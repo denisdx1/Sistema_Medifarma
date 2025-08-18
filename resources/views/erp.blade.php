@@ -9,44 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        .sidebar-text {
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal-overlay {
-            transition: opacity 0.3s ease;
-        }
-        .modal-container {
-            transition: transform 0.3s ease;
-        }
-        /* Custom Select2 styles */
-        .select2-container .select2-selection--single {
-            height: 42px;
-            border-radius: 0.375rem;
-            border: 1px solid #d1d5db;
-            padding: 0.5rem 0.75rem;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 24px;
-            color: #374151;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 40px;
-        }
-        .select2-container--open .select2-dropdown--below {
-            border-radius: 0.375rem;
-            border-color: #d1d5db;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .select2-search--dropdown .select2-search__field {
-            border-radius: 0.25rem;
-            border: 1px solid #d1d5db;
-        }
-    </style>
+    @vite('resources/css/erp.css')
 </head>
 <body class="flex h-screen overflow-hidden">
 
@@ -111,9 +74,15 @@
                 <form action="{{ route('erp') }}" method="GET">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <!-- Global Search -->
-                        <div>
+                        <div class="relative">
                             <label for="search" class="text-sm font-medium text-gray-700">Búsqueda Global</label>
                             <input type="text" name="search" id="search" placeholder="Nombre, SKU..." value="{{ request('search') }}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500">
+                            <div id="search-loading" class="absolute right-3 top-9 hidden">
+                                <svg class="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
                         </div>
 
                         <!-- Status Filter -->
@@ -172,7 +141,7 @@
                     </div>
                     <div class="mt-4 flex justify-end space-x-4">
                         <a href="{{ route('erp') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Limpiar</a>
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">Filtrar</button>
+                        <!-- Button removed: Auto search is now active -->
                     </div>
                 </form>
             </div>
@@ -285,98 +254,6 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // --- Sidebar Script ---
-        const sidebar = document.getElementById('sidebar');
-        if (sidebar) {
-            const toggleButton = document.getElementById('toggle-sidebar');
-            const sidebarLogo = document.getElementById('sidebar-logo');
-            const sidebarTexts = document.querySelectorAll('.sidebar-text');
-
-            const setInitialSidebarState = () => {
-                if (localStorage.getItem('sidebar_collapsed') === 'true') {
-                    sidebar.classList.add('w-20');
-                    sidebar.classList.remove('w-56');
-                    sidebarTexts.forEach(text => text.classList.add('hidden'));
-                    sidebarLogo.classList.add('opacity-0');
-                } else {
-                    sidebar.classList.add('w-56');
-                    sidebar.classList.remove('w-20');
-                    sidebarTexts.forEach(text => text.classList.remove('hidden'));
-                    sidebarLogo.classList.remove('opacity-0');
-                }
-            };
-            setInitialSidebarState();
-
-            if (toggleButton) {
-                toggleButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('w-56');
-                    sidebar.classList.toggle('w-20');
-                    sidebarTexts.forEach(text => text.classList.toggle('hidden'));
-                    sidebarLogo.classList.toggle('opacity-0');
-                    localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('w-20'));
-                });
-            }
-        }
-
-        // --- Select2 Initializer ---
-        $('.select2').select2({
-            width: '100%'
-        });
-
-        // --- Generate SKU Modal Script (with Event Delegation) ---
-        const generateModal = document.getElementById('generate-sku-modal');
-        if (generateModal) {
-            const generateForm = document.getElementById('generate-sku-form');
-            const closeGenerateModalButton = document.getElementById('close-generate-modal-button');
-            const cancelGenerateButton = document.getElementById('cancel-generate-button');
-            
-            const modalGenerateProductName = document.getElementById('modal-generate-product-name');
-            const modalGenerateFranchise = document.getElementById('modal-generate-franchise');
-            const modalGenerateBrand = document.getElementById('modal-generate-brand');
-            const modalGenerateBusinessUnit = document.getElementById('modal-generate-business-unit');
-            const modalGenerateMarket = document.getElementById('modal-generate-market');
-
-            const openGenerateModal = (button) => {
-                generateForm.action = button.dataset.action;
-                modalGenerateProductName.textContent = button.dataset.productName;
-                modalGenerateFranchise.textContent = button.dataset.franchise;
-                modalGenerateBrand.textContent = button.dataset.brand;
-                modalGenerateBusinessUnit.textContent = button.dataset.businessUnit;
-                modalGenerateMarket.textContent = button.dataset.market;
-                
-                generateModal.classList.remove('hidden');
-                setTimeout(() => {
-                    generateModal.classList.remove('opacity-0');
-                    generateModal.querySelector('.modal-container').classList.remove('scale-95');
-                }, 10);
-            };
-
-            const closeGenerateModal = () => {
-                generateModal.querySelector('.modal-container').classList.add('scale-95');
-                generateModal.classList.add('opacity-0');
-                setTimeout(() => generateModal.classList.add('hidden'), 300);
-            };
-
-            // Event Delegation for opening the modal
-            document.body.addEventListener('click', function(event) {
-                const button = event.target.closest('.open-generate-sku-modal-button');
-                if (button) {
-                    openGenerateModal(button);
-                }
-            });
-
-            // Listeners for closing the modal
-            closeGenerateModalButton.addEventListener('click', closeGenerateModal);
-            cancelGenerateButton.addEventListener('click', closeGenerateModal);
-            generateModal.addEventListener('click', (e) => {
-                if (e.target === generateModal) {
-                    closeGenerateModal();
-                }
-            });
-        }
-    });
-</script>
+@vite('resources/js/erp.js')
 </body>
 </html>
