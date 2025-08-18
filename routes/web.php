@@ -13,6 +13,7 @@ Route::get('/', function () {
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ErpController;
+use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MarketConfigurationController;
 
@@ -39,16 +40,33 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('test.markets');
     
-    // Market Configuration Routes
-    Route::prefix('market-configuration')->name('market-configuration.')->group(function () {
+    // Market Configuration Routes - All roles can access with different permissions
+    Route::prefix('market-configuration')->name('market-configuration.')->middleware('role:administrador,gerente_producto,business_intelligence')->group(function () {
         Route::get('/', [MarketConfigurationController::class, 'index'])->name('index');
-        Route::get('/available-markets', [MarketConfigurationController::class, 'showAvailableMarkets'])->name('available-markets');
-        Route::post('/assign-market/{product}', [MarketConfigurationController::class, 'assignMarket'])->name('assign-market');
-        Route::delete('/remove-market/{product}', [MarketConfigurationController::class, 'removeMarket'])->name('remove-market');
-        Route::get('/create-market', [MarketConfigurationController::class, 'createMarket'])->name('create-market');
-        Route::post('/create-market', [MarketConfigurationController::class, 'storeMarket'])->name('store-market');
-        Route::get('/market/{market}', [MarketConfigurationController::class, 'showMarket'])->name('show-market');
-        Route::post('/bulk-assign-market', [MarketConfigurationController::class, 'bulkAssignMarket'])->name('bulk-assign-market');
-        Route::get('/export-unassigned', [MarketConfigurationController::class, 'exportUnassigned'])->name('export-unassigned');
+        
+        // Admin and Product Manager only routes
+        Route::middleware('role:administrador,gerente_producto')->group(function () {
+            Route::post('/assign-market-to-material', [MarketConfigurationController::class, 'assignMarketToMaterial'])->name('assign-market-to-material');
+            Route::post('/create-market', [MarketConfigurationController::class, 'createMarket'])->name('create-market');
+            Route::post('/bulk-assign-market', [MarketConfigurationController::class, 'bulkAssignMarket'])->name('bulk-assign-market');
+            Route::post('/bulk-remove-market', [MarketConfigurationController::class, 'bulkRemoveMarket'])->name('bulk-remove-market');
+            Route::post('/remove-market-from-material', [MarketConfigurationController::class, 'removeMarketFromMaterial'])->name('remove-market-from-material');
+            Route::post('/edit-market-name', [MarketConfigurationController::class, 'editMarketName'])->name('edit-market-name');
+        });
+        
+        // Read-only routes for all roles
+        Route::get('/markets', [MarketConfigurationController::class, 'getMarkets'])->name('get-markets');
+        Route::get('/products-by-market', [MarketConfigurationController::class, 'getProductsByMarket'])->name('products-by-market');
+    });
+    
+    // User Management Routes - Admin only
+    Route::prefix('users')->name('users.')->middleware('role:administrador')->group(function () {
+        Route::get('/', [UserManagementController::class, 'index'])->name('index');
+        Route::get('/create', [UserManagementController::class, 'create'])->name('create');
+        Route::post('/', [UserManagementController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+        Route::patch('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
     });
 });

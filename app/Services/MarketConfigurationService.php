@@ -2,62 +2,137 @@
 
 namespace App\Services;
 
-use App\Models\Product;
-use App\Models\Market;
-use App\Models\Brand;
-use App\Models\Franchise;
-use App\Models\BusinessUnit;
-use App\Models\Log;
+use App\Models\Material;
+use App\Models\Mercado;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class MarketConfigurationService
 {
     /**
-     * Get filtered products with pagination
+     * Get filtered materials with pagination
      */
-    public function getFilteredProducts(array $filters, int $perPage = 15)
+    public function getFilteredProducts(array $filters, int $perPage = 10)
     {
-        $query = Product::with(['brand', 'franchise', 'businessUnit', 'market']);
+        // Usar exactamente la misma consulta base que funciona en getFilterOptions
+        $query = Material::select(
+            'SKU',
+            'Descripción_Presentación', 
+            'Código_ATC_4',
+            'Descripción_ATC_4',
+            'Código_FF_3', 
+            'Descripción_FF_3',
+            'Molécula',
+            'Marca_Genérico',
+            'Ético_Popular',
+            'Mercado'
+        );
 
-        // Global search
+        // Global search - search across multiple fields
         if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+            $searchTerm = $filters['search'];
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('SKU', 'like', "%{$searchTerm}%")
+                  ->orWhere('Descripción_Presentación', 'like', "%{$searchTerm}%")
+                  ->orWhere('Código_ATC_4', 'like', "%{$searchTerm}%")
+                  ->orWhere('Descripción_ATC_4', 'like', "%{$searchTerm}%")
+                  ->orWhere('Código_FF_3', 'like', "%{$searchTerm}%")
+                  ->orWhere('Descripción_FF_3', 'like', "%{$searchTerm}%")
+                  ->orWhere('Molécula', 'like', "%{$searchTerm}%")
+                  ->orWhere('Mercado', 'like', "%{$searchTerm}%");
             });
         }
 
-        // Market status filter
-        if (!empty($filters['market_status'])) {
-            switch ($filters['market_status']) {
-                case 'with_market':
-                    $query->whereNotNull('market_id');
-                    break;
-                case 'without_market':
-                    $query->whereNull('market_id');
-                    break;
+        // Marca Genérico filter
+        if (!empty($filters['marca_generico'])) {
+            if ($filters['marca_generico'] === '1') {
+                $query->where(function($q) {
+                    $q->where('Marca_Genérico', 'like', '%MARCA%')
+                      ->orWhere('Marca_Genérico', 'like', '%marca%');
+                });
+            } else {
+                $query->where(function($q) {
+                    $q->where('Marca_Genérico', 'like', '%GENÉRICO%')
+                      ->orWhere('Marca_Genérico', 'like', '%GENERICO%')
+                      ->orWhere('Marca_Genérico', 'like', '%genérico%')
+                      ->orWhere('Marca_Genérico', 'like', '%generico%');
+                });
             }
         }
 
-        // Brand filter
-        if (!empty($filters['brand_id'])) {
-            $query->where('brand_id', $filters['brand_id']);
+        // Ético Popular filter
+        if (!empty($filters['etico_popular'])) {
+            if ($filters['etico_popular'] === '1') {
+                $query->where(function($q) {
+                    $q->where('Ético_Popular', 'like', '%ÉTICO%')
+                      ->orWhere('Ético_Popular', 'like', '%ETICO%')
+                      ->orWhere('Ético_Popular', 'like', '%ético%')
+                      ->orWhere('Ético_Popular', 'like', '%etico%');
+                });
+            } else {
+                $query->where(function($q) {
+                    $q->where('Ético_Popular', 'like', '%POPULAR%')
+                      ->orWhere('Ético_Popular', 'like', '%popular%');
+                });
+            }
         }
 
-        // Franchise filter
-        if (!empty($filters['franchise_id'])) {
-            $query->where('franchise_id', $filters['franchise_id']);
+        // ATC Code filter
+        if (!empty($filters['codigo_atc'])) {
+            $query->where('Código_ATC_4', $filters['codigo_atc']);
         }
 
-        // Business Unit filter
-        if (!empty($filters['business_unit_id'])) {
-            $query->where('business_unit_id', $filters['business_unit_id']);
+        // Form Code filter
+        if (!empty($filters['codigo_ff'])) {
+            $query->where('Código_FF_3', $filters['codigo_ff']);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        // Laboratorio filter
+        if (!empty($filters['laboratorio'])) {
+            $query->where('LABORATORIO_C', $filters['laboratorio']);
+        }
+
+        // Corporación filter
+        if (!empty($filters['corporacion'])) {
+            $query->where('CORPORACION', $filters['corporacion']);
+        }
+
+        // Market Status filter (with_market / without_market)
+        if (!empty($filters['market_status'])) {
+            if ($filters['market_status'] === 'with_market') {
+                $query->whereNotNull('Mercado')
+                      ->where('Mercado', '!=', '')
+                      ->where('Mercado', '!=', 'null')
+                      ->where('Mercado', '!=', 'NULL')
+                      ->where('Mercado', '!=', 'RESTO');
+            } elseif ($filters['market_status'] === 'without_market') {
+                $query->where(function($q) {
+                    $q->whereNull('Mercado')
+                      ->orWhere('Mercado', '')
+                      ->orWhere('Mercado', 'null')
+                      ->orWhere('Mercado', 'NULL')
+                      ->orWhere('Mercado', 'RESTO');
+                });
+            }
+        }
+
+        // Mercado filter
+        if (!empty($filters['mercado'])) {
+            if ($filters['mercado'] === 'sin_asignar') {
+                $query->where(function($q) {
+                    $q->whereNull('Mercado')
+                      ->orWhere('Mercado', '')
+                      ->orWhere('Mercado', 'null')
+                      ->orWhere('Mercado', 'NULL')
+                      ->orWhere('Mercado', 'RESTO');
+                });
+            } else {
+                // Filtrar por mercado específico - exactamente igual que en getFilterOptions
+                $query->where('Mercado', $filters['mercado']);
+            }
+        }
+
+        return $query->orderBy('SKU', 'asc')->paginate($perPage);
     }
 
     /**
@@ -66,29 +141,129 @@ class MarketConfigurationService
     public function getFilterOptions(): array
     {
         return [
-            'brands' => Brand::orderBy('name')->get(),
-            'franchises' => Franchise::orderBy('name')->get(),
-            'businessUnits' => BusinessUnit::orderBy('name')->get(),
-            'markets' => Market::where('is_active', true)->orderBy('name')->get()
+            'marcas_genericos' => Material::select('Marca_Genérico')
+                ->distinct()
+                ->whereNotNull('Marca_Genérico')
+                ->orderBy('Marca_Genérico')
+                ->get()
+                ->map(function($item) {
+                    $value = $item->Marca_Genérico;
+                    return [
+                        'value' => $value,
+                        'label' => strtoupper($value)
+                    ];
+                }),
+            'etico_popular' => Material::select('Ético_Popular')
+                ->distinct()
+                ->whereNotNull('Ético_Popular')
+                ->orderBy('Ético_Popular')
+                ->get()
+                ->map(function($item) {
+                    $value = $item->Ético_Popular;
+                    return [
+                        'value' => $value,
+                        'label' => strtoupper($value)
+                    ];
+                }),
+            'codigos_atc' => Material::select('Código_ATC_4', 'Descripción_ATC_4')
+                ->distinct()
+                ->whereNotNull('Código_ATC_4')
+                ->orderBy('Código_ATC_4')
+                ->limit(50) // Limitar para no sobrecargar
+                ->get(),
+            'codigos_ff' => Material::select('Código_FF_3', 'Descripción_FF_3')
+                ->distinct()
+                ->whereNotNull('Código_FF_3')
+                ->orderBy('Código_FF_3')
+                ->limit(50) // Limitar para no sobrecargar
+                ->get(),
+            'laboratorios' => Material::select('LABORATORIO_C')
+                ->distinct()
+                ->whereNotNull('LABORATORIO_C')
+                ->where('LABORATORIO_C', '!=', '')
+                ->orderBy('LABORATORIO_C')
+                ->pluck('LABORATORIO_C')
+                ->filter(function($laboratorio) {
+                    return !empty(trim($laboratorio));
+                })
+                ->unique()
+                ->values()
+                ->toArray(),
+            'corporaciones' => Material::select('CORPORACION')
+                ->distinct()
+                ->whereNotNull('CORPORACION')
+                ->where('CORPORACION', '!=', '')
+                ->orderBy('CORPORACION')
+                ->pluck('CORPORACION')
+                ->filter(function($corporacion) {
+                    return !empty(trim($corporacion));
+                })
+                ->unique()
+                ->values()
+                ->toArray(),
+            'mercados' => Material::select('Mercado')
+                ->distinct()
+                ->whereNotNull('Mercado')
+                ->where('Mercado', '!=', '')
+                ->where('Mercado', '!=', 'null')
+                ->where('Mercado', '!=', 'NULL')
+                ->orderBy('Mercado')
+                ->pluck('Mercado')
+                ->filter(function($mercado) {
+                    return !empty(trim($mercado)) && strtolower(trim($mercado)) !== 'null';
+                })
+                ->unique()
+                ->values()
+                ->toArray()
         ];
     }
 
     /**
-     * Get market assignment statistics
+     * Get all available markets for assignment (excluding RESTO and invalid values)
+     */
+    public function getAllAvailableMarkets(): array
+    {
+        return Material::select('Mercado')
+            ->distinct()
+            ->whereNotNull('Mercado')
+            ->where('Mercado', '!=', '')
+            ->where('Mercado', '!=', 'null')
+            ->where('Mercado', '!=', 'NULL')
+            ->where('Mercado', '!=', 'RESTO')
+            ->orderBy('Mercado')
+            ->pluck('Mercado')
+            ->filter(function($mercado) {
+                return !empty(trim($mercado)) && strtolower(trim($mercado)) !== 'null';
+            })
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Get material statistics
      */
     public function getMarketStatistics(): array
     {
-        $totalProducts = Product::count();
-        $productsWithMarket = Product::whereNotNull('market_id')->count();
-        $productsWithoutMarket = $totalProducts - $productsWithMarket;
-        $totalMarkets = Market::where('is_active', true)->count();
+        $totalMaterials = Material::count();
+        $marcaMaterials = Material::where('Marca_Genérico', 'MARCA')->count();
+        $genericoMaterials = Material::where('Marca_Genérico', 'GENÉRICO')->count();
+        $eticoMaterials = Material::where('Ético_Popular', 'ÉTICO')->count();
+        $popularMaterials = Material::where('Ético_Popular', 'POPULAR')->count();
+        $sinMercadoMaterials = Material::sinMercadoAsignado()->count();
+        $conMercadoMaterials = $totalMaterials - $sinMercadoMaterials;
 
         return [
-            'total_products' => $totalProducts,
-            'products_with_market' => $productsWithMarket,
-            'products_without_market' => $productsWithoutMarket,
-            'total_markets' => $totalMarkets,
-            'assignment_percentage' => $totalProducts > 0 ? round(($productsWithMarket / $totalProducts) * 100, 2) : 0
+            'total_materials' => $totalMaterials,
+            'marca_materials' => $marcaMaterials,
+            'generico_materials' => $genericoMaterials,
+            'etico_materials' => $eticoMaterials,
+            'popular_materials' => $popularMaterials,
+            'sin_mercado_materials' => $sinMercadoMaterials,
+            'con_mercado_materials' => $conMercadoMaterials,
+            'marca_percentage' => $totalMaterials > 0 ? round(($marcaMaterials / $totalMaterials) * 100, 2) : 0,
+            'etico_percentage' => $totalMaterials > 0 ? round(($eticoMaterials / $totalMaterials) * 100, 2) : 0,
+            'mercado_percentage' => $totalMaterials > 0 ? round(($conMercadoMaterials / $totalMaterials) * 100, 2) : 0
         ];
     }
 

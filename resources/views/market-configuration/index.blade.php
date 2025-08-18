@@ -10,6 +10,529 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Enhanced Select2 Styling */
+        .select2-container--default .select2-selection--single {
+            height: 44px !important;
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%) !important;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .select2-container--default .select2-selection--single:hover {
+            border-color: #c7d2fe !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        }
+        
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #8b5cf6 !important;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            outline: none !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #1f2937 !important;
+            line-height: 40px !important;
+            padding-left: 16px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #9ca3af !important;
+            font-weight: 400 !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            right: 12px !important;
+        }
+        
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #6b7280 transparent transparent transparent !important;
+            border-width: 6px 5px 0 5px !important;
+        }
+        
+        .select2-dropdown {
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            background: white !important;
+            margin-top: 4px !important;
+            z-index: 9999 !important;
+        }
+        
+        .select2-container--default .select2-results__option {
+            padding: 12px 16px !important;
+            font-size: 14px !important;
+            transition: all 0.15s ease-in-out !important;
+            border-bottom: 1px solid #f3f4f6 !important;
+        }
+        
+        .select2-container--default .select2-results__option:last-child {
+            border-bottom: none !important;
+        }
+        
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+            color: white !important;
+        }
+        
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 1px solid #d1d5db !important;
+            border-radius: 6px !important;
+            padding: 10px 14px !important;
+            font-size: 14px !important;
+            margin: 12px !important;
+            width: calc(100% - 24px) !important;
+            background: #f9fafb !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+        
+        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+            border-color: #8b5cf6 !important;
+            background: white !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+        }
+        
+        /* Ensure Select2 dropdown appears above everything */
+        .select2-container {
+            z-index: 9998 !important;
+        }
+        
+        .select2-container--open {
+            z-index: 9999 !important;
+        }
+        
+        .select2-dropdown {
+            z-index: 10000 !important;
+        }
+        
+        /* Prevent dropdown from being cut off */
+        .select2-container--open .select2-dropdown--below {
+            border-top: none !important;
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+        }
+        
+        .select2-container--open .select2-dropdown--above {
+            border-bottom: none !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+        
+        /* Custom dropdown class for enhanced z-index */
+        .select2-dropdown-custom {
+            z-index: 10001 !important;
+            border: 2px solid #e5e7eb !important;
+            border-radius: 8px !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08) !important;
+        }
+        
+        /* Enhanced filter section styling */
+        .filter-section {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .filter-item {
+            position: relative;
+            z-index: 2;
+        }
+        .filter-section {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .filter-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #8b5cf6, #7c3aed, #6d28d9);
+        }
+        
+        .filter-title {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-title i {
+            color: #8b5cf6;
+            font-size: 20px;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-label i {
+            font-size: 16px;
+        }
+        
+        /* Search input styling */
+        #search {
+            height: 44px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #search:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        #search:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            outline: none;
+            background: white;
+        }
+        
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .active-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-badge {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px -1px rgba(139, 92, 246, 0.4);
+            animation: slideInUp 0.3s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .clear-filters-btn {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .clear-filters-btn:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px -2px rgba(75, 85, 99, 0.4);
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #6b7280;
+            z-index: 10;
+        }
+        
+        /* Animation for filter changes */
+        .filter-item {
+            animation: fadeInScale 0.3s ease-out;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Stats card enhancements */
+        .stats-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            margin-bottom: 12px;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            min-width: 300px;
+            max-width: 400px;
+            overflow: hidden;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+
+        .toast-success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast-info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toast-content {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .toast-success .toast-icon {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .toast-error .toast-icon {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .toast-warning .toast-icon {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .toast-info .toast-icon {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .toast-close:hover {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, rgba(0,0,0,0.1), rgba(0,0,0,0.2));
+            transition: width linear;
+        }
+
+        .toast-success .toast-progress {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .toast-error .toast-progress {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .toast-warning .toast-progress {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .toast-info .toast-progress {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+        }
+
+        /* Create Market Modal Styles */
+        #create-market-modal .modal-container {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        #create-market-modal input:focus,
+        #create-market-modal textarea:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        #create-market-modal .bg-blue-50 {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }
+
+        #create-market-modal button:hover {
+            transform: translateY(-1px);
+        }
+
+        #create-market-modal .error-message {
+            animation: errorShake 0.3s ease-out;
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .toast {
+            min-width: 300px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .toast.translate-x-full {
+            transform: translateX(100%);
+        }
+    </style>
     @vite('resources/css/erp.css')
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -21,19 +544,45 @@
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-800">Configuración de Mercado</h1>
-                <p class="text-gray-600 mt-1">Gestiona la asignación de mercados a los productos</p>
+                <h1 class="text-2xl font-semibold text-gray-800">Configuración de Mercado - Materiales</h1>
+                <p class="text-gray-600 mt-1">Gestiona la asignación de mercados a los materiales farmacéuticos</p>
             </div>
-            <div class="flex space-x-3">
+                        <div class="flex flex-wrap gap-3">
+                <!-- Export button - available for all roles -->
                 <button id="export-unassigned-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
                     <i class="fas fa-download mr-2"></i>
                     Exportar Sin Mercado
                 </button>
-                <button id="create-market-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                    <i class="fas fa-plus mr-2"></i>
-                    Crear Mercado
-                </button>
-            </div>
+                
+                <!-- Create/Edit buttons - only for Admin and Product Manager -->
+                @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+                    <button id="create-market-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Crear Mercado
+                    </button>
+                    
+                    <!-- New bulk operations buttons -->
+                    <div class="border-l border-gray-300 pl-3 flex gap-3">
+                        <button id="bulk-assign-market-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-tags mr-2"></i>
+                            Asignar en Lote
+                        </button>
+                        <button id="bulk-remove-market-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-trash mr-2"></i>
+                            Quitar en Lote
+                        </button>
+                        <button id="manage-markets-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                            <i class="fas fa-edit mr-2"></i>
+                            Gestionar Mercados
+                        </button>
+                    </div>
+                @else
+                    <!-- Read-only indicators for BI role -->
+                    <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-eye mr-2"></i>
+                        <span class="text-sm font-medium">Modo Solo Lectura</span>
+                    </div>
+                @endif
         </header>
 
         <!-- Session Messages -->
@@ -67,27 +616,15 @@
         @endif
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-lg border stats-card">
                 <div class="flex items-center">
                     <div class="p-3 bg-blue-100 rounded-full">
-                        <i class="fas fa-boxes text-blue-600"></i>
+                        <i class="fas fa-capsules text-blue-600"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-gray-500 text-sm">Total Productos</p>
-                        <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['total_products']) }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg border stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-full">
-                        <i class="fas fa-check-circle text-green-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-500 text-sm">Con Mercado</p>
-                        <p class="text-2xl font-bold text-green-600">{{ number_format($stats['products_with_market']) }}</p>
+                        <p class="text-gray-500 text-sm">Total Materiales</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['total_materials']) }}</p>
                     </div>
                 </div>
             </div>
@@ -99,97 +636,284 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-gray-500 text-sm">Sin Mercado</p>
-                        <p class="text-2xl font-bold text-red-600">{{ number_format($stats['products_without_market']) }}</p>
+                        <p class="text-2xl font-bold text-red-600">{{ number_format($stats['sin_mercado_materials']) }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-6 rounded-lg border stats-card">
                 <div class="flex items-center">
-                    <div class="p-3 bg-purple-100 rounded-full">
-                        <i class="fas fa-percentage text-purple-600"></i>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <i class="fas fa-map-marker-alt text-green-600"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-gray-500 text-sm">% Asignado</p>
-                        <p class="text-2xl font-bold text-purple-600">{{ $stats['assignment_percentage'] }}%</p>
+                        <p class="text-gray-500 text-sm">Con Mercado</p>
+                        <p class="text-2xl font-bold text-green-600">{{ number_format($stats['con_mercado_materials']) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="bg-gray-50 p-6 rounded-lg mb-8">
+        <!-- Bulk Actions Bar (Hidden by default) - Only for Admin and Product Manager -->
+        @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+            <div id="bulk-actions" class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-square text-purple-600 mr-2"></i>
+                        <span class="text-purple-800 font-medium">
+                            <span id="selected-count">0</span> materiales seleccionados
+                        </span>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="bulk-assign-market" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Asignar Mercado
+                        </button>
+                        <button id="bulk-export" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                            <i class="fas fa-download mr-2"></i>
+                            Exportar Seleccionados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Enhanced Filters Section -->
+        <div class="filter-section p-6 mb-8">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i>
+                Filtros de Búsqueda
+            </div>
+            
             <form action="{{ route('market-configuration.index') }}" method="GET" id="filters-form">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="filter-grid">
                     <!-- Global Search -->
-                    <div class="relative">
-                        <label for="search" class="text-sm font-medium text-gray-700">Búsqueda Global</label>
-                        <input type="text" name="search" id="search" placeholder="Nombre, SKU..." value="{{ request('search') }}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500">
-                        <div id="search-loading" class="absolute right-3 top-9 hidden">
-                            <svg class="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                    <div class="filter-item">
+                        <label for="search" class="filter-label">
+                            <i class="fas fa-search text-gray-400"></i>
+                            Búsqueda Global
+                        </label>
+                        <div class="relative">
+                            <input type="text" name="search" id="search" 
+                                   placeholder="Nombre, SKU, descripción..." 
+                                   value="{{ request('search') }}" 
+                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 transition-all duration-150">
+                            <div id="search-loading" class="absolute right-3 top-3 hidden">
+                                <svg class="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Market Status Filter -->
-                    <div>
-                        <label for="market_status" class="text-sm font-medium text-gray-700">Estado de Mercado</label>
-                        <select name="market_status" id="market_status" class="w-full mt-1 select2">
-                            <option value="">Todos</option>
-                            <option value="with_market" @if(request('market_status') == 'with_market') selected @endif>Con Mercado</option>
-                            <option value="without_market" @if(request('market_status') == 'without_market') selected @endif>Sin Mercado</option>
+                    <div class="filter-item">
+                        <label for="market_status" class="filter-label">
+                            <i class="fas fa-globe text-gray-400"></i>
+                            Estado de Mercado
+                        </label>
+                        <select name="market_status" id="market_status" class="select2-filter">
+                            <option value="">Todos los estados</option>
+                            <option value="with_market" @if(request('market_status') == 'with_market') selected @endif>Con Mercado Asignado</option>
+                            <option value="without_market" @if(request('market_status') == 'without_market') selected @endif>Sin Mercado Asignado</option>
                         </select>
                     </div>
 
-                    <!-- Brand Filter -->
-                    <div>
-                        <label for="brand_id" class="text-sm font-medium text-gray-700">Marca</label>
-                        <select name="brand_id" id="brand_id" class="w-full mt-1 select2">
-                            <option value="">Todas</option>
-                            @foreach ($filterOptions['brands'] as $brand)
-                                <option value="{{ $brand->id }}" @if(request('brand_id') == $brand->id) selected @endif>{{ $brand->name }}</option>
+                    <!-- Marca/Genérico Filter -->
+                    <div class="filter-item">
+                        <label for="marca_generico" class="filter-label">
+                            <i class="fas fa-certificate text-gray-400"></i>
+                            Marca/Genérico
+                        </label>
+                        <select name="marca_generico" id="marca_generico" class="select2-filter">
+                            <option value="">Todos los tipos</option>
+                            @foreach ($filterOptions['marcas_genericos'] as $option)
+                                <option value="{{ $option['value'] }}" @if(request('marca_generico') == $option['value']) selected @endif>{{ $option['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <!-- Franchise Filter -->
-                    <div>
-                        <label for="franchise_id" class="text-sm font-medium text-gray-700">Franquicia</label>
-                        <select name="franchise_id" id="franchise_id" class="w-full mt-1 select2">
-                            <option value="">Todas</option>
-                            @foreach ($filterOptions['franchises'] as $franchise)
-                                <option value="{{ $franchise->id }}" @if(request('franchise_id') == $franchise->id) selected @endif>{{ $franchise->name }}</option>
+                    <!-- Ético/Popular Filter -->
+                    <div class="filter-item">
+                        <label for="etico_popular" class="filter-label">
+                            <i class="fas fa-prescription-bottle-alt text-gray-400"></i>
+                            Ético/Popular
+                        </label>
+                        <select name="etico_popular" id="etico_popular" class="select2-filter">
+                            <option value="">Todos los tipos</option>
+                            @foreach ($filterOptions['etico_popular'] as $option)
+                                <option value="{{ $option['value'] }}" @if(request('etico_popular') == $option['value']) selected @endif>{{ $option['label'] }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <!-- Business Unit Filter -->
-                    <div>
-                        <label for="business_unit_id" class="text-sm font-medium text-gray-700">Unidad de Negocio</label>
-                        <select name="business_unit_id" id="business_unit_id" class="w-full mt-1 select2">
-                            <option value="">Todas</option>
-                            @foreach ($filterOptions['businessUnits'] as $businessUnit)
-                                <option value="{{ $businessUnit->id }}" @if(request('business_unit_id') == $businessUnit->id) selected @endif>{{ $businessUnit->name }}</option>
+                    <!-- Mercado Filter -->
+                    <div class="filter-item">
+                        <label for="mercado" class="filter-label">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            Mercado
+                        </label>
+                        <select name="mercado" id="mercado" class="select2-filter">
+                            <option value="">Todos los mercados</option>
+                            <option value="sin_asignar" @if(request('mercado') == 'sin_asignar') selected @endif>
+                                Sin Asignar
+                            </option>
+                            @foreach ($filterOptions['mercados'] as $mercado)
+                                <option value="{{ $mercado }}" @if(request('mercado') == $mercado) selected @endif>
+                                    {{ strtoupper($mercado) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Código ATC Filter -->
+                    <div class="filter-item">
+                        <label for="codigo_atc" class="filter-label">
+                            <i class="fas fa-dna text-gray-400"></i>
+                            Código ATC
+                        </label>
+                        <select name="codigo_atc" id="codigo_atc" class="select2-filter">
+                            <option value="">Todos los códigos ATC</option>
+                            @foreach ($filterOptions['codigos_atc'] as $atc)
+                                <option value="{{ $atc->Código_ATC_4 }}" @if(request('codigo_atc') == $atc->Código_ATC_4) selected @endif>
+                                    {{ $atc->Código_ATC_4 }} - {{ $atc->Descripción_ATC_4 }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Código FF Filter -->
+                    <div class="filter-item">
+                        <label for="codigo_ff" class="filter-label">
+                            <i class="fas fa-pills text-gray-400"></i>
+                            Forma Farmacéutica
+                        </label>
+                        <select name="codigo_ff" id="codigo_ff" class="select2-filter">
+                            <option value="">Todas las formas</option>
+                            @foreach ($filterOptions['codigos_ff'] as $ff)
+                                <option value="{{ $ff->Código_FF_3 }}" @if(request('codigo_ff') == $ff->Código_FF_3) selected @endif>
+                                    {{ $ff->Código_FF_3 }} - {{ $ff->Descripción_FF_3 }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Laboratorio Filter -->
+                    <div class="filter-item">
+                        <label for="laboratorio" class="filter-label">
+                            <i class="fas fa-industry text-gray-400"></i>
+                            Laboratorio
+                        </label>
+                        <select name="laboratorio" id="laboratorio" class="select2-filter">
+                            <option value="">Todos los laboratorios</option>
+                            @foreach ($filterOptions['laboratorios'] as $laboratorio)
+                                <option value="{{ $laboratorio }}" @if(request('laboratorio') == $laboratorio) selected @endif>
+                                    {{ $laboratorio }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Corporación Filter -->
+                    <div class="filter-item">
+                        <label for="corporacion" class="filter-label">
+                            <i class="fas fa-building text-gray-400"></i>
+                            Corporación
+                        </label>
+                        <select name="corporacion" id="corporacion" class="select2-filter">
+                            <option value="">Todas las corporaciones</option>
+                            @foreach ($filterOptions['corporaciones'] as $corporacion)
+                                <option value="{{ $corporacion }}" @if(request('corporacion') == $corporacion) selected @endif>
+                                    {{ $corporacion }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
                 </div>
-                <div class="mt-4 flex justify-between items-center">
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ route('market-configuration.index') }}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Limpiar</a>
-                        <button type="button" id="bulk-assign-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg flex items-center" disabled>
-                            <i class="fas fa-layer-group mr-2"></i>
-                            Asignar en Lote (<span id="selected-count">0</span>)
-                        </button>
+                
+                <div class="filter-actions">
+                    <div class="active-filters">
+                        @if(request('search'))
+                            <span class="filter-badge">
+                                <i class="fas fa-search"></i>
+                                "{{ request('search') }}"
+                            </span>
+                        @endif
+                        @if(request('market_status'))
+                            <span class="filter-badge">
+                                <i class="fas fa-globe"></i>
+                                {{ request('market_status') == 'with_market' ? 'CON MERCADO' : 'SIN MERCADO' }}
+                            </span>
+                        @endif
+                        @if(request('marca_generico'))
+                            <span class="filter-badge">
+                                <i class="fas fa-certificate"></i>
+                                {{ strtoupper(request('marca_generico')) }}
+                            </span>
+                        @endif
+                        @if(request('etico_popular'))
+                            <span class="filter-badge">
+                                <i class="fas fa-prescription-bottle-alt"></i>
+                                {{ strtoupper(request('etico_popular')) }}
+                            </span>
+                        @endif
+                        @if(request('codigo_atc'))
+                            <span class="filter-badge">
+                                <i class="fas fa-dna"></i>
+                                ATC: {{ request('codigo_atc') }}
+                            </span>
+                        @endif
+                        @if(request('codigo_ff'))
+                            <span class="filter-badge">
+                                <i class="fas fa-pills"></i>
+                                FF: {{ request('codigo_ff') }}
+                            </span>
+                        @endif
+                        @if(request('mercado'))
+                            <span class="filter-badge">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ request('mercado') == 'sin_asignar' ? 'SIN ASIGNAR' : strtoupper(request('mercado')) }}
+                            </span>
+                        @endif
+                        @if(request('laboratorio'))
+                            <span class="filter-badge">
+                                <i class="fas fa-flask"></i>
+                                LAB: {{ strtoupper(request('laboratorio')) }}
+                            </span>
+                        @endif
+                        @if(request('corporacion'))
+                            <span class="filter-badge">
+                                <i class="fas fa-building"></i>
+                                CORP: {{ strtoupper(request('corporacion')) }}
+                            </span>
+                        @endif
                     </div>
-                    <div class="text-sm text-gray-600">
-                        <span id="products-count">{{ $products->total() }}</span> productos encontrados
-                    </div>
+                    
+                    @if(request()->hasAny(['search', 'market_status', 'marca_generico', 'etico_popular', 'codigo_atc', 'codigo_ff', 'mercado', 'laboratorio', 'corporacion']))
+                        <a href="{{ route('market-configuration.index') }}" class="clear-filters-btn">
+                            <i class="fas fa-times mr-2"></i>
+                            Limpiar Filtros
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
+
+        <!-- Products Table Section -->
+        <div class="bg-white rounded-lg border mb-8">
+            <!-- Table Actions -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        
+                    </div>
+                    <div class="text-sm text-gray-600 flex items-center">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="products-count">{{ $products->total() }}</span> productos encontrados
+                    </div>
+                </div>
+            </div>
 
         <!-- Products Table -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -197,93 +921,147 @@
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="p-4 text-left">
-                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            </th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Producto</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SKU</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Marca</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Franquicia</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">U. Negocio</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mercado</th>
-                            <th class="p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                            @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+                                <th class="p-2 text-left">
+                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                </th>
+                            @endif
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SKU</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código ATC</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código FF</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Molécula</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoría</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mercado</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse ($products as $product)
-                            <tr class="hover:bg-gray-50 product-row" data-product-id="{{ $product->id }}">
-                                <td class="p-4">
-                                    <input type="checkbox" class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500" value="{{ $product->id }}">
+                        @forelse ($products as $material)
+                            <tr class="hover:bg-gray-50 product-row" data-product-id="{{ $material->SKU }}">
+                                @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+                                    <td class="p-2">
+                                        <input type="checkbox" class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500" value="{{ $material->SKU }}">
+                                    </td>
+                                @endif
+                                <td class="p-2">
+                                    @if($material->SKU)
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded">{{ $material->SKU }}</span>
+                                    @else
+                                        <span class="text-gray-400 text-xs">Sin SKU</span>
+                                    @endif
                                 </td>
-                                <td class="p-4">
+                                <td class="p-2">
                                     <div>
-                                        <p class="font-semibold text-gray-900">{{ $product->name }}</p>
-                                        @if($product->description)
-                                            <p class="text-sm text-gray-500">{{ Str::limit($product->description, 50) }}</p>
+                                        <p class="font-medium text-gray-900 text-xs">{{ $material->Descripción_Presentación }}</p>
+                                    </div>
+                                </td>
+                                <td class="p-2">
+                                    <div>
+                                        <span class="bg-purple-100 text-purple-800 text-xs font-medium px-1.5 py-0.5 rounded block mb-1">{{ $material->Código_ATC_4 ?? 'N/A' }}</span>
+                                        @if($material->Descripción_ATC_4)
+                                            <p class="text-xs text-gray-500">{{ Str::limit($material->Descripción_ATC_4, 25) }}</p>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="p-4">
-                                    @if($product->sku)
-                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">{{ $product->sku }}</span>
-                                    @else
-                                        <span class="text-gray-400 text-sm">Sin SKU</span>
-                                    @endif
-                                </td>
-                                <td class="p-4">
-                                    <span class="text-sm text-gray-900">{{ $product->brand->name ?? 'Sin Marca' }}</span>
-                                </td>
-                                <td class="p-4">
-                                    <span class="text-sm text-gray-900">{{ $product->franchise->name ?? 'Sin Franquicia' }}</span>
-                                </td>
-                                <td class="p-4">
-                                    <span class="text-sm text-gray-900">{{ $product->businessUnit->name ?? 'Sin U. Negocio' }}</span>
-                                </td>
-                                <td class="p-4">
-                                    @if($product->market)
-                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded flex items-center w-fit">
-                                            <i class="fas fa-check-circle mr-1"></i>
-                                            {{ $product->market->name }}
-                                        </span>
-                                    @else
-                                        <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded flex items-center w-fit">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                                            Sin Mercado
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="p-4">
-                                    <div class="flex space-x-2">
-                                        @if($product->market)
-                                            <button class="change-market-btn bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded" 
-                                                data-product-id="{{ $product->id }}"
-                                                data-product-name="{{ $product->name }}"
-                                                data-current-market="{{ $product->market->name }}">
-                                                <i class="fas fa-edit mr-1"></i>
-                                                Cambiar
-                                            </button>
-                                            <button class="remove-market-btn bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded" 
-                                                data-product-id="{{ $product->id }}"
-                                                data-product-name="{{ $product->name }}">
-                                                <i class="fas fa-times mr-1"></i>
-                                                Remover
-                                            </button>
-                                        @else
-                                            <button class="assign-market-btn bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-1 px-2 rounded" 
-                                                data-product-id="{{ $product->id }}"
-                                                data-product-name="{{ $product->name }}">
-                                                <i class="fas fa-plus mr-1"></i>
-                                                Asignar
-                                            </button>
+                                <td class="p-2">
+                                    <div>
+                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded block mb-1">{{ $material->Código_FF_3 ?? 'N/A' }}</span>
+                                        @if($material->Descripción_FF_3)
+                                            <p class="text-xs text-gray-500">{{ Str::limit($material->Descripción_FF_3, 25) }}</p>
                                         @endif
                                     </div>
+                                </td>
+                                <td class="p-2">
+                                    <span class="text-xs text-gray-900">{{ $material->Molécula ?? 'N/A' }}</span>
+                                </td>
+                                <td class="p-2">
+                                    @if(strtoupper($material->Marca_Genérico) == 'MARCA')
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-certificate mr-1 text-xs"></i>
+                                            <span class="text-xs">Marca</span>
+                                        </span>
+                                    @else
+                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-clone mr-1 text-xs"></i>
+                                            <span class="text-xs">Genérico</span>
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="p-2">
+                                    @if(strtoupper($material->Ético_Popular) == 'ÉTICO' || strtoupper($material->Ético_Popular) == 'ETICO')
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-prescription-bottle-alt mr-1 text-xs"></i>
+                                            <span class="text-xs">Ético</span>
+                                        </span>
+                                    @else
+                                        <span class="bg-orange-100 text-orange-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-pills mr-1 text-xs"></i>
+                                            <span class="text-xs">Popular</span>
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="p-2">
+                                    @if(!empty($material->Mercado) && $material->Mercado !== 'null' && $material->Mercado !== 'NULL' && $material->Mercado !== 'RESTO')
+                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-map-marker-alt mr-1 text-xs"></i>
+                                            <span class="text-xs">{{ $material->Mercado }}</span>
+                                        </span>
+                                    @else
+                                        <span class="bg-red-100 text-red-800 text-xs font-medium px-1.5 py-0.5 rounded flex items-center w-fit">
+                                            <i class="fas fa-exclamation-triangle mr-1 text-xs"></i>
+                                            <span class="text-xs">RESTO</span>
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="p-2">
+                                    @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+                                        <!-- Full access for Admin and Product Manager -->
+                                        <div class="flex space-x-1">
+                                            @if(empty($material->Mercado) || $material->Mercado === 'null' || $material->Mercado === 'NULL' || $material->Mercado === 'RESTO')
+                                                <button class="assign-market-btn bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1 px-2 rounded" 
+                                                    data-product-id="{{ $material->SKU }}"
+                                                    data-product-name="{{ $material->Descripción_Presentación }}"
+                                                    title="Asignar mercado">
+                                                    <i class="fas fa-plus mr-1 text-xs"></i>
+                                                    <span class="text-xs">Asignar</span>
+                                                </button>
+                                            @else
+                                                <button class="edit-market-btn bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1 px-2 rounded mr-1" 
+                                                    data-product-id="{{ $material->SKU }}"
+                                                    data-product-name="{{ $material->Descripción_Presentación }}"
+                                                    data-current-market="{{ $material->Mercado }}"
+                                                    title="Reasignar mercado">
+                                                    <i class="fas fa-edit mr-1 text-xs"></i>
+                                                    <span class="text-xs">Editar</span>
+                                                </button>
+                                                <button class="remove-market-btn bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-1 px-2 rounded" 
+                                                    data-product-id="{{ $material->SKU }}"
+                                                    data-product-name="{{ $material->Descripción_Presentación }}"
+                                                    data-current-market="{{ $material->Mercado }}"
+                                                    title="Quitar mercado">
+                                                    <i class="fas fa-times mr-1 text-xs"></i>
+                                                    <span class="text-xs">Quitar</span>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <!-- Read-only for Business Intelligence -->
+                                        <div class="flex items-center">
+                                            <span class="bg-gray-100 text-gray-500 text-xs font-medium py-1 px-2 rounded">
+                                                <i class="fas fa-eye mr-1 text-xs"></i>
+                                                Solo lectura
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="p-8 text-center text-gray-500">
-                                    <i class="fas fa-search text-4xl mb-4"></i>
-                                    <p class="text-lg">No se encontraron productos que coincidan con los filtros aplicados.</p>
+                                <td colspan="{{ Auth::user()->isAdmin() || Auth::user()->isProductManager() ? '10' : '9' }}" class="p-6 text-center text-gray-500">
+                                    <i class="fas fa-search text-3xl mb-3"></i>
+                                    <p class="text-sm">No se encontraron materiales que coincidan con los filtros aplicados.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -312,9 +1090,44 @@
     <!-- Remove Market Confirmation Modal -->
     @include('market-configuration.partials.remove-market-modal')
 
+    <!-- Bulk Market Assignment Modal -->
+    @include('market-configuration.partials.bulk-assign-market-modal')
+
+    <!-- Bulk Market Removal Modal -->
+    @include('market-configuration.partials.bulk-remove-market-modal')
+
+    <!-- Edit Market Modal -->
+    @include('market-configuration.partials.edit-market-modal')
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Laravel Routes Configuration for JavaScript -->
+    <script>
+        // Define all Laravel routes for JavaScript access
+        window.MarketConfigRoutes = {
+            createMarket: '{{ route("market-configuration.create-market") }}',
+            getMarkets: '{{ route("market-configuration.get-markets") }}',
+            bulkAssignMarket: '{{ route("market-configuration.bulk-assign-market") }}',
+            bulkRemoveMarket: '{{ route("market-configuration.bulk-remove-market") }}',
+            removeMarketFromMaterial: '{{ route("market-configuration.remove-market-from-material") }}',
+            productsByMarket: '{{ route("market-configuration.products-by-market") }}',
+            editMarketName: '{{ route("market-configuration.edit-market-name") }}',
+            assignMarket: '{{ route("market-configuration.assign-market-to-material") }}'
+        };
+        
+        // CSRF Token for AJAX requests
+        window.csrfToken = '{{ csrf_token() }}';
+        
+        // User role for JavaScript access
+        window.userRole = '{{ Auth::user()->role }}';
+        window.canEdit = {{ Auth::user()->isAdmin() || Auth::user()->isProductManager() ? 'true' : 'false' }};
+    </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+    
     @vite('resources/js/market-configuration.js')
 </body>
 </html>

@@ -1,10 +1,11 @@
-// Market Configuration JavaScript - Simple Version
+// Market Configuration JavaScript - Enhanced Simple Version
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Market Configuration JavaScript loaded');
     
     // Initialize market assignment
     initializeMarketAssignment();
     initializeAutoSearch();
+    initializeFilterSelects();
 });
 
 function initializeMarketAssignment() {
@@ -176,5 +177,70 @@ function initializeAutoSearch() {
         select.addEventListener('change', () => {
             setTimeout(() => searchForm.submit(), 100);
         });
+    });
+}
+
+// Initialize enhanced Select2 for filter dropdowns
+function initializeFilterSelects() {
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is required for Select2');
+        return;
+    }
+
+    // Enhanced configuration for filter selects
+    const filterSelects = [
+        {
+            selector: '#brand_id',
+            placeholder: 'Buscar marca...',
+            allowClear: true
+        },
+        {
+            selector: '#franchise_id', 
+            placeholder: 'Buscar franquicia...',
+            allowClear: true
+        },
+        {
+            selector: '#business_unit_id',
+            placeholder: 'Buscar unidad de negocio...',
+            allowClear: true
+        },
+        {
+            selector: '#market_status',
+            placeholder: 'Seleccionar estado...',
+            allowClear: true
+        }
+    ];
+
+    filterSelects.forEach(config => {
+        const $select = $(config.selector);
+        if ($select.length) {
+            $select.select2({
+                width: '100%',
+                placeholder: config.placeholder,
+                allowClear: config.allowClear,
+                minimumResultsForSearch: 5, // Show search box only if more than 5 options
+                dropdownCssClass: 'custom-dropdown',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    },
+                    loadingMore: function() {
+                        return "Cargando más resultados...";
+                    }
+                }
+            });
+
+            // Custom styling and behavior
+            $select.on('select2:open', function() {
+                $('.select2-dropdown').addClass('animate-fadeIn');
+            });
+
+            $select.on('select2:close', function() {
+                $('.select2-dropdown').removeClass('animate-fadeIn');
+            });
+        }
     });
 }

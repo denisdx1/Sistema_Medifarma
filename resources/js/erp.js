@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Sidebar Toggle Functionality ---
     initializeSidebar();
     
-    // --- Select2 Initializer ---
+    // --- Enhanced Select2 Initializer ---
     initializeSelect2();
+    initializeFilterSelects();
     
     // --- Auto Search Functionality ---
     initializeAutoSearch();
@@ -248,6 +249,76 @@ const ERPUtils = {
         }).format(amount);
     }
 };
+
+// Initialize enhanced Select2 for filter dropdowns
+function initializeFilterSelects() {
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is required for Select2');
+        return;
+    }
+
+    // Enhanced configuration for filter selects
+    const filterSelects = [
+        {
+            selector: '#status',
+            placeholder: 'Seleccionar estado...',
+            allowClear: true
+        },
+        {
+            selector: '#franchise_id',
+            placeholder: 'Buscar franquicia...',
+            allowClear: true
+        },
+        {
+            selector: '#brand_id',
+            placeholder: 'Buscar marca...',
+            allowClear: true
+        },
+        {
+            selector: '#business_unit_id',
+            placeholder: 'Buscar unidad de negocio...',
+            allowClear: true
+        },
+        {
+            selector: '#market_id',
+            placeholder: 'Buscar mercado...',
+            allowClear: true
+        }
+    ];
+
+    filterSelects.forEach(config => {
+        const $select = $(config.selector);
+        if ($select.length) {
+            $select.select2({
+                width: '100%',
+                placeholder: config.placeholder,
+                allowClear: config.allowClear,
+                minimumResultsForSearch: 5, // Show search box only if more than 5 options
+                dropdownCssClass: 'custom-dropdown',
+                language: {
+                    noResults: function() {
+                        return "No se encontraron resultados";
+                    },
+                    searching: function() {
+                        return "Buscando...";
+                    },
+                    loadingMore: function() {
+                        return "Cargando más resultados...";
+                    }
+                }
+            });
+
+            // Custom styling and behavior
+            $select.on('select2:open', function() {
+                $('.select2-dropdown').addClass('animate-fadeIn');
+            });
+
+            $select.on('select2:close', function() {
+                $('.select2-dropdown').removeClass('animate-fadeIn');
+            });
+        }
+    });
+}
 
 // Export for potential module usage
 if (typeof module !== 'undefined' && module.exports) {
