@@ -122,6 +122,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relación con las configuraciones de mercado solicitadas por este usuario
+     */
+    public function configuracionesMercado(): HasMany
+    {
+        return $this->hasMany(ConfiguracionMercado::class, 'id_usuario', 'id');
+    }
+
+    /**
      * Update last login timestamp
      */
     public function updateLastLogin(): void

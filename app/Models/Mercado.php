@@ -44,6 +44,14 @@ class Mercado extends Model
     }
 
     /**
+     * Relación con las configuraciones de mercado
+     */
+    public function configuracionesMercado(): HasMany
+    {
+        return $this->hasMany(ConfiguracionMercado::class, 'id_mercado', 'id_mercado');
+    }
+
+    /**
      * Scope para mercados activos
      */
     public function scopeActivos($query)

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Material;
 use App\Models\Mercado;
+use App\Models\ConfiguracionMercado;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -517,5 +518,96 @@ class MarketConfigurationService
     {
         $totalProducts = Product::count();
         return $totalProducts > 0 ? round(($productCount / $totalProducts) * 100, 2) : 0;
+    }
+
+    /**
+     * Crear solicitud de configuración de mercado
+     */
+    public function crearSolicitudMercado(string $sku, int $idMercado, int $idUsuario, string $comentario = null): ConfiguracionMercado
+    {
+        return ConfiguracionMercado::create([
+            'id_producto' => $sku,
+            'id_mercado' => $idMercado,
+            'id_usuario' => $idUsuario,
+            'fecha_solicitud' => now(),
+            'estado' => ConfiguracionMercado::ESTADO_PENDIENTE,
+            'aprobacion' => $comentario
+        ]);
+    }
+
+    /**
+     * Obtener configuraciones pendientes de aprobación
+     */
+    public function getConfiguracionesPendientes(int $perPage = 10)
+    {
+        return ConfiguracionMercado::with(['material', 'mercado', 'usuario'])
+            ->pendientes()
+            ->orderBy('fecha_solicitud', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Obtener configuraciones por usuario
+     */
+    public function getConfiguracionesPorUsuario(int $userId, int $perPage = 10)
+    {
+        return ConfiguracionMercado::with(['material', 'mercado'])
+            ->porUsuario($userId)
+            ->orderBy('fecha_solicitud', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Aprobar configuración de mercado
+     */
+    public function aprobarConfiguracion(int $configId, string $comentario = null): bool
+    {
+        $config = ConfiguracionMercado::findOrFail($configId);
+        
+        DB::beginTransaction();
+        try {
+            // Aprobar la configuración
+            $config->aprobar($comentario);
+            
+            // Actualizar el material con el mercado asignado
+            Material::where('SKU', $config->id_producto)
+                ->update(['id_mercado' => $config->id_mercado]);
+            
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Rechazar configuración de mercado
+     */
+    public function rechazarConfiguracion(int $configId, string $comentario = null): bool
+    {
+        $config = ConfiguracionMercado::findOrFail($configId);
+        return $config->rechazar($comentario);
+    }
+
+    /**
+     * Obtener estadísticas de configuraciones
+     */
+    public function getEstadisticasConfiguraciones(): array
+    {
+        return [
+            'pendientes' => ConfiguracionMercado::pendientes()->count(),
+            'aprobadas' => ConfiguracionMercado::aprobadas()->count(),
+            'rechazadas' => ConfiguracionMercado::rechazadas()->count(),
+            'total' => ConfiguracionMercado::count()
+        ];
+    }
+
+    /**
+     * Obtener mercados disponibles desde la tabla mercados
+     */
+    public function getMercadosDisponibles(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Mercado::activos()->orderBy('mercado')->get();
     }
 }

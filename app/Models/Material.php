@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Material extends Model
 {
@@ -41,6 +42,14 @@ class Material extends Model
     public function mercadoAsignado(): BelongsTo
     {
         return $this->belongsTo(Mercado::class, 'id_mercado', 'id_mercado');
+    }
+
+    /**
+     * Relación con las configuraciones de mercado
+     */
+    public function configuracionesMercado(): HasMany
+    {
+        return $this->hasMany(ConfiguracionMercado::class, 'id_producto', 'SKU');
     }
 
     /**

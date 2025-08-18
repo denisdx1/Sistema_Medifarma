@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Material;
 use App\Models\Mercado;
+use App\Models\ConfiguracionMercado;
 use App\Services\MarketConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
