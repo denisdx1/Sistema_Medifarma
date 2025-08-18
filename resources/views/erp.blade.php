@@ -166,10 +166,10 @@
                                 <tr>
                                     <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->sku ?? 'N/A' }}</td>
                                     <td class="p-4 whitespace-nowrap text-sm text-gray-900">{{ $product->name }}</td>
-                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->brand->name }}</td>
-                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->franchise->name }}</td>
-                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->businessUnit->name }}</td>
-                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->market->name }}</td>
+                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->brand->name ?? 'Sin Marca' }}</td>
+                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->franchise->name ?? 'Sin Franquicia' }}</td>
+                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->businessUnit->name ?? 'Sin U. Negocio' }}</td>
+                                    <td class="p-4 whitespace-nowrap text-sm text-gray-500">{{ $product->market->name ?? 'Sin Mercado' }}</td>
                                     <td class="p-4 whitespace-nowrap text-sm font-medium">
                                         @if ($product->sku)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

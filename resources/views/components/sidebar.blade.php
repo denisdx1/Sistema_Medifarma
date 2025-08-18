@@ -14,35 +14,20 @@
         <p class="sidebar-text px-4 mb-2 text-xs text-gray-400 uppercase tracking-wider">Menu</p>
         <ul>
             <li>
-                <a href="#" class="flex items-center px-4 py-2.5 text-purple-700 bg-purple-50 rounded-lg mx-2 font-semibold">
-                    <i class="fas fa-barcode w-6 text-center text-purple-600"></i>
+                <a href="{{ route('erp') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('erp') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 font-semibold">
+                    <i class="fas fa-barcode w-6 text-center {{ request()->routeIs('erp') ? 'text-purple-600' : 'text-gray-400' }}"></i>
                     <span class="sidebar-text ml-3">Código Material</span>
                 </a>
             </li>
             <li class="mt-1">
-                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg mx-2">
-                    <i class="fas fa-store w-6 text-center text-gray-400"></i>
+                <a href="{{ route('market-configuration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-configuration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
+                    <i class="fas fa-store w-6 text-center {{ request()->routeIs('market-configuration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
                     <span class="sidebar-text ml-3">Config. Mercado</span>
                 </a>
             </li>
-            <li class="mt-1">
-                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg mx-2">
-                    <i class="fas fa-boxes-stacked w-6 text-center text-gray-400"></i>
-                    <span class="sidebar-text ml-3">Inventario</span>
-                </a>
-            </li>
-            <li class="mt-1">
-                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg mx-2">
-                    <i class="fas fa-chart-pie w-6 text-center text-gray-400"></i>
-                    <span class="sidebar-text ml-3">Reportes</span>
-                </a>
-            </li>
-            <li class="mt-1">
-                <a href="#" class="flex items-center px-4 py-2.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg mx-2">
-                    <i class="fas fa-cog w-6 text-center text-gray-400"></i>
-                    <span class="sidebar-text ml-3">Configuración</span>
-                </a>
-            </li>
+            
+            
+            
         </ul>
     </nav>
 

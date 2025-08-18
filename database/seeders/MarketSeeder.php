@@ -13,8 +13,46 @@ class MarketSeeder extends Seeder
     public function run(): void
     {
         DB::table('markets')->insert([
-            ['name' => 'Mercado 1', 'description' => 'Descripción del mercado 1'],
-            ['name' => 'Mercado 2', 'description' => 'Descripción del mercado 2'],
+            [
+                'name' => 'Mercado Nacional', 
+                'description' => 'Mercado para productos nacionales',
+                'code' => 'NAC',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'name' => 'Mercado Internacional', 
+                'description' => 'Mercado para productos internacionales',
+                'code' => 'INT',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'name' => 'Mercado Farmacéutico', 
+                'description' => 'Mercado especializado en productos farmacéuticos',
+                'code' => 'FARM',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'name' => 'Mercado Hospitalario', 
+                'description' => 'Mercado para instituciones hospitalarias',
+                'code' => 'HOSP',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'name' => 'Mercado Mayorista', 
+                'description' => 'Mercado para ventas al por mayor',
+                'code' => 'MAY',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]
         ]);
     }
 }

@@ -28,5 +28,11 @@ class AuthService
     public function logout(): void
     {
         Auth::logout();
+        
+        // Invalidate the session
+        request()->session()->invalidate();
+        
+        // Regenerate the CSRF token
+        request()->session()->regenerateToken();
     }
 }
