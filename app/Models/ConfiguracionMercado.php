@@ -54,10 +54,11 @@ class ConfiguracionMercado extends Model
 
     /**
      * Relación con el material (producto)
+     * NOTA: Retorna relación vacía ya que no existe tabla materiales
      */
     public function material(): BelongsTo
     {
-        return $this->belongsTo(Material::class, 'id_producto', 'SKU');
+        return $this->belongsTo(Material::class, 'id_producto_inexistente', 'SKU');
     }
 
     /**

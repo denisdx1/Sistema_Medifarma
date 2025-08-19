@@ -14,18 +14,18 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'min:6'],
+            'login' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:3'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'email.required' => 'El email es requerido',
-            'email.email' => 'El email debe ser una dirección válida',
+            'login.required' => 'El usuario (login) es requerido',
+            'login.string' => 'El usuario debe ser una cadena de texto válida',
             'password.required' => 'La contraseña es requerida',
-            'password.min' => 'La contraseña debe tener al menos 6 caracteres',
+            'password.min' => 'La contraseña debe tener al menos 3 caracteres',
         ];
     }
 }

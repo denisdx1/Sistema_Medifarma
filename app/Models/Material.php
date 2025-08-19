@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Material extends Model
 {
-    protected $connection = 'sqlsrv'; // Conexión SQL Server
-    protected $table = 'materiales'; // Nombre de tu tabla en SQL Server
+    // NOTA: Esta clase mantiene la estructura pero no consulta la BD
+    // ya que la tabla 'materiales' no existe en la nueva base de datos
     
-    // Campos de la tabla
+    protected $connection = 'sqlsrv'; 
+    protected $table = 'materiales_inexistente'; // Tabla que no existe para evitar consultas
+    
+    // Campos de la tabla (mantenidos para compatibilidad)
     protected $fillable = [
         'SKU',
         'Descripción_Presentación',
@@ -28,140 +33,107 @@ class Material extends Model
         'id_mercado'
     ];
 
-    // Deshabilitar timestamps si la tabla no los tiene
     public $timestamps = false;
-
-    // Si tu tabla no tiene una columna 'id' como primary key, especifica la correcta
-    protected $primaryKey = 'SKU'; // Asumiendo que SKU es la clave primaria
-    public $incrementing = false; // Si SKU no es auto-increment
-    protected $keyType = 'string'; // Si SKU es string
+    protected $primaryKey = 'SKU';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * Relación con el mercado asignado
+     * NOTA: Retorna relación vacía ya que no existe tabla materiales
      */
     public function mercadoAsignado(): BelongsTo
     {
-        return $this->belongsTo(Mercado::class, 'id_mercado', 'id_mercado');
+        return $this->belongsTo(Mercado::class, 'id_mercado_inexistente', 'idMercado');
     }
 
     /**
      * Relación con las configuraciones de mercado
+     * NOTA: Retorna relación vacía ya que no existe tabla materiales
      */
     public function configuracionesMercado(): HasMany
     {
-        return $this->hasMany(ConfiguracionMercado::class, 'id_producto', 'SKU');
+        return $this->hasMany(ConfiguracionMercado::class, 'id_producto_inexistente', 'SKU');
     }
 
     /**
-     * Scope para buscar por términos globales
+     * Override de métodos de Query para devolver colecciones vacías
+     * Esto evita que se ejecuten consultas a la tabla inexistente
      */
+    public static function all($columns = ['*'])
+    {
+        return new Collection();
+    }
+
+    public static function get($columns = ['*'])
+    {
+        return new Collection();
+    }
+
+    public static function count()
+    {
+        return 0;
+    }
+
+    public static function find($id, $columns = ['*'])
+    {
+        return null;
+    }
+
+    public static function where($column, $operator = null, $value = null, $boolean = 'and')
+    {
+        return new static;
+    }
+
     public function scopeGlobalSearch($query, $search)
     {
-        return $query->where(function ($q) use ($search) {
-            $q->where('SKU', 'like', "%{$search}%")
-              ->orWhere('Descripción_Presentación', 'like', "%{$search}%")
-              ->orWhere('Molécula', 'like', "%{$search}%")
-              ->orWhere('Marca_Genérico', 'like', "%{$search}%");
-        });
+        return $query;
     }
 
-    /**
-     * Scope para filtrar por marca genérico
-     */
     public function scopeByMarcaGenerico($query, $marca)
     {
-        return $query->where('Marca_Genérico', $marca);
+        return $query;
     }
 
-    /**
-     * Scope para filtrar por ético popular
-     */
     public function scopeByEticoPopular($query, $etico)
     {
-        return $query->where('Ético_Popular', $etico);
+        return $query;
     }
 
-    /**
-     * Scope para filtrar por mercado
-     */
     public function scopeByMercado($query, $mercado)
     {
-        return $query->where('Mercado', $mercado);
+        return $query;
     }
 
-    /**
-     * Scope para materiales sin mercado asignado o con mercado RESTO
-     */
     public function scopeSinMercadoAsignado($query)
     {
-        return $query->where(function ($q) {
-            $q->where('Mercado', 'RESTO')
-              ->orWhereNull('Mercado')
-              ->orWhere('Mercado', '')
-              ->orWhere('Mercado', 'null')
-              ->orWhere('Mercado', 'NULL');
-        });
+        return $query;
     }
 
-    /**
-     * Accessor para formatear el estado ético/popular
-     */
-    public function getEticoPopularFormattedAttribute()
-    {
-        return strtoupper($this->Ético_Popular) == 'ÉTICO' || strtoupper($this->Ético_Popular) == 'ETICO' ? 'Ético' : 'Popular';
-    }
-
-    /**
-     * Accessor para formatear la marca genérico
-     */
-    public function getMarcaGenericoFormattedAttribute()
-    {
-        return strtoupper($this->Marca_Genérico) == 'MARCA' ? 'Marca' : 'Genérico';
-    }
-
-    /**
-     * Accessor para formatear el mercado
-     */
-    public function getMercadoFormattedAttribute()
-    {
-        $mercado = trim($this->Mercado ?? '');
-        
-        if (empty($mercado) || strtolower($mercado) === 'null') {
-            return 'Sin Asignar';
-        }
-        
-        if (strtoupper($mercado) === 'RESTO') {
-            return 'Resto';
-        }
-        
-        // Capitalizar primera letra de cada palabra
-        return ucwords(strtolower($mercado));
-    }
-
-    /**
-     * Accessor para verificar si tiene mercado asignado
-     */
-    public function getHasMercadoAttribute()
-    {
-        $mercado = trim($this->Mercado ?? '');
-        return !empty($mercado) && 
-               strtolower($mercado) !== 'null' && 
-               strtoupper($mercado) !== 'RESTO';
-    }
-
-    /**
-     * Scope para filtrar por laboratorio
-     */
     public function scopeByLaboratorio($query, $laboratorio)
     {
-        return $query->where('LABORATORIO_C', $laboratorio);
+        return $query;
+    }
+
+    public function scopeByCorporacion($query, $corporacion)
+    {
+        return $query;
     }
 
     /**
-     * Scope para filtrar por corporación
+     * Override del método paginate para evitar consultas
      */
-    public function scopeByCorporacion($query, $corporacion)
+    public static function paginate($perPage = 15, $columns = ['*'], $pageName = 'page', $page = null)
     {
-        return $query->where('CORPORACION', $corporacion);
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            new Collection(), // items vacíos
+            0, // total
+            $perPage,
+            $page ?: 1,
+            [
+                'path' => request()->url(),
+                'pageName' => $pageName,
+            ]
+        );
     }
 }

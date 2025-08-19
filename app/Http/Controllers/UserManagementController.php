@@ -12,11 +12,35 @@ class UserManagementController extends Controller
     /**
      * Display a listing of users
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::orderBy('name')->paginate(15);
-        
-        return view('users.index', compact('users'));
+        $query = User::query();
+
+        // Aplicar filtros
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status == '1');
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Estadísticas
+        $totalUsers = User::count();
+        $activeUsers = User::where('is_active', true)->count();
+        $inactiveUsers = User::where('is_active', false)->count();
+        $adminUsers = User::where('role', 'administrador')->count();
+
+        return view('users.index', compact('users', 'totalUsers', 'activeUsers', 'inactiveUsers', 'adminUsers'));
     }
 
     /**
@@ -40,7 +64,7 @@ class UserManagementController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'role' => ['required', Rule::in(array_keys(User::getRoles()))],
             'department' => 'nullable|string|max:255',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         User::create([
@@ -54,7 +78,7 @@ class UserManagementController extends Controller
         ]);
 
         return redirect()->route('users.index')
-                         ->with('success', 'Usuario creado exitosamente.');
+            ->with('success', 'Usuario creado exitosamente.');
     }
 
     /**
@@ -78,7 +102,7 @@ class UserManagementController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'role' => ['required', Rule::in(array_keys(User::getRoles()))],
             'department' => 'nullable|string|max:255',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         $data = [
@@ -86,7 +110,7 @@ class UserManagementController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'department' => $request->department,
-            'is_active' => $request->boolean('is_active', true)
+            'is_active' => $request->boolean('is_active', true),
         ];
 
         if ($request->filled('password')) {

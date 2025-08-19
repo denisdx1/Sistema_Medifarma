@@ -157,7 +157,7 @@
         @csrf
         <div class="mb-3">
             <label class="form-label">Usuario</label>
-            <input type="email" name="email" class="form-control" placeholder="Tu usuario" value="{{ old('email') }}" required>
+            <input type="text" name="login" class="form-control" placeholder="Tu usuario de acceso" value="{{ old('login') }}" required>
         </div>
 
         <div class="mb-3">

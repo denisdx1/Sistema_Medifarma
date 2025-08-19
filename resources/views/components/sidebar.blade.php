@@ -13,7 +13,7 @@
     <nav class="flex-1 mt-6">
         <p class="sidebar-text px-4 mb-2 text-xs text-gray-400 uppercase tracking-wider">Menu</p>
         <ul>
-            <!-- Market Configuration - All roles can view, GP and Admin can edit -->
+            <!-- Market Configuration - All authenticated users can access -->
             <li>
                 <a href="{{ route('market-configuration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-configuration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
                     <i class="fas fa-store w-6 text-center {{ request()->routeIs('market-configuration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
@@ -22,9 +22,9 @@
                         <span class="ml-auto">
                             <i class="fas fa-eye text-xs text-blue-500" title="Solo lectura"></i>
                         </span>
-                    @endif
-                </a>
-            </li>
+                        @endif
+                    </a>
+                </li>
 
             <!-- User Management - Admin only -->
             @if(Auth::user()->isAdmin())
@@ -32,6 +32,17 @@
                     <a href="{{ route('users.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('users.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
                         <i class="fas fa-users w-6 text-center {{ request()->routeIs('users.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
                         <span class="sidebar-text ml-3">Gestión Usuarios</span>
+                    </a>
+                </li>
+                
+                <!-- Market Administration - Admin only -->
+                <li class="mt-1">
+                    <a href="{{ route('market-administration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-administration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
+                        <i class="fas fa-shield-alt w-6 text-center {{ request()->routeIs('market-administration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+                        <span class="sidebar-text ml-3">Admin. Mercados</span>
+                        <span class="ml-auto" id="pending-markets-badge" style="display: none;">
+                            <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">0</span>
+                        </span>
                     </a>
                 </li>
             @endif
@@ -85,3 +96,22 @@
         </form>
     </div>
 </aside>
+
+<!-- Script para cargar mercados pendientes (solo para admin) -->
+@if(Auth::user()->isAdmin())
+<script>
+$(document).ready(function() {
+    // Cargar conteo de mercados pendientes
+    $.get('{{ route("market-administration.pending-count") }}')
+    .done(function(response) {
+        if (response.success && response.count > 0) {
+            $('#pending-markets-badge').show();
+            $('#pending-markets-badge span').text(response.count);
+        }
+    })
+    .fail(function() {
+        console.log('No se pudo cargar el conteo de mercados pendientes');
+    });
+});
+</script>
+@endif

@@ -8,55 +8,60 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mercado extends Model
 {
-    protected $table = 'mercados';
-    protected $primaryKey = 'id_mercado';
+    // Usar la nueva conexión y vista
+    protected $connection = 'sqlsrv';
+    protected $table = 'DM.MERCADO';
+    protected $primaryKey = 'idMercado';
+    
+    // Solo lectura desde la vista
+    public $timestamps = false;
     
     protected $fillable = [
-        'mercado',
-        'fecha_update',
-        'fecha_registro',
-        'estado',
-        'id_usuario'
+        'mercado'
     ];
 
     protected $casts = [
-        'fecha_update' => 'datetime',
-        'fecha_registro' => 'datetime',
-        'estado' => 'boolean'
+        'idMercado' => 'integer',
+        'mercado' => 'string'
     ];
 
-    public $timestamps = false;
-
-    /**
-     * Relación con el usuario que creó el mercado
-     */
-    public function usuario(): BelongsTo
+    // Prevenir modificaciones ya que es una vista
+    public function save(array $options = [])
     {
-        return $this->belongsTo(User::class, 'id_usuario', 'id');
+        throw new \Exception('No se puede modificar la vista DM.MERCADO. Esta es solo de lectura.');
+    }
+
+    public function delete()
+    {
+        throw new \Exception('No se puede eliminar registros de la vista DM.MERCADO. Esta es solo de lectura.');
     }
 
     /**
      * Relación con los materiales asignados a este mercado
+     * NOTA: Como no tienes tabla de materiales en la nueva BD, esto devuelve colección vacía
      */
     public function materiales(): HasMany
     {
-        return $this->hasMany(Material::class, 'id_mercado', 'id_mercado');
+        // Retornar una relación vacía ya que no existe tabla materiales en la nueva BD
+        return $this->hasMany(Material::class, 'mercado_id_inexistente', 'idMercado');
     }
 
     /**
      * Relación con las configuraciones de mercado
+     * NOTA: Mantener compatibilidad con el sistema existente
      */
     public function configuracionesMercado(): HasMany
     {
-        return $this->hasMany(ConfiguracionMercado::class, 'id_mercado', 'id_mercado');
+        // Mantener compatibilidad con ConfiguracionMercado usando el nuevo ID
+        return $this->hasMany(ConfiguracionMercado::class, 'id_mercado', 'idMercado');
     }
 
     /**
-     * Scope para mercados activos
+     * Scope para mercados activos - como es vista, todos están "activos"
      */
     public function scopeActivos($query)
     {
-        return $query->where('estado', true);
+        return $query; // Todos los registros de la vista están activos
     }
 
     /**
@@ -65,5 +70,52 @@ class Mercado extends Model
     public function scopeBuscarPorNombre($query, $nombre)
     {
         return $query->where('mercado', 'like', "%{$nombre}%");
+    }
+
+    /**
+     * Método estático para obtener todos los mercados con paginación
+     */
+    public static function obtenerTodosPaginados($perPage = 15, $busqueda = null)
+    {
+        $query = self::query();
+        
+        if ($busqueda) {
+            $query->buscarPorNombre($busqueda);
+        }
+        
+        return $query->orderBy('mercado', 'asc')->paginate($perPage);
+    }
+
+    /**
+     * Método para obtener todos los mercados como colección
+     */
+    public static function obtenerTodos()
+    {
+        return self::orderBy('mercado', 'asc')->get();
+    }
+
+    /**
+     * Accessor para mantener compatibilidad con el campo 'estado'
+     * Como es una vista, asumimos que todos están activos
+     */
+    public function getEstadoAttribute()
+    {
+        return true; // Todos los mercados de la vista están "activos"
+    }
+
+    /**
+     * Accessor para mantener compatibilidad con 'id_mercado'
+     */
+    public function getIdMercadoAttribute()
+    {
+        return $this->attributes['idMercado'] ?? null;
+    }
+
+    /**
+     * Accessor para fecha_registro (compatibilidad)
+     */
+    public function getFechaRegistroAttribute()
+    {
+        return now(); // Valor por defecto
     }
 }

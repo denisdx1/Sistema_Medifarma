@@ -8,11 +8,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    // Usar la nueva conexión y tabla
+    protected $connection = 'sqlsrv';
+    protected $table = 'ODS.TAB_USUARIO';
+    protected $primaryKey = 'idUsuario';
+    
+    // No usar timestamps automáticos de Laravel
+    public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
@@ -20,19 +29,18 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'idRol',
+        'usuario',
+        'login',
         'password',
-        'role',
-        'department',
-        'is_active',
-        'last_login_at',
+        'fechaRegistro',
+        'idEstado'
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -47,19 +55,31 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-            'last_login_at' => 'datetime',
+            'idUsuario' => 'integer',
+            'idRol' => 'integer',
+            'usuario' => 'string',
+            'login' => 'string',
+            'fechaRegistro' => 'date',
+            'idEstado' => 'integer',
+            // No usar hashed para password ya que viene como varbinary
         ];
     }
 
     /**
-     * Role constants
+     * Role constants - mapeo con IDs de la nueva tabla
      */
-    public const ROLE_ADMIN = 'administrador';
-    public const ROLE_PRODUCT_MANAGER = 'gerente_producto';
-    public const ROLE_BUSINESS_INTELLIGENCE = 'business_intelligence';
+    public const ROLE_ADMIN = 1;
+    public const ROLE_PRODUCT_MANAGER = 2;
+    public const ROLE_BUSINESS_INTELLIGENCE = 3;
+
+    /**
+     * Role mapping for compatibility
+     */
+    private const ROLE_MAPPING = [
+        1 => 'administrador',
+        2 => 'gerente_producto', 
+        3 => 'business_intelligence'
+    ];
 
     /**
      * Get all available roles
@@ -67,9 +87,9 @@ class User extends Authenticatable
     public static function getRoles(): array
     {
         return [
-            self::ROLE_ADMIN => 'Administrador',
-            self::ROLE_PRODUCT_MANAGER => 'Gerente de Producto (GP)',
-            self::ROLE_BUSINESS_INTELLIGENCE => 'Business Intelligence (BI)',
+            1 => 'Administrador',
+            2 => 'Gerente de Producto (GP)',
+            3 => 'Business Intelligence (BI)',
         ];
     }
 
@@ -78,63 +98,70 @@ class User extends Authenticatable
      */
     public function getRoleDisplayName(): string
     {
-        return self::getRoles()[$this->role] ?? 'Sin Rol';
+        return self::getRoles()[$this->idRol] ?? 'Sin Rol';
     }
 
     /**
-     * Check if user has specific role
+     * Check if user has specific role (mantener compatibilidad)
      */
     public function hasRole(string $role): bool
     {
-        return $this->role === $role;
+        // Convertir string role a ID
+        $roleId = array_search($role, self::ROLE_MAPPING);
+        return $this->idRol === $roleId;
     }
 
     /**
-     * Check if user is admin
+     * Verificar si el usuario es administrador
      */
-    public function isAdmin(): bool
+    public function isAdmin()
     {
-        return $this->hasRole(self::ROLE_ADMIN);
+        return $this->idRol === self::ROLE_ADMIN;
     }
 
     /**
-     * Check if user is product manager
+     * Verificar si el usuario es gerente de producto
      */
-    public function isProductManager(): bool
+    public function isProductManager()
     {
-        return $this->hasRole(self::ROLE_PRODUCT_MANAGER);
+        return $this->idRol === self::ROLE_PRODUCT_MANAGER;
     }
 
     /**
-     * Check if user is business intelligence
+     * Verificar si el usuario es de business intelligence
      */
-    public function isBusinessIntelligence(): bool
+    public function isBusinessIntelligence()
     {
-        return $this->hasRole(self::ROLE_BUSINESS_INTELLIGENCE);
+        return $this->idRol === self::ROLE_BUSINESS_INTELLIGENCE;
     }
 
     /**
      * Relación con los mercados creados por este usuario
+     * NOTA: Deshabilitado por ahora
      */
     public function mercados(): HasMany
     {
-        return $this->hasMany(Mercado::class, 'id_usuario', 'id');
+        // Retornar relación vacía 
+        return $this->hasMany(Mercado::class, 'usuario_id_inexistente', 'idUsuario');
     }
 
     /**
      * Relación con las configuraciones de mercado solicitadas por este usuario
+     * NOTA: Deshabilitado por ahora
      */
     public function configuracionesMercado(): HasMany
     {
-        return $this->hasMany(ConfiguracionMercado::class, 'id_usuario', 'id');
+        // Retornar relación vacía por ahora
+        return $this->hasMany(ConfiguracionMercado::class, 'usuario_id_inexistente', 'idUsuario');
     }
 
     /**
-     * Update last login timestamp
+     * Update last login timestamp (no aplicable en nueva estructura)
      */
     public function updateLastLogin(): void
     {
-        $this->update(['last_login_at' => now()]);
+        // No hacer nada ya que no hay campo last_login_at en la nueva tabla
+        // Se podría implementar con un log separado si es necesario
     }
 
     /**
@@ -142,14 +169,147 @@ class User extends Authenticatable
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('idEstado', 1);
     }
 
     /**
      * Scope for users by role
      */
-    public function scopeByRole($query, string $role)
+    public function scopeByRole($query, int $roleId)
     {
-        return $query->where('role', $role);
+        return $query->where('idRol', $roleId);
+    }
+
+    /**
+     * Scope for users by role string (compatibilidad)
+     */
+    public function scopeByRoleString($query, string $role)
+    {
+        $roleId = array_search($role, self::ROLE_MAPPING);
+        if ($roleId !== false) {
+            return $query->where('idRol', $roleId);
+        }
+        return $query->whereRaw('1 = 0'); // No results
+    }
+
+    // ========================================
+    // ACCESSORS PARA COMPATIBILIDAD
+    // ========================================
+
+    /**
+     * Accessor para 'name' (compatibilidad)
+     */
+    public function getNameAttribute()
+    {
+        return $this->usuario;
+    }
+
+    /**
+     * Accessor para 'email' (compatibilidad)
+     */
+    public function getEmailAttribute()
+    {
+        return $this->login . '@medifarma.com'; // Simular email
+    }
+
+    /**
+     * Accessor para 'role' (compatibilidad)
+     */
+    public function getRoleAttribute()
+    {
+        return self::ROLE_MAPPING[$this->idRol] ?? 'sin_rol';
+    }
+
+    /**
+     * Accessor para 'is_active' (compatibilidad)
+     */
+    public function getIsActiveAttribute()
+    {
+        return $this->idEstado == 1;
+    }
+
+    /**
+     * Accessor para 'id' (compatibilidad)
+     */
+    public function getIdAttribute()
+    {
+        return $this->idUsuario;
+    }
+
+    // ========================================
+    // MÉTODOS PARA AUTENTICACIÓN
+    // ========================================
+
+    /**
+     * Obtener el campo usado para el username en autenticación
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'login'; // Usar 'login' en lugar de 'email'
+    }
+
+    /**
+     * Obtener el identificador único del usuario
+     */
+    public function getAuthIdentifier()
+    {
+        return $this->login;
+    }
+
+    /**
+     * Obtener la contraseña para autenticación
+     */
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * Verificar contraseña (método personalizado para varbinary con SHA2_256)
+     */
+    public function verificarPassword($password)
+    {
+        // Generar hash SHA2_256 de la contraseña en texto plano
+        $passwordHasheada = hash('sha256', $password, true); // true para obtener binario
+        
+        // Comparar con la contraseña almacenada en la BD
+        return $passwordHasheada === $this->password;
+    }
+
+    // ========================================
+    // MÉTODOS ESTÁTICOS
+    // ========================================
+
+    /**
+     * Buscar usuario por login
+     */
+    public static function findByLogin($login)
+    {
+        return self::where('login', $login)->where('idEstado', 1)->first();
+    }
+
+    /**
+     * Obtener todos los usuarios activos
+     */
+    public static function getActiveUsers()
+    {
+        return self::active()->orderBy('usuario')->get();
+    }
+
+    /**
+     * Crear nuevo usuario
+     */
+    public static function crearUsuario($datos)
+    {
+        $usuario = new self();
+        $usuario->idRol = $datos['idRol'];
+        $usuario->usuario = $datos['usuario'];
+        $usuario->login = $datos['login'];
+        $usuario->password = $datos['password']; // Debe venir ya hasheada
+        $usuario->fechaRegistro = $datos['fechaRegistro'] ?? now()->format('Y-m-d');
+        $usuario->idEstado = $datos['idEstado'] ?? 1;
+        $usuario->save();
+        
+        return $usuario;
     }
 }

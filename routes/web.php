@@ -39,7 +39,7 @@ Route::middleware('auth')->group(function () {
     })->name('test.markets');
     
     // Market Configuration Routes - All roles can access with different permissions
-    Route::prefix('market-configuration')->name('market-configuration.')->middleware('role:administrador,gerente_producto,business_intelligence')->group(function () {
+    Route::prefix('market-configuration')->name('market-configuration.')->group(function () {
         Route::get('/', [MarketConfigurationController::class, 'index'])->name('index');
         
         // Admin and Product Manager only routes
@@ -61,20 +61,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/products-by-market', [MarketConfigurationController::class, 'getProductsByMarket'])->name('products-by-market');
     });
     
+    // Market Administration Routes - Only for Admin users
+    Route::prefix('market-administration')->name('market-administration.')->middleware(['auth', 'role:administrador'])->group(function () {
+        Route::get('/', [App\Http\Controllers\MarketAdministrationController::class, 'index'])->name('index');
+        Route::post('/approve', [App\Http\Controllers\MarketAdministrationController::class, 'approve'])->name('approve');
+        Route::post('/change-status', [App\Http\Controllers\MarketAdministrationController::class, 'changeStatus'])->name('change-status');
+        Route::get('/pending-count', [App\Http\Controllers\MarketAdministrationController::class, 'getPendingCount'])->name('pending-count');
+    });
+    
     // API routes
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/markets', [MarketConfigurationController::class, 'getMarketsAPI'])->name('markets');
         Route::get('/product-details/{sku}', [MarketConfigurationController::class, 'getProductDetails'])->name('product-details');
     });
     
-    // User Management Routes - Admin only
-    Route::prefix('users')->name('users.')->middleware('role:administrador')->group(function () {
+    // User Management Routes - Available for authenticated users
+    Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
         Route::get('/create', [UserManagementController::class, 'create'])->name('create');
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
-        Route::patch('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
     });
 });

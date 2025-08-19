@@ -24,13 +24,13 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->only('login', 'password');
 
         if ($this->authService->attempt($credentials)) {
             return redirect()->route('market-configuration.index')->with('success', 'Has iniciado sesión correctamente');
         }
 
-        return back()->withErrors(['email' => 'Credenciales incorrectas'])->withInput();
+        return back()->withErrors(['login' => 'Credenciales incorrectas'])->withInput();
     }
 
     public function logout(Request $request): RedirectResponse
