@@ -13,11 +13,11 @@
     <style>
         /* Enhanced Select2 Styling */
         .select2-container--default .select2-selection--single {
-            height: 44px !important;
-            border: 2px solid #e5e7eb !important;
-            border-radius: 8px !important;
+            height: 36px !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 6px !important;
             background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%) !important;
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06) !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         
@@ -34,9 +34,9 @@
         
         .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #1f2937 !important;
-            line-height: 40px !important;
-            padding-left: 16px !important;
-            font-size: 14px !important;
+            line-height: 32px !important;
+            padding-left: 12px !important;
+            font-size: 13px !important;
             font-weight: 500 !important;
         }
         
@@ -46,8 +46,8 @@
         }
         
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 40px !important;
-            right: 12px !important;
+            height: 32px !important;
+            right: 10px !important;
         }
         
         .select2-container--default .select2-selection--single .select2-selection__arrow b {
@@ -144,9 +144,9 @@
         }
         .filter-section {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
             position: relative;
             overflow: hidden;
         }
@@ -157,30 +157,30 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
+            height: 3px;
             background: linear-gradient(90deg, #8b5cf6, #7c3aed, #6d28d9);
         }
         
         .filter-title {
             color: #1f2937;
-            font-weight: 700;
-            font-size: 18px;
-            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .filter-title i {
             color: #8b5cf6;
-            font-size: 20px;
+            font-size: 16px;
         }
         
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
         }
         
         .filter-item {
@@ -190,29 +190,29 @@
         }
         
         .filter-label {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .filter-label i {
-            font-size: 16px;
+            font-size: 14px;
         }
         
         /* Search input styling */
         #search {
-            height: 44px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 0 16px;
-            font-size: 14px;
+            height: 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 13px;
             font-weight: 500;
             background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
@@ -232,8 +232,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
-            padding-top: 20px;
+            margin-top: 16px;
+            padding-top: 16px;
             border-top: 1px solid #e2e8f0;
         }
         
@@ -478,6 +478,8 @@
         /* Create Market Modal Styles */
         #create-market-modal .modal-container {
             animation: modalSlideIn 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         @keyframes modalSlideIn {
@@ -532,8 +534,40 @@
         .toast.translate-x-full {
             transform: translateX(100%);
         }
+        
+        /* Quick search styling */
+        #search-quick {
+            height: 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #search-quick:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.12);
+            outline: none;
+        }
+        
+        /* Filter content animation */
+        #filter-content {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Active filters count badge */
+        #active-filters-count {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
     </style>
-    @vite('resources/css/erp.css')
 </head>
 <body class="flex h-screen overflow-hidden">
 
@@ -547,34 +581,23 @@
                 <h1 class="text-2xl font-semibold text-gray-800">Configuración de Mercado - Materiales</h1>
                 <p class="text-gray-600 mt-1">Gestiona la asignación de mercados a los materiales farmacéuticos</p>
             </div>
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap gap-2">
                 <!-- Export button - available for all roles -->
-                <button id="export-unassigned-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                    <i class="fas fa-download mr-2"></i>
+                <button id="export-unassigned-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded-md text-sm flex items-center">
+                    <i class="fas fa-download mr-1.5"></i>
                     Exportar Sin Mercado
                 </button>
                 
                 <!-- Create/Edit buttons - only for Admin and Product Manager -->
                 @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
-                    <button id="create-market-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                        <i class="fas fa-plus mr-2"></i>
-                        Crear Mercado
+                    <button id="manage-markets-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 rounded-md text-sm flex items-center">
+                        <i class="fas fa-cog mr-1.5"></i>
+                        Gestionar Mercados
                     </button>
                     
                     <!-- New bulk operations buttons -->
-                    <div class="border-l border-gray-300 pl-3 flex gap-3">
-                        <button id="bulk-assign-market-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                            <i class="fas fa-tags mr-2"></i>
-                            Asignar en Lote
-                        </button>
-                        <button id="bulk-remove-market-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                            <i class="fas fa-trash mr-2"></i>
-                            Quitar en Lote
-                        </button>
-                        <button id="manage-markets-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
-                            <i class="fas fa-edit mr-2"></i>
-                            Gestionar Mercados
-                        </button>
+                    <div class="border-l border-gray-300 pl-2 flex gap-2">
+                        <!-- Bulk operations removed -->
                     </div>
                 @else
                     <!-- Read-only indicators for BI role -->
@@ -654,51 +677,26 @@
             </div>
         </div>
 
-        <!-- Bulk Actions Bar (Hidden by default) - Only for Admin and Product Manager -->
-        @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
-            <div id="bulk-actions" class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6 hidden">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <i class="fas fa-check-square text-purple-600 mr-2"></i>
-                        <span class="text-purple-800 font-medium">
-                            <span id="selected-count">0</span> materiales seleccionados
-                        </span>
-                    </div>
-                    <div class="flex space-x-3">
-                        <button id="bulk-assign-market" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                            <i class="fas fa-map-marker-alt mr-2"></i>
-                            Asignar Mercado
-                        </button>
-                        <button id="bulk-export" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                            <i class="fas fa-download mr-2"></i>
-                            Exportar Seleccionados
-                        </button>
-                    </div>
-                </div>
-            </div>
-        @endif
+        
 
-        <!-- Enhanced Filters Section -->
-        <div class="filter-section p-6 mb-8">
-            <div class="filter-title">
-                <i class="fas fa-filter"></i>
-                Filtros de Búsqueda
-            </div>
-            
-            <form action="{{ route('market-configuration.index') }}" method="GET" id="filters-form">
-                <div class="filter-grid">
-                    <!-- Global Search -->
-                    <div class="filter-item">
-                        <label for="search" class="filter-label">
-                            <i class="fas fa-search text-gray-400"></i>
-                            Búsqueda Global
-                        </label>
+        <!-- Compact Collapsible Filters Section -->
+        <div class="filter-section p-4 mb-6">
+            <!-- Filter Header with Toggle -->
+            <div class="flex justify-between items-center cursor-pointer" onclick="toggleFilters()">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i>
+                    Filtros de Búsqueda
+                    <span id="active-filters-count" class="hidden ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-semibold"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- Quick Search - Always Visible -->
+                    <div class="flex-1 min-w-64">
                         <div class="relative">
-                            <input type="text" name="search" id="search" 
-                                   placeholder="Nombre, SKU, descripción..." 
+                            <input type="text" name="search" id="search-quick" 
+                                   placeholder="Búsqueda rápida..." 
                                    value="{{ request('search') }}" 
-                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 transition-all duration-150">
-                            <div id="search-loading" class="absolute right-3 top-3 hidden">
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 transition-all duration-150 text-sm">
+                            <div id="search-loading-quick" class="absolute right-3 top-2.5 hidden">
                                 <svg class="animate-spin h-4 w-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -706,7 +704,21 @@
                             </div>
                         </div>
                     </div>
-
+                    <!-- Toggle Button -->
+                    <button type="button" class="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium">
+                        <span id="filter-toggle-text">Más filtros</span>
+                        <i id="filter-toggle-icon" class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Collapsible Filter Content -->
+            <div id="filter-content" class="hidden mt-4 pt-4 border-t border-gray-200">
+                <form action="{{ route('market-configuration.index') }}" method="GET" id="filters-form">
+                    <!-- Hidden search input to sync with quick search -->
+                    <input type="hidden" name="search" id="search-hidden" value="{{ request('search') }}">
+                    
+                    <div class="filter-grid">
                     <!-- Market Status Filter -->
                     <div class="filter-item">
                         <label for="market_status" class="filter-label">
@@ -897,7 +909,8 @@
                         </a>
                     @endif
                 </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         <!-- Products Table Section -->
@@ -921,11 +934,6 @@
                 <table class="w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
-                                <th class="p-2 text-left">
-                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                </th>
-                            @endif
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SKU</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código ATC</th>
@@ -940,11 +948,6 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($products as $material)
                             <tr class="hover:bg-gray-50 product-row" data-product-id="{{ $material->SKU }}">
-                                @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
-                                    <td class="p-2">
-                                        <input type="checkbox" class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500" value="{{ $material->SKU }}">
-                                    </td>
-                                @endif
                                 <td class="p-2">
                                     @if($material->SKU)
                                         <span class="bg-blue-100 text-blue-800 text-xs font-medium px-1.5 py-0.5 rounded">{{ $material->SKU }}</span>
@@ -1019,23 +1022,7 @@
                                     @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
                                         <!-- Full access for Admin and Product Manager -->
                                         <div class="flex space-x-1">
-                                            @if(empty($material->Mercado) || $material->Mercado === 'null' || $material->Mercado === 'NULL' || $material->Mercado === 'RESTO')
-                                                <button class="assign-market-btn bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium py-1 px-2 rounded" 
-                                                    data-product-id="{{ $material->SKU }}"
-                                                    data-product-name="{{ $material->Descripción_Presentación }}"
-                                                    title="Asignar mercado">
-                                                    <i class="fas fa-plus mr-1 text-xs"></i>
-                                                    <span class="text-xs">Asignar</span>
-                                                </button>
-                                            @else
-                                                <button class="edit-market-btn bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1 px-2 rounded mr-1" 
-                                                    data-product-id="{{ $material->SKU }}"
-                                                    data-product-name="{{ $material->Descripción_Presentación }}"
-                                                    data-current-market="{{ $material->Mercado }}"
-                                                    title="Reasignar mercado">
-                                                    <i class="fas fa-edit mr-1 text-xs"></i>
-                                                    <span class="text-xs">Editar</span>
-                                                </button>
+                                            @if(!empty($material->Mercado) && $material->Mercado !== 'null' && $material->Mercado !== 'NULL' && $material->Mercado !== 'RESTO')
                                                 <button class="remove-market-btn bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-1 px-2 rounded" 
                                                     data-product-id="{{ $material->SKU }}"
                                                     data-product-name="{{ $material->Descripción_Presentación }}"
@@ -1078,26 +1065,11 @@
         @endif
     </main>
 
-    <!-- Market Assignment Modal -->
-    @include('market-configuration.partials.assign-market-modal')
-
     <!-- Create Market Modal -->
     @include('market-configuration.partials.create-market-modal')
 
-    <!-- Bulk Assignment Modal -->
-    @include('market-configuration.partials.bulk-assign-modal')
-
     <!-- Remove Market Confirmation Modal -->
     @include('market-configuration.partials.remove-market-modal')
-
-    <!-- Bulk Market Assignment Modal -->
-    @include('market-configuration.partials.bulk-assign-market-modal')
-
-    <!-- Bulk Market Removal Modal -->
-    @include('market-configuration.partials.bulk-remove-market-modal')
-
-    <!-- Edit Market Modal -->
-    @include('market-configuration.partials.edit-market-modal')
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -1109,12 +1081,10 @@
         window.MarketConfigRoutes = {
             createMarket: '{{ route("market-configuration.create-market") }}',
             getMarkets: '{{ route("market-configuration.get-markets") }}',
-            bulkAssignMarket: '{{ route("market-configuration.bulk-assign-market") }}',
-            bulkRemoveMarket: '{{ route("market-configuration.bulk-remove-market") }}',
+            getMarketsPaginated: '{{ route("market-configuration.get-markets-paginated") }}',
             removeMarketFromMaterial: '{{ route("market-configuration.remove-market-from-material") }}',
             productsByMarket: '{{ route("market-configuration.products-by-market") }}',
-            editMarketName: '{{ route("market-configuration.edit-market-name") }}',
-            assignMarket: '{{ route("market-configuration.assign-market-to-material") }}'
+            editMarketName: '{{ route("market-configuration.edit-market-name") }}'
         };
         
         // CSRF Token for AJAX requests
@@ -1127,6 +1097,76 @@
 
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
+    
+    <script>
+        // Toggle filters functionality
+        function toggleFilters() {
+            const content = document.getElementById('filter-content');
+            const icon = document.getElementById('filter-toggle-icon');
+            const text = document.getElementById('filter-toggle-text');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('fa-chevron-up');
+                icon.classList.remove('fa-chevron-down');
+                text.textContent = 'Ocultar filtros';
+            } else {
+                content.classList.add('hidden');
+                icon.classList.add('fa-chevron-down');
+                icon.classList.remove('fa-chevron-up');
+                text.textContent = 'Más filtros';
+            }
+        }
+        
+        // Sync quick search with hidden search input
+        document.addEventListener('DOMContentLoaded', function() {
+            const quickSearch = document.getElementById('search-quick');
+            const hiddenSearch = document.getElementById('search-hidden');
+            
+            // Update hidden input when quick search changes
+            quickSearch.addEventListener('input', function() {
+                hiddenSearch.value = this.value;
+                
+                // Auto-submit after a delay (debounce)
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(() => {
+                    // Show loading
+                    document.getElementById('search-loading-quick').classList.remove('hidden');
+                    
+                    // Submit form
+                    const form = document.getElementById('filters-form');
+                    const formData = new FormData(form);
+                    const searchParams = new URLSearchParams(formData);
+                    
+                    // Update URL and reload
+                    window.location.href = '{{ route("market-configuration.index") }}?' + searchParams.toString();
+                }, 500);
+            });
+            
+            // Count active filters
+            updateActiveFiltersCount();
+        });
+        
+        function updateActiveFiltersCount() {
+            const params = new URLSearchParams(window.location.search);
+            let count = 0;
+            
+            // Count non-empty parameters (excluding page)
+            for (const [key, value] of params) {
+                if (key !== 'page' && value.trim() !== '') {
+                    count++;
+                }
+            }
+            
+            const countElement = document.getElementById('active-filters-count');
+            if (count > 0) {
+                countElement.textContent = count;
+                countElement.classList.remove('hidden');
+            } else {
+                countElement.classList.add('hidden');
+            }
+        }
+    </script>
     
     @vite('resources/js/market-configuration.js')
 </body>

@@ -5,14 +5,13 @@ use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        return redirect()->route('erp');
+        return redirect()->route('market-configuration.index');
     }
     return redirect()->route('login');
 });
 
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ErpController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MarketConfigurationController;
@@ -27,7 +26,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::get('/logout-now', [AuthController::class, 'logout'])->name('logout.now');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/erp', [ErpController::class, 'index'])->name('erp');
     Route::post('/products/{product}/generate-sku', [ProductController::class, 'generateAndAssignSku'])->name('products.generateSku');
     
     // Test endpoint for API
@@ -46,17 +44,21 @@ Route::middleware('auth')->group(function () {
         
         // Admin and Product Manager only routes
         Route::middleware('role:administrador,gerente_producto')->group(function () {
-            Route::post('/assign-market-to-material', [MarketConfigurationController::class, 'assignMarketToMaterial'])->name('assign-market-to-material');
             Route::post('/create-market', [MarketConfigurationController::class, 'createMarket'])->name('create-market');
-            Route::post('/bulk-assign-market', [MarketConfigurationController::class, 'bulkAssignMarket'])->name('bulk-assign-market');
-            Route::post('/bulk-remove-market', [MarketConfigurationController::class, 'bulkRemoveMarket'])->name('bulk-remove-market');
             Route::post('/remove-market-from-material', [MarketConfigurationController::class, 'removeMarketFromMaterial'])->name('remove-market-from-material');
             Route::post('/edit-market-name', [MarketConfigurationController::class, 'editMarketName'])->name('edit-market-name');
         });
         
         // Read-only routes for all roles
         Route::get('/markets', [MarketConfigurationController::class, 'getMarkets'])->name('get-markets');
+        Route::get('/markets-paginated', [MarketConfigurationController::class, 'getMarketsPaginated'])->name('get-markets-paginated');
         Route::get('/products-by-market', [MarketConfigurationController::class, 'getProductsByMarket'])->name('products-by-market');
+    });
+    
+    // API routes
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/markets', [MarketConfigurationController::class, 'getMarketsAPI'])->name('markets');
+        Route::get('/product-details/{sku}', [MarketConfigurationController::class, 'getProductDetails'])->name('product-details');
     });
     
     // User Management Routes - Admin only

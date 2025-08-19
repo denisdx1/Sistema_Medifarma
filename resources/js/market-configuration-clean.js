@@ -104,6 +104,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 100);
         });
 
+        // Handle checkbox selection
+        $('#select-all').on('change', function () {
+            $('.product-checkbox').prop('checked', this.checked);
+            updateSelectedCount();
+        });
+
+        // Handle individual checkbox changes
+        $('.product-checkbox').on('change', function () {
+            updateSelectedCount();
+            
+            // Update "select all" checkbox state
+            const totalCheckboxes = $('.product-checkbox').length;
+            const checkedCheckboxes = $('.product-checkbox:checked').length;
+            
+            $('#select-all').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+            $('#select-all').prop('checked', checkedCheckboxes === totalCheckboxes);
+        });
+
         // Remove market button functionality
         $('.remove-market-btn').on('click', function () {
             const productId = $(this).data('product-id');
@@ -181,6 +199,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+        // Export functionality
+        $('#bulk-export').on('click', function() {
+            exportSelectedProducts();
+        });
+
         // Close modal when clicking outside
         $('.close-modal, .modal-overlay').on('click', function (e) {
             if (e.target === this) {
@@ -221,6 +244,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Helper Functions
+    function updateSelectedCount() {
+        const selectedCount = $('.product-checkbox:checked').length;
+        const countDisplay = $('#selected-count');
+        
+        if (countDisplay.length) {
+            countDisplay.text(selectedCount);
+        }
+        
+        // Show/hide export button based on selection
+        const exportBtn = $('#bulk-export');
+        if (exportBtn.length) {
+            exportBtn.toggle(selectedCount > 0);
+        }
+    }
+
     function resetCreateMarketForm() {
         $('#market-name').val('');
         const submitBtn = $('#create-market-submit');
@@ -246,6 +284,50 @@ document.addEventListener('DOMContentLoaded', function () {
         .fail(function() {
             showToast('Error al remover mercado', 'error');
         });
+    }
+
+    function exportSelectedProducts() {
+        const selectedProducts = [];
+        $('.product-checkbox:checked').each(function() {
+            const row = $(this).closest('tr');
+            selectedProducts.push({
+                sku: $(this).val(),
+                descripcion: row.find('td:nth-child(3)').text().trim(),
+                marca: row.find('td:nth-child(4)').text().trim(),
+                laboratorio: row.find('td:nth-child(5)').text().trim(),
+                corporacion: row.find('td:nth-child(6)').text().trim(),
+                mercado: row.find('td:nth-child(7)').text().trim()
+            });
+        });
+
+        if (selectedProducts.length === 0) {
+            showToast('No hay productos seleccionados para exportar', 'warning');
+            return;
+        }
+
+        // Create CSV content
+        const headers = ['SKU', 'Descripción', 'Marca', 'Laboratorio', 'Corporación', 'Mercado'];
+        const csvContent = [
+            headers.join(','),
+            ...selectedProducts.map(product => 
+                [product.sku, product.descripcion, product.marca, product.laboratorio, product.corporacion, product.mercado]
+                .map(field => `"${field.replace(/"/g, '""')}"`)
+                .join(',')
+            )
+        ].join('\n');
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `productos_seleccionados_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast(`Se exportaron ${selectedProducts.length} productos`, 'success');
     }
 
     // Sidebar functionality

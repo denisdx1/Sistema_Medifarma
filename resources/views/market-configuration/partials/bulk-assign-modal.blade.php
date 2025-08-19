@@ -12,6 +12,13 @@
             <div class="mb-4">
                 <p class="text-sm text-gray-600">Productos seleccionados:</p>
                 <p id="bulk-selected-count" class="font-semibold text-gray-800 text-lg"></p>
+                
+                <!-- Lista de productos seleccionados -->
+                <div class="mt-3 max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-3">
+                    <div id="selected-products-list" class="space-y-1">
+                        <!-- Los productos se llenarán dinámicamente -->
+                    </div>
+                </div>
             </div>
 
             <form id="bulk-assign-form">

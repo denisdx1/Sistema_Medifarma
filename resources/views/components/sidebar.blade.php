@@ -13,15 +13,8 @@
     <nav class="flex-1 mt-6">
         <p class="sidebar-text px-4 mb-2 text-xs text-gray-400 uppercase tracking-wider">Menu</p>
         <ul>
-            <li>
-                <a href="{{ route('erp') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('erp') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 font-semibold">
-                    <i class="fas fa-barcode w-6 text-center {{ request()->routeIs('erp') ? 'text-purple-600' : 'text-gray-400' }}"></i>
-                    <span class="sidebar-text ml-3">Código Material</span>
-                </a>
-            </li>
-            
             <!-- Market Configuration - All roles can view, GP and Admin can edit -->
-            <li class="mt-1">
+            <li>
                 <a href="{{ route('market-configuration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-configuration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
                     <i class="fas fa-store w-6 text-center {{ request()->routeIs('market-configuration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
                     <span class="sidebar-text ml-3">Config. Mercado</span>

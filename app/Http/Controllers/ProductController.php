@@ -16,7 +16,7 @@ class ProductController extends Controller
     {
         // Ensure SKU is not already set, to prevent overwriting
         if ($product->sku) {
-            return redirect()->route('erp')->with('error', 'Este producto ya tiene un SKU asignado.');
+            return redirect()->route('market-configuration.index')->with('error', 'Este producto ya tiene un SKU asignado.');
         }
 
         // Generate a unique SKU
@@ -41,6 +41,6 @@ class ProductController extends Controller
             'user_agent' => request()->header('User-Agent'),
         ]);
 
-        return redirect()->route('erp')->with('success', 'Nuevo SKU (' . $sku . ') asignado correctamente.');
+        return redirect()->route('market-configuration.index')->with('success', 'Nuevo SKU (' . $sku . ') asignado correctamente.');
     }
 }
