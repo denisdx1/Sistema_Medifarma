@@ -582,17 +582,18 @@
                 <p class="text-gray-600 mt-1">Gestiona la asignación de mercados a los materiales farmacéuticos</p>
             </div>
                         <div class="flex flex-wrap gap-2">
-                <!-- Export button - available for all roles -->
-                <button id="export-unassigned-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-3 rounded-md text-sm flex items-center">
-                    <i class="fas fa-download mr-1.5"></i>
-                    Exportar Sin Mercado
-                </button>
+                
                 
                 <!-- Create/Edit buttons - only for Admin and Product Manager -->
                 @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
                     <button id="manage-markets-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 rounded-md text-sm flex items-center">
                         <i class="fas fa-cog mr-1.5"></i>
                         Gestionar Mercados
+                    </button>
+                    
+                    <button id="bulk-assign-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-md text-sm flex items-center">
+                        <i class="fas fa-layer-group mr-1.5"></i>
+                        Asignar Mercados
                     </button>
                     
                     <!-- New bulk operations buttons -->
@@ -783,7 +784,7 @@
                     <div class="filter-item">
                         <label for="codigo_atc" class="filter-label">
                             <i class="fas fa-dna text-gray-400"></i>
-                            Código ATC
+                            Código ATC 4
                         </label>
                         <select name="codigo_atc" id="codigo_atc" class="select2-filter">
                             <option value="">Todos los códigos ATC</option>
@@ -936,8 +937,8 @@
                         <tr>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SKU</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción</th>
-                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código ATC</th>
-                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código FF</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código ATC 4</th>
+                            <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código FF 3</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Molécula</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
                             <th class="p-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoría</th>
@@ -1023,6 +1024,7 @@
                                         <!-- Full access for Admin and Product Manager -->
                                         <div class="flex space-x-1">
                                             @if(!empty($material->Mercado) && $material->Mercado !== 'null' && $material->Mercado !== 'NULL' && $material->Mercado !== 'RESTO')
+                                                <!-- Botón para remover mercado existente -->
                                                 <button class="remove-market-btn bg-red-600 hover:bg-red-700 text-white text-xs font-medium py-1 px-2 rounded" 
                                                     data-product-id="{{ $material->SKU }}"
                                                     data-product-name="{{ $material->Descripción_Presentación }}"
@@ -1030,6 +1032,15 @@
                                                     title="Quitar mercado">
                                                     <i class="fas fa-times mr-1 text-xs"></i>
                                                     <span class="text-xs">Quitar</span>
+                                                </button>
+                                            @else
+                                                <!-- Botón para asignar mercado a productos sin mercado (RESTO) -->
+                                                <button class="assign-market-btn bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1 px-2 rounded" 
+                                                    data-product-id="{{ $material->SKU }}"
+                                                    data-product-name="{{ $material->Descripción_Presentación }}"
+                                                    title="Asignar mercado">
+                                                    <i class="fas fa-plus mr-1 text-xs"></i>
+                                                    <span class="text-xs">Asignar</span>
                                                 </button>
                                             @endif
                                         </div>
@@ -1068,6 +1079,9 @@
     <!-- Create Market Modal -->
     @include('market-configuration.partials.create-market-modal')
 
+    <!-- Bulk Assign Markets Modal -->
+    @include('market-configuration.partials.bulk-assign-modal')
+
     <!-- Remove Market Confirmation Modal -->
     @include('market-configuration.partials.remove-market-modal')
 
@@ -1081,7 +1095,13 @@
         window.MarketConfigRoutes = {
             createMarket: '{{ route("market-configuration.create-market") }}',
             getMarkets: '{{ route("market-configuration.get-markets") }}',
+            getAllMarkets: '{{ route("market-configuration.get-all-markets") }}',
             getMarketsPaginated: '{{ route("market-configuration.get-markets-paginated") }}',
+            updateMarket: '{{ route("market-configuration.update-market", ":id") }}',
+            deleteMarket: '{{ route("market-configuration.delete-market", ":id") }}',
+            assignMaterialToMarket: '{{ route("market-configuration.assign-material-to-market") }}',
+            bulkAssignMarkets: '{{ route("market-configuration.bulk-assign-markets") }}',
+            searchProductsForAssignment: '{{ route("market-configuration.search-products-for-assignment") }}',
             removeMarketFromMaterial: '{{ route("market-configuration.remove-market-from-material") }}',
             productsByMarket: '{{ route("market-configuration.products-by-market") }}',
             editMarketName: '{{ route("market-configuration.edit-market-name") }}'

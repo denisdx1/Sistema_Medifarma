@@ -118,6 +118,15 @@
             margin-bottom: 24px;
         }
         
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+        }
+        
         .mb-3 {
             margin-bottom: 20px;
         }
@@ -130,21 +139,30 @@
     <h3 class="text-center">Sistema de Gestión</h3>
     <p class="text-center text-muted">Ingresa tus credenciales para acceder</p>
 
-    <!-- Simulación de error para demostración -->
-    <div class="alert alert-danger" style="display: none;">
-        Las credenciales proporcionadas no son válidas.
-    </div>
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+                {{ $error }}
+            @endforeach
+        </div>
+    @endif
+
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
 
     <form method="POST" action="{{ route('login.attempt') }}">
         @csrf
         <div class="mb-3">
             <label class="form-label">Usuario</label>
-            <input type="email" name="email" class="form-control" placeholder="Tu usuario" value="">
+            <input type="email" name="email" class="form-control" placeholder="Tu usuario" value="{{ old('email') }}" required>
         </div>
 
         <div class="mb-3">
             <label class="form-label">Contraseña</label>
-            <input type="password" name="password" class="form-control" placeholder="Tu contraseña">
+            <input type="password" name="password" class="form-control" placeholder="Tu contraseña" required>
         </div>
 
         <div class="d-grid">

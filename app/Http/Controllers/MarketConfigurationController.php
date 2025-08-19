@@ -52,50 +52,38 @@ class MarketConfigurationController extends Controller
     }
 
     /**
-     * Create a new market (stores it by creating a dummy entry in materials table)
+     * Create a new market (stores it in the mercados table)
      */
     public function createMarket(Request $request)
     {
         $request->validate([
-            'market_name' => 'required|string|max:255'
+            'market_name' => 'required|string|max:255|unique:mercados,mercado'
+        ], [
+            'market_name.unique' => 'Ya existe un mercado con ese nombre'
         ]);
 
         try {
-            $marketName = strtoupper(trim($request->market_name));
+            DB::beginTransaction();
             
-            // Verificar si el mercado ya existe en la tabla de materiales
-            $existingMarket = Material::where('Mercado', 'like', $marketName)->first();
+            $marketName = trim($request->market_name);
             
-            if ($existingMarket) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ya existe un mercado con ese nombre'
-                ], 422);
-            }
-
-            // Crear una entrada "placeholder" en la tabla de materiales para el nuevo mercado
-            // Esto permite que el mercado aparezca en las listas sin tener que asignarlo inmediatamente
-            $uniqueSku = 'MARKET_' . strtoupper(str_replace(' ', '_', $marketName)) . '_' . time();
-            
-            Material::create([
-                'SKU' => $uniqueSku,
-                'Descripción_Presentación' => 'MERCADO CREADO: ' . $marketName,
-                'Mercado' => $marketName,
-                'Marca_Genérico' => 'SISTEMA',
-                'Ético_Popular' => 'SISTEMA',
-                'Código_ATC_4' => 'SYS',
-                'Descripción_ATC_4' => 'Entrada del sistema para mercado',
-                'Código_FF_3' => 'SYS',
-                'Descripción_FF_3' => 'Sistema',
-                'Molécula' => 'N/A',
-                'LABORATORIO_C' => 'SISTEMA',
-                'CORPORACION' => 'SISTEMA'
+            // Crear el mercado en la tabla mercados
+            $mercado = Mercado::create([
+                'mercado' => $marketName,
+                'fecha_registro' => now(),
+                'fecha_update' => now(),
+                'estado' => true,
+                'id_usuario' => Auth::id()
             ]);
+            
+            DB::commit();
             
             return response()->json([
                 'success' => true,
-                'message' => 'Mercado "' . $marketName . '" creado correctamente',
-                'market_name' => $marketName
+                'message' => 'El mercado "' . $marketName . '" ha sido creado exitosamente y está listo para usar',
+                'market_name' => $marketName,
+                'market_id' => $mercado->id_mercado,
+                'timestamp' => now()->format('H:i:s')
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -313,6 +301,309 @@ class MarketConfigurationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar mercados: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update market name from mercados table and sync with materiales
+     */
+    public function updateMarket(Request $request, $id)
+    {
+        $request->validate([
+            'market_name' => 'required|string|max:255|unique:mercados,mercado,' . $id . ',id_mercado'
+        ], [
+            'market_name.unique' => 'Ya existe un mercado con ese nombre'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $mercado = Mercado::where('id_mercado', $id)->first();
+            
+            if (!$mercado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mercado no encontrado'
+                ], 404);
+            }
+
+            $oldMarketName = $mercado->mercado;
+            $newMarketName = trim($request->market_name);
+
+            // Actualizar el mercado en la tabla mercados
+            $mercado->update([
+                'mercado' => $newMarketName,
+                'fecha_update' => now(),
+                'id_usuario' => Auth::id()
+            ]);
+
+            // Sincronizar con la tabla materiales - actualizar todos los materiales que tengan este mercado
+            $updatedMaterials = Material::where('Mercado', $oldMarketName)
+                                      ->update(['Mercado' => $newMarketName]);
+
+            // Actualizar materiales que tengan el id_mercado asignado
+            Material::where('id_mercado', $id)
+                    ->update(['Mercado' => $newMarketName]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Mercado actualizado correctamente. {$updatedMaterials} materiales sincronizados",
+                'old_name' => $oldMarketName,
+                'new_name' => $newMarketName,
+                'materials_updated' => $updatedMaterials
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar mercado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a market from mercados table and handle materials
+     */
+    public function deleteMarket($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $mercado = Mercado::where('id_mercado', $id)->first();
+            
+            if (!$mercado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mercado no encontrado'
+                ], 404);
+            }
+
+            $marketName = $mercado->mercado;
+
+            // Mover todos los materiales de este mercado a "RESTO"
+            $materialsCount = Material::where('id_mercado', $id)
+                                    ->orWhere('Mercado', $marketName)
+                                    ->update([
+                                        'Mercado' => 'RESTO',
+                                        'id_mercado' => null
+                                    ]);
+
+            // Eliminar el mercado
+            $mercado->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Mercado '{$marketName}' eliminado correctamente. {$materialsCount} materiales movidos a RESTO",
+                'materials_moved' => $materialsCount
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar mercado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all markets from mercados table
+     */
+    public function getAllMarkets()
+    {
+        try {
+            $markets = Mercado::select('id_mercado', 'mercado', 'estado', 'fecha_registro', 'fecha_update')
+                             ->with('usuario:id,name')
+                             ->orderBy('mercado')
+                             ->get();
+
+            // Agregar conteo de materiales por mercado
+            $marketsWithCount = $markets->map(function ($market) {
+                $materialsCount = Material::where('id_mercado', $market->id_mercado)
+                                        ->orWhere('Mercado', $market->mercado)
+                                        ->count();
+                
+                $market->materials_count = $materialsCount;
+                return $market;
+            });
+
+            return response()->json([
+                'success' => true,
+                'markets' => $marketsWithCount
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener mercados: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign material to market
+     */
+    public function assignMaterialToMarket(Request $request)
+    {
+        $request->validate([
+            'material_sku' => 'required|string',
+            'market_id' => 'required|integer|exists:mercados,id_mercado'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $material = Material::where('SKU', $request->material_sku)->first();
+            $mercado = Mercado::where('id_mercado', $request->market_id)->first();
+
+            if (!$material) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Material no encontrado'
+                ], 404);
+            }
+
+            if (!$mercado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mercado no encontrado'
+                ], 404);
+            }
+
+            // Actualizar el material
+            $material->update([
+                'id_mercado' => $mercado->id_mercado,
+                'Mercado' => $mercado->mercado
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Material '{$material->Descripción_Presentación}' asignado al mercado '{$mercado->mercado}' correctamente",
+                'material' => $material,
+                'market' => $mercado
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar material al mercado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Search products for bulk assignment
+     */
+    public function searchProductsForAssignment(Request $request)
+    {
+        try {
+            $search = $request->get('search', '');
+            $currentMarket = $request->get('current_market', '');
+            
+            $query = Material::select('SKU', 'Descripción_Presentación', 'Mercado', 'Marca_Genérico', 'LABORATORIO_C')
+                            ->distinct();
+
+            // Search filter
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('SKU', 'like', "%{$search}%")
+                      ->orWhere('Descripción_Presentación', 'like', "%{$search}%")
+                      ->orWhere('Molécula', 'like', "%{$search}%")
+                      ->orWhere('LABORATORIO_C', 'like', "%{$search}%");
+                });
+            }
+
+            // Current market filter
+            if (!empty($currentMarket)) {
+                if ($currentMarket === 'RESTO') {
+                    $query->where(function($q) {
+                        $q->where('Mercado', '=', 'RESTO')
+                          ->orWhereNull('Mercado')
+                          ->orWhere('Mercado', '=', '');
+                    });
+                } else {
+                    $query->where('Mercado', '=', $currentMarket);
+                }
+            }
+
+            $products = $query->orderBy('SKU')
+                             ->limit(100) // Limit results for performance
+                             ->get();
+
+            return response()->json([
+                'success' => true,
+                'products' => $products,
+                'total' => $products->count()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar productos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk assign markets to multiple materials
+     */
+    public function bulkAssignMarkets(Request $request)
+    {
+        $request->validate([
+            'target_market_id' => 'required|integer|exists:mercados,id_mercado',
+            'product_skus' => 'required|array|min:1',
+            'product_skus.*' => 'required|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $targetMarket = Mercado::where('id_mercado', $request->target_market_id)->first();
+            
+            if (!$targetMarket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mercado de destino no encontrado'
+                ], 404);
+            }
+
+            $skus = $request->product_skus;
+            $updatedCount = 0;
+
+            foreach ($skus as $sku) {
+                $material = Material::where('SKU', $sku)->first();
+                if ($material) {
+                    $material->update([
+                        'id_mercado' => $targetMarket->id_mercado,
+                        'Mercado' => $targetMarket->mercado
+                    ]);
+                    $updatedCount++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Se asignaron {$updatedCount} productos al mercado '{$targetMarket->mercado}' exitosamente",
+                'updated_count' => $updatedCount,
+                'market_name' => $targetMarket->mercado
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar mercados: ' . $e->getMessage()
             ], 500);
         }
     }

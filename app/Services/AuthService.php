@@ -16,6 +16,10 @@ class AuthService
             return false;
         }
 
+        if (! $user->is_active) {
+            return false;
+        }
+
         if (! Hash::check($credentials['password'], $user->password)) {
             return false;
         }

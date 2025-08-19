@@ -32,7 +32,7 @@ class UserRolesSeeder extends Seeder
             ['email' => 'gp@medifarma.com'],
             [
                 'name' => 'Gerente de Producto',
-                'password' => Hash::make('gp123'),
+                'password' => Hash::make('gp1234'),
                 'role' => 'gerente_producto',
                 'department' => 'Producto',
                 'is_active' => true,
@@ -45,7 +45,7 @@ class UserRolesSeeder extends Seeder
             ['email' => 'bi@medifarma.com'],
             [
                 'name' => 'Business Intelligence',
-                'password' => Hash::make('bi123'),
+                'password' => Hash::make('bi1234'),
                 'role' => 'business_intelligence',
                 'department' => 'Inteligencia de Negocios',
                 'is_active' => true,

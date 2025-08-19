@@ -202,43 +202,84 @@ class MarketConfigurationService
                 ->unique()
                 ->values()
                 ->toArray(),
-            'mercados' => Material::select('Mercado')
-                ->distinct()
-                ->whereNotNull('Mercado')
-                ->where('Mercado', '!=', '')
-                ->where('Mercado', '!=', 'null')
-                ->where('Mercado', '!=', 'NULL')
-                ->orderBy('Mercado')
-                ->pluck('Mercado')
-                ->filter(function($mercado) {
-                    return !empty(trim($mercado)) && strtolower(trim($mercado)) !== 'null';
-                })
-                ->unique()
-                ->values()
-                ->toArray()
+            'mercados' => $this->getMarketsForFilter()
         ];
     }
 
     /**
-     * Get all available markets for assignment (excluding RESTO and invalid values)
+     * Get markets for filter dropdown (from mercados table + existing in materials)
      */
-    public function getAllAvailableMarkets(): array
+    private function getMarketsForFilter(): array
     {
-        return Material::select('Mercado')
+        // Obtener mercados de la tabla mercados (activos)
+        $mercadosFromTable = Mercado::where('estado', true)
+            ->orderBy('mercado')
+            ->pluck('mercado')
+            ->toArray();
+
+        // También incluir mercados que existen en materiales pero no están en la tabla mercados
+        // (para compatibilidad con datos existentes)
+        $mercadosFromMaterials = Material::select('Mercado')
             ->distinct()
             ->whereNotNull('Mercado')
             ->where('Mercado', '!=', '')
             ->where('Mercado', '!=', 'null')
             ->where('Mercado', '!=', 'NULL')
             ->where('Mercado', '!=', 'RESTO')
+            ->whereNotIn('Mercado', $mercadosFromTable) // Excluir los que ya están en la tabla mercados
             ->orderBy('Mercado')
             ->pluck('Mercado')
             ->filter(function($mercado) {
                 return !empty(trim($mercado)) && strtolower(trim($mercado)) !== 'null';
             })
-            ->unique()
-            ->values()
             ->toArray();
+
+        // Combinar ambos arrays, mantener orden alfabético y agregar RESTO al final
+        $allMarkets = array_merge($mercadosFromTable, $mercadosFromMaterials);
+        sort($allMarkets);
+        
+        // Agregar RESTO al final si existe en materiales
+        $hasResto = Material::where('Mercado', 'RESTO')->exists();
+        if ($hasResto) {
+            $allMarkets[] = 'RESTO';
+        }
+        
+        return array_values(array_unique($allMarkets));
+    }
+
+    /**
+     * Get all available markets for assignment (from mercados table)
+     */
+    public function getAllAvailableMarkets(): array
+    {
+        // Obtener mercados de la tabla mercados (activos)
+        $mercadosFromTable = Mercado::where('estado', true)
+            ->orderBy('mercado')
+            ->pluck('mercado')
+            ->toArray();
+
+        // También incluir mercados que existen en materiales pero no están en la tabla mercados
+        // (para compatibilidad con datos existentes)
+        $mercadosFromMaterials = Material::select('Mercado')
+            ->distinct()
+            ->whereNotNull('Mercado')
+            ->where('Mercado', '!=', '')
+            ->where('Mercado', '!=', 'null')
+            ->where('Mercado', '!=', 'NULL')
+            ->where('Mercado', '!=', 'RESTO')
+            ->whereNotIn('Mercado', $mercadosFromTable) // Excluir los que ya están en la tabla mercados
+            ->orderBy('Mercado')
+            ->pluck('Mercado')
+            ->filter(function($mercado) {
+                return !empty(trim($mercado)) && strtolower(trim($mercado)) !== 'null';
+            })
+            ->toArray();
+
+        // Combinar ambos arrays y mantener orden alfabético
+        $allMarkets = array_merge($mercadosFromTable, $mercadosFromMaterials);
+        sort($allMarkets);
+        
+        return array_values(array_unique($allMarkets));
     }
 
     /**

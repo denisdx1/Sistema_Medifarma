@@ -45,12 +45,18 @@ Route::middleware('auth')->group(function () {
         // Admin and Product Manager only routes
         Route::middleware('role:administrador,gerente_producto')->group(function () {
             Route::post('/create-market', [MarketConfigurationController::class, 'createMarket'])->name('create-market');
+            Route::put('/markets/{id}', [MarketConfigurationController::class, 'updateMarket'])->name('update-market');
+            Route::delete('/markets/{id}', [MarketConfigurationController::class, 'deleteMarket'])->name('delete-market');
+            Route::post('/assign-material-to-market', [MarketConfigurationController::class, 'assignMaterialToMarket'])->name('assign-material-to-market');
+            Route::post('/bulk-assign-markets', [MarketConfigurationController::class, 'bulkAssignMarkets'])->name('bulk-assign-markets');
+            Route::get('/search-products-for-assignment', [MarketConfigurationController::class, 'searchProductsForAssignment'])->name('search-products-for-assignment');
             Route::post('/remove-market-from-material', [MarketConfigurationController::class, 'removeMarketFromMaterial'])->name('remove-market-from-material');
             Route::post('/edit-market-name', [MarketConfigurationController::class, 'editMarketName'])->name('edit-market-name');
         });
         
         // Read-only routes for all roles
         Route::get('/markets', [MarketConfigurationController::class, 'getMarkets'])->name('get-markets');
+        Route::get('/all-markets', [MarketConfigurationController::class, 'getAllMarkets'])->name('get-all-markets');
         Route::get('/markets-paginated', [MarketConfigurationController::class, 'getMarketsPaginated'])->name('get-markets-paginated');
         Route::get('/products-by-market', [MarketConfigurationController::class, 'getProductsByMarket'])->name('products-by-market');
     });
