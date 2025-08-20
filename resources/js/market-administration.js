@@ -259,16 +259,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Function to escape JavaScript strings
+    function escapeForJs(str) {
+        return str.replace(/\\/g, '\\\\')
+                  .replace(/'/g, "\\'")
+                  .replace(/"/g, '\\"')
+                  .replace(/\n/g, '\\n')
+                  .replace(/\r/g, '\\r')
+                  .replace(/\t/g, '\\t');
+    }
+    
     function generateActionButtons(market) {
         let buttons = '';
+        const escapedMarketName = escapeForJs(market.mercado);
+        const escapedMarketStatus = escapeForJs(market.estado);
         
         if (market.solicitud === 'ESPERA') {
             buttons += `
-                <button onclick="approveMarket(${market.idMercado}, '${market.mercado}')" 
+                <button onclick="openApproveModal(${market.idMercado}, '${escapedMarketName}')" 
                         class="text-green-600 hover:text-green-900 transition-colors duration-200 p-2 rounded hover:bg-green-50">
                     <i class="fas fa-check" title="Aprobar"></i>
                 </button>
-                <button onclick="denyMarket(${market.idMercado}, '${market.mercado}')" 
+                <button onclick="openDenyModal(${market.idMercado}, '${escapedMarketName}')" 
                         class="text-red-600 hover:text-red-900 transition-colors duration-200 p-2 rounded hover:bg-red-50">
                     <i class="fas fa-times" title="Denegar"></i>
                 </button>
@@ -276,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         buttons += `
-            <button onclick="changeStatus(${market.idMercado}, '${market.mercado}', '${market.estado}')" 
+            <button onclick="changeStatus(${market.idMercado}, '${escapedMarketName}', '${escapedMarketStatus}')" 
                     class="text-purple-600 hover:text-purple-900 transition-colors duration-200 p-2 rounded hover:bg-purple-50">
                 <i class="fas fa-cog" title="Cambiar Estado"></i>
             </button>
@@ -374,6 +386,12 @@ function closeDenyModal() {
     currentMarketId = null;
     currentMarketName = null;
 }
+
+// Make functions globally available
+window.openApproveModal = openApproveModal;
+window.closeApproveModal = closeApproveModal;
+window.openDenyModal = openDenyModal;
+window.closeDenyModal = closeDenyModal;
 
 // Confirm approval
 function confirmApproval() {
@@ -520,6 +538,44 @@ document.addEventListener('keyup', function(e) {
     }
 });
 
+// Change market status function
+function changeStatus(marketId, marketName, currentStatus) {
+    // Determine the new status (toggle between ACTIVO/INACTIVO)
+    const newStatus = currentStatus === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    const statusId = currentStatus === 'ACTIVO' ? 2 : 1; // Assuming 1=ACTIVO, 2=INACTIVO
+    
+    const action = newStatus === 'ACTIVO' ? 'activar' : 'desactivar';
+    
+    if (confirm(`¿Estás seguro de que deseas ${action} el mercado "${marketName}"?`)) {
+        fetch(MarketAdminRoutes.changeStatus, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                market_id: marketId,
+                status_id: statusId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error changing status:', error);
+            showToast('Error al cambiar el estado del mercado', 'error');
+        });
+    }
+}
+
 // Close modals when clicking outside
 document.getElementById('approve-modal').addEventListener('click', function(e) {
     if (e.target === this) {
@@ -532,3 +588,9 @@ document.getElementById('deny-modal').addEventListener('click', function(e) {
         closeDenyModal();
     }
 });
+
+// Make all functions globally available for onclick handlers
+window.confirmApproval = confirmApproval;
+window.confirmDenial = confirmDenial;
+window.changeStatus = changeStatus;
+window.removeToast = removeToast;

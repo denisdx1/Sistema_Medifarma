@@ -23,7 +23,10 @@
                         <i class="fas fa-store text-purple-600 text-xs"></i>
                     </div>
                     <div>
-                        <p class="text-lg font-medium text-gray-800">{{ $market->mercado }}</p>
+                        <p class="text-lg font-medium text-gray-800">{{ $market->mercado ?? 'Mercado no encontrado' }}</p>
+                        @if(config('app.debug'))
+                            <p class="text-xs text-gray-500">Debug - Market ID: {{ $market->idMercado ?? 'NULL' }}</p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -133,9 +136,28 @@
 @endsection
 
 @push('scripts')
+<!-- Debug Info: Market ID = {{ $market->idMercado ?? 'NULL' }}, Market Name = {{ $market->mercado ?? 'NULL' }} -->
 <script>
 $(document).ready(function() {
-    const marketId = {{ $market->idMercado }};
+    // Validación robusta del marketId
+    const marketId = {{ $market->idMercado ?? 'null' }};
+    
+    // Log de debugging
+    console.log('Market object received:', @json($market ?? null));
+    console.log('Market ID extracted:', marketId);
+    
+    // Verificar que tenemos un marketId válido
+    if (!marketId || isNaN(marketId)) {
+        console.error('Market ID inválido:', marketId);
+        showError('Error: ID de mercado inválido. Regresando a la lista de mercados...');
+        setTimeout(() => {
+            window.location.href = '{{ route("market-management.index") }}';
+        }, 3000);
+        return;
+    }
+    
+    console.log('Market ID cargado correctamente:', marketId);
+    
     let currentCursor = null;
     let isLoading = false;
     let totalProductsLoaded = 0;

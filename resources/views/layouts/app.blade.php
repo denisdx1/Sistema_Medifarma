@@ -31,6 +31,33 @@
             opacity: 0;
         }
         
+        /* Manejar badges de mercados pendientes */
+        .sidebar-collapsed #pending-markets-badge {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-20px);
+            transition: all 0.3s ease;
+        }
+        
+        /* Mostrar badge compacto cuando sidebar está contraído */
+        #pending-markets-badge-collapsed {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-collapsed #pending-markets-badge-collapsed {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        
+        /* Asegurar que el badge contraído no interfiera con el layout */
+        .sidebar-collapsed #pending-markets-badge-collapsed {
+            z-index: 10;
+        }
+        
         .content-expanded {
             margin-left: 4rem !important;
         }

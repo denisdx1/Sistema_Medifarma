@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Traits\HasAuditTrail;
 use App\Services\StoredProcedureAuditService;
 use App\Models\VmaeProductoIqvia;
@@ -326,10 +327,14 @@ class MarketManagementController extends Controller
     public function showProducts($marketId)
     {
         try {
-            // Validar que marketId sea un número
-            if (!is_numeric($marketId)) {
+            // Log de acceso
+            Log::info('Acceso a productos del mercado', ['market_id' => $marketId]);
+            
+            // Validar que marketId sea un número válido
+            if (!is_numeric($marketId) || $marketId <= 0) {
+                Log::warning('ID de mercado inválido', ['market_id' => $marketId]);
                 return redirect()->route('market-management.index')
-                    ->with('error', 'ID de mercado inválido');
+                    ->with('error', 'ID de mercado inválido: ' . $marketId);
             }
 
             // Verificar que el mercado existe
@@ -339,13 +344,20 @@ class MarketManagementController extends Controller
                 ->first();
 
             if (!$market) {
+                Log::warning('Mercado no encontrado', ['market_id' => $marketId]);
                 return redirect()->route('market-management.index')
-                    ->with('error', 'El mercado no existe');
+                    ->with('error', 'El mercado con ID ' . $marketId . ' no existe');
             }
 
+            Log::info('Mercado encontrado', ['market' => $market]);
             return view('market-management.products', compact('market'));
 
         } catch (\Exception $e) {
+            Log::error('Error al cargar productos del mercado', [
+                'market_id' => $marketId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->route('market-management.index')
                 ->with('error', 'Error al cargar productos del mercado: ' . $e->getMessage());
         }

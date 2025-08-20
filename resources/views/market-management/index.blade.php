@@ -452,6 +452,17 @@ window.MarketManagementRoutes = {
 
 window.csrfToken = '{{ csrf_token() }}';
 
+// Utility function to safely escape strings for JavaScript
+function escapeForJs(str) {
+    if (!str) return '';
+    return str.replace(/\\/g, '\\\\')
+              .replace(/'/g, "\\'")
+              .replace(/"/g, '\\"')
+              .replace(/\n/g, '\\n')
+              .replace(/\r/g, '\\r')
+              .replace(/\t/g, '\\t');
+}
+
 // Open create modal
 function openCreateModal() {
     $('#market-name').val('');
@@ -592,7 +603,28 @@ function toggleMarketStatus(marketId, marketName, currentStatus) {
 
 // View market products
 function viewMarketProducts(marketId, marketName) {
+    console.log('viewMarketProducts called with:', {
+        marketId: marketId,
+        marketName: marketName,
+        typeof_marketId: typeof marketId,
+        typeof_marketName: typeof marketName
+    });
+    
+    // Validar que el marketId sea válido
+    if (!marketId || isNaN(marketId) || marketId <= 0) {
+        console.error('Invalid market ID:', marketId);
+        showToast('Error: ID de mercado inválido. No se puede cargar la vista de productos.', 'error');
+        return;
+    }
+    
+    // Validar que tengamos un nombre de mercado
+    if (marketName === undefined || marketName === null) {
+        console.warn('Market name is undefined/null, using default');
+        marketName = 'Mercado sin nombre';
+    }
+    
     console.log('Redirecting to products for market:', marketId, marketName);
+    
     // Redirect to products view for this market
     window.location.href = `/market-management/market/${marketId}/products`;
 }
@@ -809,20 +841,36 @@ function generateActionButtons(market) {
     let buttons = '';
     const escapedMarketName = escapeHtml(market.mercado);
     
-    // Ver Productos Button - Always available
-    buttons += `
-        <button onclick="viewMarketProducts(${market.idMercado}, ${JSON.stringify(market.mercado)})"
-                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
-                title="Ver productos del mercado">
-            <i class="fas fa-box mr-1"></i>
-            Productos
-        </button>
-    `;
+    // Ver Productos Button - Always available (con validación)
+    if (market.idMercado && !isNaN(market.idMercado)) {
+        // Escapar el nombre del mercado de manera segura para JavaScript
+        const safeMarketName = escapeForJs(market.mercado || '');
+        buttons += `
+            <button onclick="viewMarketProducts(${market.idMercado}, '${safeMarketName}')"
+                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
+                    title="Ver productos del mercado">
+                <i class="fas fa-box mr-1"></i>
+                Productos
+            </button>
+        `;
+    } else {
+        buttons += `
+            <button disabled 
+                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+                    title="ID de mercado no válido">
+                <i class="fas fa-box mr-1"></i>
+                Productos
+            </button>
+        `;
+    }
     
     if (market.solicitud === 'APROBADO') {
+        // Escapar el nombre del mercado de manera segura para JavaScript
+        const safeMarketName = escapeForJs(market.mercado || '');
+        
         // Edit Market Button - Only for approved markets
         buttons += `
-            <button onclick="openEditModal(${market.idMercado}, ${JSON.stringify(market.mercado)})"
+            <button onclick="openEditModal(${market.idMercado}, '${safeMarketName}')"
                     class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
                     title="Editar mercado">
                 <i class="fas fa-edit mr-1"></i>
@@ -837,7 +885,7 @@ function generateActionButtons(market) {
         const toggleText = isActive ? 'Desactivar' : 'Activar';
         
         buttons += `
-            <button onclick="toggleMarketStatus(${market.idMercado}, ${JSON.stringify(market.mercado)}, '${market.estado}')"
+            <button onclick="toggleMarketStatus(${market.idMercado}, '${safeMarketName}', '${market.estado}')"
                     class="inline-flex items-center px-3 py-1 rounded-md text-sm ${toggleClass} transition-colors duration-200">
                 <i class="fas ${toggleIcon} mr-1"></i>
                 ${toggleText}
@@ -858,6 +906,7 @@ function generateActionButtons(market) {
 
 // Function to escape HTML characters
 function escapeHtml(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -865,7 +914,7 @@ function escapeHtml(text) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 function formatDate(dateString) {

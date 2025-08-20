@@ -47,11 +47,16 @@
                 
                 <!-- Market Administration - Admin only -->
                 <li class="mt-1">
-                    <a href="{{ route('market-administration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-administration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
+                    <a href="{{ route('market-administration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-administration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 relative">
                         <i class="fas fa-shield-alt w-6 text-center {{ request()->routeIs('market-administration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
                         <span class="sidebar-text ml-3">Admin. Mercados</span>
-                        <span class="ml-auto" id="pending-markets-badge" style="display: none;">
+                        <!-- Badge for expanded sidebar -->
+                        <span class="sidebar-text ml-auto" id="pending-markets-badge" style="display: none;">
                             <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">0</span>
+                        </span>
+                        <!-- Badge for collapsed sidebar -->
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="pending-markets-badge-collapsed" style="display: none;">
+                            <span class="text-xs font-bold">0</span>
                         </span>
                     </a>
                 </li>
@@ -116,10 +121,17 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.count > 0) {
+            // Badge para sidebar expandido
             const badge = document.getElementById('pending-markets-badge');
             const countSpan = badge.querySelector('span');
             badge.style.display = 'block';
             countSpan.textContent = data.count;
+            
+            // Badge para sidebar contraído
+            const badgeCollapsed = document.getElementById('pending-markets-badge-collapsed');
+            const countSpanCollapsed = badgeCollapsed.querySelector('span');
+            badgeCollapsed.style.display = 'flex';
+            countSpanCollapsed.textContent = data.count;
         }
     })
     .catch(error => {
