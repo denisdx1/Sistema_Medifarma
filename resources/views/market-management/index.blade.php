@@ -95,6 +95,7 @@
                         Listado de Mercados
                     </h2>
                     <div class="flex items-center space-x-4">
+                        <!-- Búsqueda de texto -->
                         <div class="relative">
                             <input type="text" 
                                    id="search-input"
@@ -103,6 +104,10 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <i class="fas fa-search text-gray-400"></i>
                             </div>
+                            <button id="clear-search" 
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                 </div>

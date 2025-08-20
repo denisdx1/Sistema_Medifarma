@@ -60,6 +60,19 @@
                         </span>
                     </a>
                 </li>
+
+                <!-- Admin Productos - Admin only -->
+                <li class="mt-1">
+                    <a href="{{ route('admin-productos.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('admin-productos.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 relative">
+                        <i class="fas fa-clipboard-check w-6 text-center {{ request()->routeIs('admin-productos.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+                        <span class="sidebar-text ml-3">Admin. Productos</span>
+                        <!-- Badge for expanded sidebar -->
+                        <span class="sidebar-text ml-auto" id="pending-productos-badge" style="display: none;">
+                            <span class="bg-orange-500 text-white text-xs rounded-full px-2 py-1">0</span>
+                        </span>
+                        
+                    </a>
+                </li>
             @endif
         </ul>
         
@@ -136,6 +149,28 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(error => {
         console.log('No se pudo cargar el conteo de mercados pendientes');
+    });
+
+    // Cargar conteo de productos pendientes
+    fetch('{{ route("admin-productos.productos.api") }}?count_only=true')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.total > 0) {
+            // Badge para sidebar expandido
+            const badge = document.getElementById('pending-productos-badge');
+            const countSpan = badge.querySelector('span');
+            badge.style.display = 'block';
+            countSpan.textContent = data.total;
+            
+            // Badge para sidebar contraído
+            const badgeCollapsed = document.getElementById('pending-productos-badge-collapsed');
+            const countSpanCollapsed = badgeCollapsed.querySelector('span');
+            badgeCollapsed.style.display = 'flex';
+            countSpanCollapsed.textContent = data.total;
+        }
+    })
+    .catch(error => {
+        console.log('No se pudo cargar el conteo de productos pendientes');
     });
 });
 </script>

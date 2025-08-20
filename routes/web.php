@@ -77,6 +77,8 @@ Route::middleware('auth')->group(function () {
     // Temporary routes without middleware for testing
     Route::get('/market-management/market/{marketId}/products', [App\Http\Controllers\MarketManagementController::class, 'showProducts'])->name('market-management.products')->where('marketId', '[0-9]+');
     Route::get('/market-management/market/{marketId}/products/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketProducts'])->name('market-management.products.api')->where('marketId', '[0-9]+');
+    Route::get('/market-management/markets/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketsApi'])->name('market-management.markets.api');
+    Route::post('/market-management/products/remove', [App\Http\Controllers\MarketManagementController::class, 'removeProduct'])->name('market-management.products.remove');
     
     // API routes
     Route::prefix('api')->name('api.')->group(function () {
@@ -95,5 +97,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
     });
     
+    // Admin Productos Routes - Admin module for product approval workflow
+    Route::prefix('admin-productos')->name('admin-productos.')->middleware(['auth', 'role:administrador'])->group(function () {
+        Route::get('/', [App\Http\Controllers\AdminProductosController::class, 'index'])->name('index');
+        Route::post('/aprobar', [App\Http\Controllers\AdminProductosController::class, 'aprobar'])->name('aprobar');
+        Route::post('/denegar', [App\Http\Controllers\AdminProductosController::class, 'denegar'])->name('denegar');
+        Route::get('/api/productos', [App\Http\Controllers\AdminProductosController::class, 'getProductosApi'])->name('productos.api');
+    });
 
 });

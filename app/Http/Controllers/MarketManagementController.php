@@ -21,7 +21,7 @@ class MarketManagementController extends Controller
         try {
             $search = $request->get('search'); // Parámetro de búsqueda
 
-            // Query base para mercados
+            // Query base para mercados (excluir mercados DENEGADOS)
             $marketsQuery = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
                 ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
@@ -33,6 +33,7 @@ class MarketManagementController extends Controller
                     's.solicitud',
                     'e.estado'
                 )
+                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
                 ->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global si se proporciona un término
@@ -50,12 +51,13 @@ class MarketManagementController extends Controller
             $markets = $marketsQuery->paginate(10);
             $markets->appends($request->all()); // Mantener parámetros en paginación
 
-            // Obtener estadísticas (sin paginación para el total real)
+            // Obtener estadísticas (sin paginación para el total real, excluyendo denegados)
             $allMarkets = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
                 ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
                 ->select('s.solicitud', 'e.estado')
+                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados de las estadísticas
                 ->get();
 
             $stats = [
@@ -114,9 +116,11 @@ class MarketManagementController extends Controller
             
             DB::commit();
             
-            // Calcular la página donde aparecerá el nuevo mercado (al final)
+            // Calcular la página donde aparecerá el nuevo mercado (al final, excluyendo denegados)
             $totalMarkets = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
+                ->table('ODS.TAB_MERCADO as m')
+                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
+                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados del conteo
                 ->count() + 1; // +1 por el que acabamos de crear
             
             $itemsPerPage = 10;
@@ -273,7 +277,7 @@ class MarketManagementController extends Controller
             $search = $request->get('search');
             $perPage = 10;
 
-            // Query base para búsqueda
+            // Query base para búsqueda (excluir mercados DENEGADOS)
             $query = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
                 ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
@@ -285,6 +289,7 @@ class MarketManagementController extends Controller
                     's.solicitud',
                     'e.estado'
                 )
+                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
                 ->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global
@@ -398,17 +403,17 @@ class MarketManagementController extends Controller
 
             // Query base con filtro por mercado - optimizado con índices
             $query = VmaeProductoIqvia::select([
-                'Código_Presentación',
-                'Descripción_Presentación',
-                'Marca_Genérico',
-                'Ético_Popular',
-                'Molécula',
-                'Código_FF_3',
-                'Código_ATC_4',
+                'codigoPresentacion',
+                'descripcionPresentacion',
+                'marcaGenerico',
+                'eticoPopular',
+                'molecula',
+                'codigoFF3',
+                'codigoATC4',
                 'MERCADO'
             ])
             ->where('MERCADO', $market->mercado)
-            ->orderBy('Código_Presentación'); // Cambiado a un campo que probablemente tenga índice
+            ->orderBy('codigoPresentacion'); // Cambiado a un campo que probablemente tenga índice
 
             // NO calculamos el total count para evitar timeouts
             // El frontend manejará la paginación sin conocer el total exacto
@@ -443,6 +448,122 @@ class MarketManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener productos del mercado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API endpoint to get all available markets for dropdowns/selects
+     */
+    public function getMarketsApi(Request $request)
+    {
+        try {
+            // Obtener todos los mercados con su estado y solicitud (excluir DENEGADOS)
+            $markets = DB::connection('sqlsrv')
+                ->table('ODS.TAB_MERCADO as m')
+                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
+                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                ->select(
+                    'm.idMercado',
+                    'm.mercado',
+                    'm.fechaRegistro',
+                    's.solicitud',
+                    'e.estado'
+                )
+                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
+                ->orderBy('m.mercado', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $markets,
+                'total' => $markets->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error en getMarketsApi: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener la lista de mercados: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    //solicitar cambiar el estado del producto
+    public function changeStatusMarket (Request $request){
+        $validated = $request->validate([
+            'id' => 'required|exists:vmae_producto_iqvia,id',
+            'estado' => 'required|in:ACTIVO,INACTIVO'
+        ]);
+
+        try {
+            $product = VmaeProductoIqvia::findOrFail($validated['id']);
+            $product->estado = $validated['estado'];
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Estado del producto actualizado exitosamente.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en changeStatusMarket: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cambiar el estado del producto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove product from market using stored procedure
+     */
+    public function removeProduct(Request $request)
+    {
+        $validated = $request->validate([
+            'codigoPresentacion' => 'required|string'
+        ]);
+
+        try {
+            // Ejecutar el stored procedure para solicitar quitar producto (cambia estado a ESPERA)
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_SOLICITAR_QUITAR_PRODUCTO ?', [
+                $validated['codigoPresentacion']
+            ]);
+
+            // Log de la operación para auditoría
+            Log::info('Solicitud para quitar producto ejecutada', [
+                'codigoPresentacion' => $validated['codigoPresentacion'],
+                'usuario' => Auth::user()->name ?? 'Usuario no identificado',
+                'timestamp' => now(),
+                'executed' => $executed
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'El estado del producto ha sido cambiado a ESPERA exitosamente.',
+                'codigoPresentacion' => $validated['codigoPresentacion']
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al solicitar quitar producto: ' . $e->getMessage(), [
+                'codigoPresentacion' => $validated['codigoPresentacion'],
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la solicitud: ' . $e->getMessage()
             ], 500);
         }
     }

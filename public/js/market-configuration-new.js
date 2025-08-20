@@ -104,42 +104,42 @@ document.addEventListener('DOMContentLoaded', function () {
                     <tr class="hover:bg-gray-50 transition-colors duration-200">
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                ${product['Código_Presentación'] || '-'}
+                                ${product['codigoPresentacion'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800 max-w-xs truncate" title="${product['Descripción_Presentación'] || '-'}">
-                                ${product['Descripción_Presentación'] || '-'}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800 max-w-xs truncate" title="${product['descripcionPresentacion'] || '-'}">
+                                ${product['descripcionPresentacion'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                ${product['Marca_Genérico'] || '-'}
+                                ${product['marcaGenerico'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEticoPopularClass(product['Ético_Popular'])}">
-                                ${product['Ético_Popular'] || '-'}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEticoPopularClass(product['eticoPopular'])}">
+                                ${product['eticoPopular'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
-                                ${product['Molécula'] || '-'}
+                                ${product['molecula'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                ${product['Código_FF_3'] || '-'}
+                                ${product['codigoFF3'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                                ${product['Código_ATC_4'] || '-'}
+                                ${product['codigoATC4'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-orange-100 text-orange-800">
-                                ${product['Descripción_Laboratorio'] || '-'}
+                                ${product['descripcionLaboratorio'] || '-'}
                             </span>
                         </td>
                         <td class="p-4">
