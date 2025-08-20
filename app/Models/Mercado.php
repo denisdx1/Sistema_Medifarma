@@ -36,16 +36,7 @@ class Mercado extends Model
         throw new \Exception('No se puede eliminar registros de la vista DM.MERCADO. Esta es solo de lectura.');
     }
 
-    /**
-     * Relación con los materiales asignados a este mercado
-     * NOTA: Como no tienes tabla de materiales en la nueva BD, esto devuelve colección vacía
-     */
-    public function materiales(): HasMany
-    {
-        // Retornar una relación vacía ya que no existe tabla materiales en la nueva BD
-        return $this->hasMany(Material::class, 'mercado_id_inexistente', 'idMercado');
-    }
-
+    
     /**
      * Relación con las configuraciones de mercado
      * NOTA: Mantener compatibilidad con el sistema existente
@@ -117,5 +108,36 @@ class Mercado extends Model
     public function getFechaRegistroAttribute()
     {
         return now(); // Valor por defecto
+    }
+
+    /**
+     * Relación con configuraciones del mercado
+     */
+    public function configuraciones()
+    {
+        return $this->hasMany(TabConfiguracion::class, 'idMercado', 'idMercado');
+    }
+
+    /**
+     * Relación con productos IQVIA a través de configuraciones
+     */
+    public function productosIqvia()
+    {
+        return $this->hasManyThrough(
+            VmaeProductoIqvia::class,
+            TabConfiguracion::class,
+            'idMercado', // Foreign key en tab_configuracion
+            'Codigo_Interno', // Foreign key en vmae_prod_iqvia
+            'idMercado', // Local key en mercado
+            'codigo' // Local key en tab_configuracion
+        );
+    }
+
+    /**
+     * Obtener configuraciones activas del mercado
+     */
+    public function configuracionesActivas()
+    {
+        return $this->configuraciones()->activas();
     }
 }

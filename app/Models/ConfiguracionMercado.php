@@ -31,6 +31,7 @@ class ConfiguracionMercado extends Model
     public const ESTADO_PENDIENTE = 0;
     public const ESTADO_APROBADO = 1;
     public const ESTADO_RECHAZADO = 2;
+    public const ESTADO_DENEGADO = 3;
 
     /**
      * Obtener array de estados disponibles
@@ -41,6 +42,7 @@ class ConfiguracionMercado extends Model
             self::ESTADO_PENDIENTE => 'Pendiente',
             self::ESTADO_APROBADO => 'Aprobado',
             self::ESTADO_RECHAZADO => 'Rechazado',
+            self::ESTADO_DENEGADO => 'Denegado',
         ];
     }
 
@@ -99,6 +101,14 @@ class ConfiguracionMercado extends Model
     public function scopeRechazadas($query)
     {
         return $query->where('estado', self::ESTADO_RECHAZADO);
+    }
+
+    /**
+     * Scope para configuraciones denegadas
+     */
+    public function scopeDenegadas($query)
+    {
+        return $query->where('estado', self::ESTADO_DENEGADO);
     }
 
     /**
