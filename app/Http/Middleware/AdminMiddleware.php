@@ -7,17 +7,13 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 
-class RoleMiddleware
+class AdminMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  ...$roles
      */
-    public function handle(Request $request, Closure $next, ...$roles): Response
+    public function handle(Request $request, Closure $next): Response
     {
-        
         // Check if user is authenticated
         if (!Auth::check()) {
             return redirect()->route('login');
@@ -25,14 +21,20 @@ class RoleMiddleware
 
         $user = Auth::user();
 
+        // Verificar que el usuario existe
+        if (!$user) {
+            Auth::logout();
+            return redirect()->route('login')->with('error', 'Sesión inválida.');
+        }
+
         // Check if user is active
         if (!$user->is_active) {
             Auth::logout();
             return redirect()->route('login')->with('error', 'Tu cuenta ha sido desactivada. Contacta al administrador.');
         }
 
-        // Check if user has any of the required roles
-        if (!empty($roles) && !in_array($user->role, $roles)) {
+        // Check if user is admin
+        if (!$user->isAdmin()) {
             abort(403, 'No tienes permisos para acceder a esta sección.');
         }
 

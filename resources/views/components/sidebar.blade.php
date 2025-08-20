@@ -26,6 +26,16 @@
                     </a>
                 </li>
 
+            <!-- Market Management - Admin and Product Manager -->
+            @if(Auth::user()->isAdmin() || Auth::user()->isProductManager())
+                <li class="mt-1">
+                    <a href="{{ route('market-management.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-management.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
+                        <i class="fas fa-clipboard-list w-6 text-center {{ request()->routeIs('market-management.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+                        <span class="sidebar-text ml-3">Gestión Mercados</span>
+                    </a>
+                </li>
+            @endif
+
             <!-- User Management - Admin only -->
             @if(Auth::user()->isAdmin())
                 <li class="mt-1">
@@ -100,16 +110,19 @@
 <!-- Script para cargar mercados pendientes (solo para admin) -->
 @if(Auth::user()->isAdmin())
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Cargar conteo de mercados pendientes
-    $.get('{{ route("market-administration.pending-count") }}')
-    .done(function(response) {
-        if (response.success && response.count > 0) {
-            $('#pending-markets-badge').show();
-            $('#pending-markets-badge span').text(response.count);
+    fetch('{{ route("market-administration.pending-count") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.count > 0) {
+            const badge = document.getElementById('pending-markets-badge');
+            const countSpan = badge.querySelector('span');
+            badge.style.display = 'block';
+            countSpan.textContent = data.count;
         }
     })
-    .fail(function() {
+    .catch(error => {
         console.log('No se pudo cargar el conteo de mercados pendientes');
     });
 });

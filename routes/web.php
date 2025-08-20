@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
+    // TEMPORAL: Saltarse autenticación - acceso directo a administración de mercados
+    //return redirect()->route('market-administration.index');
+    
+    // CÓDIGO ORIGINAL COMENTADO - Descomentar cuando la autenticación esté lista
     if (Auth::check()) {
         return redirect()->route('market-configuration.index');
     }
@@ -39,35 +43,40 @@ Route::middleware('auth')->group(function () {
     })->name('test.markets');
     
     // Market Configuration Routes - All roles can access with different permissions
+    // Market Configuration Routes - Productos IQVIA
     Route::prefix('market-configuration')->name('market-configuration.')->group(function () {
+        // Ruta principal para mostrar la página
         Route::get('/', [MarketConfigurationController::class, 'index'])->name('index');
         
-        // Admin and Product Manager only routes
-        Route::middleware('role:administrador,gerente_producto')->group(function () {
-            Route::post('/create-market', [MarketConfigurationController::class, 'createMarket'])->name('create-market');
-            Route::put('/markets/{id}', [MarketConfigurationController::class, 'updateMarket'])->name('update-market');
-            Route::delete('/markets/{id}', [MarketConfigurationController::class, 'deleteMarket'])->name('delete-market');
-            Route::post('/assign-material-to-market', [MarketConfigurationController::class, 'assignMaterialToMarket'])->name('assign-material-to-market');
-            Route::post('/bulk-assign-markets', [MarketConfigurationController::class, 'bulkAssignMarkets'])->name('bulk-assign-markets');
-            Route::get('/search-products-for-assignment', [MarketConfigurationController::class, 'searchProductsForAssignment'])->name('search-products-for-assignment');
-            Route::post('/remove-market-from-material', [MarketConfigurationController::class, 'removeMarketFromMaterial'])->name('remove-market-from-material');
-            Route::post('/edit-market-name', [MarketConfigurationController::class, 'editMarketName'])->name('edit-market-name');
-        });
-        
-        // Read-only routes for all roles
-        Route::get('/markets', [MarketConfigurationController::class, 'getMarkets'])->name('get-markets');
-        Route::get('/all-markets', [MarketConfigurationController::class, 'getAllMarkets'])->name('get-all-markets');
-        Route::get('/markets-paginated', [MarketConfigurationController::class, 'getMarketsPaginated'])->name('get-markets-paginated');
-        Route::get('/products-by-market', [MarketConfigurationController::class, 'getProductsByMarket'])->name('products-by-market');
+        // Ruta para obtener productos con paginación y chunks
+        Route::get('/productos', [MarketConfigurationController::class, 'getProductos'])->name('get-productos');
     });
     
     // Market Administration Routes - Only for Admin users
+    // TEMPORAL: Middleware de autenticación comentado
     Route::prefix('market-administration')->name('market-administration.')->middleware(['auth', 'role:administrador'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketAdministrationController::class, 'index'])->name('index');
         Route::post('/approve', [App\Http\Controllers\MarketAdministrationController::class, 'approve'])->name('approve');
+        Route::post('/deny', [App\Http\Controllers\MarketAdministrationController::class, 'deny'])->name('deny');
         Route::post('/change-status', [App\Http\Controllers\MarketAdministrationController::class, 'changeStatus'])->name('change-status');
         Route::get('/pending-count', [App\Http\Controllers\MarketAdministrationController::class, 'getPendingCount'])->name('pending-count');
+        Route::get('/search', [App\Http\Controllers\MarketAdministrationController::class, 'search'])->name('search');
     });
+
+    // Market Management Routes - For Admin and Product Manager users
+    // TEMPORAL: Middleware de autenticación comentado
+    // Route::prefix('market-management')->name('market-management.')->group(function () {
+    Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto'])->group(function () {
+        Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');
+        Route::post('/create', [App\Http\Controllers\MarketManagementController::class, 'createMarket'])->name('create');
+        Route::put('/update', [App\Http\Controllers\MarketManagementController::class, 'updateMarket'])->name('update');
+        Route::post('/toggle-status', [App\Http\Controllers\MarketManagementController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/search', [App\Http\Controllers\MarketManagementController::class, 'search'])->name('search');
+    });
+    
+    // Temporary routes without middleware for testing
+    Route::get('/market-management/market/{marketId}/products', [App\Http\Controllers\MarketManagementController::class, 'showProducts'])->name('market-management.products')->where('marketId', '[0-9]+');
+    Route::get('/market-management/market/{marketId}/products/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketProducts'])->name('market-management.products.api')->where('marketId', '[0-9]+');
     
     // API routes
     Route::prefix('api')->name('api.')->group(function () {
@@ -85,4 +94,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
     });
+    
+
 });
