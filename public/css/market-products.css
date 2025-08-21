@@ -1,0 +1,685 @@
+/* Market Products Styles */
+
+/* Custom styles for the products table */
+.table-container {
+    max-height: calc(100vh - 300px);
+    min-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden; /* Eliminar scroll horizontal */
+    width: 100%;
+}
+
+.product-row:hover {
+    background-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced table responsiveness */
+.products-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%; /* Forzar que ocupe el 100% sin scroll horizontal */
+    table-layout: fixed; /* Layout fijo para controlar anchos */
+}
+
+.products-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 20;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.products-table td,
+.products-table th {
+    border-right: 1px solid #e5e7eb;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.products-table td:last-child,
+.products-table th:last-child {
+    border-right: none;
+}
+
+/* Fixed column widths - SIN scroll horizontal */
+.products-table th:nth-child(1) { width: 10%; } /* Código */
+.products-table th:nth-child(2) { width: 30%; } /* Descripción */
+.products-table th:nth-child(3) { width: 10%; } /* Marca/Genérico */
+.products-table th:nth-child(4) { width: 10%; } /* Ético/Popular */
+.products-table th:nth-child(5) { width: 25%; } /* Molécula */
+.products-table th:nth-child(6) { width: 8%; } /* Fuente */
+.products-table th:nth-child(7) { width: 8%; } /* FF3 */
+.products-table th:nth-child(8) { width: 8%; } /* ATC4 */
+.products-table th:nth-child(9) { width: 6%; } /* Acciones */
+
+/* Permitir texto multilínea SOLO en la columna de molécula */
+.products-table td:nth-child(5) {
+    white-space: normal !important;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4;
+    max-height: none;
+    overflow: visible;
+    vertical-align: top; /* Alinear contenido al inicio de la celda */
+}
+
+/* Estilos específicos para el contenido de molécula */
+.molecule-cell {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+}
+
+.molecule-text {
+    font-size: 0.8125rem;
+    color: #374151;
+    hyphens: auto; /* Permitir guiones automáticos */
+    word-break: break-word;
+}
+
+/* Asegurar que las otras columnas mantengan una línea */
+.products-table td:not(:nth-child(5)) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle; /* Centrar verticalmente en otras columnas */
+}
+
+/* Ajustar altura mínima de las filas para acomodar texto multilínea */
+.products-table tbody tr {
+    min-height: 3rem;
+}
+
+/* Loading overlay styles */
+#loading-overlay {
+    min-height: 400px;
+    backdrop-filter: blur(2px);
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Improved spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Badge styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Responsive table */
+@media (max-width: 1024px) {
+    .table-container {
+        max-height: calc(100vh - 350px);
+    }
+    
+    .products-table th,
+    .products-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8125rem;
+    }
+    
+    /* Ajustar anchos para tablet */
+    .products-table th:nth-child(1) { width: 10%; } /* Código */
+    .products-table th:nth-child(2) { width: 22%; } /* Descripción */
+    .products-table th:nth-child(3) { width: 9%; } /* Marca/Genérico */
+    .products-table th:nth-child(4) { width: 9%; } /* Ético/Popular */
+    .products-table th:nth-child(5) { width: 18%; } /* Molécula */
+    .products-table th:nth-child(6) { width: 8%; } /* Fuente */
+    .products-table th:nth-child(7) { width: 7%; } /* FF3 */
+    .products-table th:nth-child(8) { width: 7%; } /* ATC4 */
+    .products-table th:nth-child(9) { width: 6%; } /* Mercado */
+    .products-table th:nth-child(10) { width: 4%; } /* Acciones */
+}
+
+@media (max-width: 768px) {
+    .table-container {
+        max-height: calc(100vh - 400px);
+        min-height: 300px;
+    }
+    
+    .products-table th,
+    .products-table td {
+        padding: 0.375rem 0.125rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Ajustes especiales para molécula en móvil */
+    .molecule-cell {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    
+    .molecule-text {
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+    
+    /* Redistribuir espacio sin FF3 y ATC4 */
+    .products-table th:nth-child(7), /* FF3 */
+    .products-table td:nth-child(7),
+    .products-table th:nth-child(8), /* ATC4 */
+    .products-table td:nth-child(8) {
+        display: none;
+    }
+    
+    .products-table th:nth-child(1) { width: 12%; } /* Código */
+    .products-table th:nth-child(2) { width: 30%; } /* Descripción */
+    .products-table th:nth-child(3) { width: 10%; } /* Marca/Genérico */
+    .products-table th:nth-child(4) { width: 10%; } /* Ético/Popular */
+    .products-table th:nth-child(5) { width: 22%; } /* Molécula */
+    .products-table th:nth-child(6) { width: 8%; } /* Fuente */
+    .products-table th:nth-child(9) { width: 4%; } /* Mercado */
+    .products-table th:nth-child(10) { width: 4%; } /* Acciones */
+    
+    #loading-overlay {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 640px) {
+    .table-container {
+        max-height: calc(100vh - 450px);
+    }
+    
+    .products-table th,
+    .products-table td {
+        padding: 0.25rem 0.125rem;
+        font-size: 0.6875rem;
+    }
+    
+    /* Ocultar también Ético/Popular y Mercado */
+    .products-table th:nth-child(4), /* Ético/Popular */
+    .products-table td:nth-child(4),
+    .products-table th:nth-child(9), /* Mercado */
+    .products-table td:nth-child(9) {
+        display: none;
+    }
+    
+    .products-table th:nth-child(1) { width: 15%; } /* Código */
+    .products-table th:nth-child(2) { width: 40%; } /* Descripción */
+    .products-table th:nth-child(3) { width: 12%; } /* Marca/Genérico */
+    .products-table th:nth-child(5) { width: 25%; } /* Molécula */
+    .products-table th:nth-child(6) { width: 4%; } /* Fuente - solo ícono */
+    .products-table th:nth-child(10) { width: 4%; } /* Acciones */
+    
+    .action-buttons {
+        opacity: 1; /* Siempre visible en móvil */
+    }
+}
+
+/* Full width layout adjustments */
+@media (min-width: 1280px) {
+    .table-container {
+        max-height: calc(100vh - 250px);
+    }
+    
+    .products-table th,
+    .products-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Más espacio en pantallas grandes */
+    .products-table th:nth-child(2) { width: 28%; } /* Descripción */
+    .products-table th:nth-child(5) { width: 22%; } /* Molécula */
+}
+
+@media (min-width: 1536px) {
+    .products-table th:nth-child(2) { width: 30%; }
+    .products-table th:nth-child(5) { width: 24%; }
+}
+
+/* Modal styles */
+.modal {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Centrado perfecto de modales */
+#remove-product-modal,
+#change-market-modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+#remove-product-modal.hidden,
+#change-market-modal.hidden {
+    display: none !important;
+}
+
+/* Action buttons hover effects */
+.action-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Select dropdown styling */
+#new-market-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+#new-market-select:disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* Market search dropdown styles */
+#markets-dropdown {
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    background: white;
+    z-index: 1000;
+}
+
+.market-item {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.market-item:hover {
+    background-color: #f9fafb;
+}
+
+.market-item:active {
+    background-color: #f3f4f6;
+}
+
+/* Search input with icon */
+#market-search-input {
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#market-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Selected market display */
+#selected-market-display {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dropdown scrollbar styling */
+#markets-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+#markets-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#markets-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#markets-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Loading states */
+.markets-loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Responsive adjustments for dropdown */
+@media (max-width: 640px) {
+    #markets-dropdown {
+        max-height: 200px;
+    }
+    
+    .market-item {
+        padding: 0.75rem;
+    }
+}
+
+/* Toast notifications positioning */
+.toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 60;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Notification toast animations */
+.notification-toast {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+}
+
+.notification-toast:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive notifications */
+@media (max-width: 640px) {
+    .notification-toast {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+    }
+}
+
+/* Additional product table styles */
+.products-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.products-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+}
+
+.products-table td,
+.products-table th {
+    border-right: 1px solid #e5e7eb;
+}
+
+.products-table td:last-child,
+.products-table th:last-child {
+    border-right: none;
+}
+
+/* Improved pagination styles */
+.pagination-controls button {
+    transition: all 0.2s ease-in-out;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+}
+
+.pagination-controls button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Product badge animations */
+.product-badge {
+    transition: all 0.15s ease-in-out;
+}
+
+.product-badge:hover {
+    transform: scale(1.05);
+}
+
+/* Loading timer styles */
+#loading-timer {
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Action buttons improved styles */
+.action-buttons {
+    opacity: 0.7;
+    transition: opacity 0.2s ease-in-out;
+}
+
+tr:hover .action-buttons {
+    opacity: 1;
+}
+
+/* Enhanced modal animations */
+.modal-backdrop {
+    animation: fadeInBackdrop 0.3s ease-out;
+}
+
+.modal-content-inner {
+    animation: slideInModal 0.3s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInModal {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Search input placeholder animation */
+#market-search-input::placeholder {
+    transition: color 0.2s ease-in-out;
+}
+
+#market-search-input:focus::placeholder {
+    color: #9ca3af;
+}
+
+/* Product row hover effects */
+.product-row {
+    transition: all 0.15s ease-in-out;
+}
+
+.product-row:hover {
+    background-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading state improvements */
+.loading-state {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Enhanced button states */
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+    background-color: #f3f4f6;
+    transform: translateY(-1px);
+}
+
+/* Market selector enhancements */
+.market-dropdown-item {
+    position: relative;
+    overflow: hidden;
+}
+
+.market-dropdown-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s ease-in-out;
+}
+
+.market-dropdown-item:hover::after {
+    left: 100%;
+}
+
+/* Status indicators */
+.status-indicator {
+    position: relative;
+    overflow: hidden;
+}
+
+.status-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Improved scrollbar for table */
+.table-container::-webkit-scrollbar {
+    width: 12px;
+    height: 0; /* Eliminar scrollbar horizontal */
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 6px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+    border: 2px solid #f1f5f9;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Enhanced mobile scroll indicators - REMOVIDO */
+
+/* Focus improvements */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Mobile improvements */
+@media (max-width: 640px) {
+    .modal-content-inner {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+    
+    .notification-toast {
+        font-size: 0.875rem;
+        padding: 1rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+    }
+}
+
+/* Extra small screens - máxima optimización */
+@media (max-width: 480px) {
+    .products-table th,
+    .products-table td {
+        padding: 0.125rem;
+        font-size: 0.625rem;
+    }
+    
+    /* Solo mostrar lo esencial */
+    .products-table th:nth-child(1) { width: 12%; } /* Código */
+    .products-table th:nth-child(2) { width: 50%; } /* Descripción */
+    .products-table th:nth-child(3) { width: 15%; } /* Marca/Genérico */
+    .products-table th:nth-child(5) { width: 18%; } /* Molécula */
+    .products-table th:nth-child(6) { width: 3%; } /* Fuente - solo ícono */
+    .products-table th:nth-child(10) { width: 2%; } /* Acciones - solo íconos */
+}
+
+/* Tablet landscape - show all but optimize spacing */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .products-table th:nth-child(2) { width: 24%; }
+    .products-table th:nth-child(5) { width: 20%; }
+}

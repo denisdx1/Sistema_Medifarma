@@ -10,7 +10,7 @@ class VmaeProductoIqvia extends Model
     protected $table = 'dbo.VMAE_PROD_IQVIA';
     
     // No tiene primary key definida, usamos la primera columna
-    protected $primaryKey = 'Código_Presentación';
+    protected $primaryKey = 'codigoPresentacion';
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
@@ -122,19 +122,19 @@ class VmaeProductoIqvia extends Model
     public static function getDatosConfiguracion($filtros = [])
     {
         $query = static::select([
-            'Código_Presentación',
-            'Descripción_Presentación',
-            'Código_ATC_4',
-            'Código_FF_3',
-            'Descripción_Laboratorio',
-            'Corporación',
-            'Descripción_Corporación',
-            'Ético_Popular',
-            'Molécula',
-            'MERCADO',
-            'Codigo_Interno',
-            'Laboratorio',
-            'Fuente'
+            'codigoPresentacion',
+            'descripcionPresentacion',
+            'codigoATC4',
+            'codigoFF3',
+            'descripcionLaboratorio',
+            'corporacion',
+            'descripcionCorporacion',
+            'eticoPopular',
+            'molecula',
+            'mercado',
+            'codigoInterno',
+            'laboratorio',
+            'fuente'
         ]);
 
         // Aplicar filtros

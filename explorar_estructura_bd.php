@@ -36,7 +36,7 @@ class DatabaseExplorer
     public function exploreDatabase()
     {
         $this->showDatabaseInfo();
-        $this->exploreTableStructure('ODS.TAB_MERCADO');
+        $this->exploreTableStructure('ODS.TAB_CONFIGURACION');
         $this->exploreViewStructure('DM.MERCADO');
         $this->showSampleData();
     }

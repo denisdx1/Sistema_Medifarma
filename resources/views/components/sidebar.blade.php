@@ -36,44 +36,7 @@
                 </li>
             @endif
 
-            <!-- User Management - Admin only -->
-            @if(Auth::user()->isAdmin())
-                <li class="mt-1">
-                    <a href="{{ route('users.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('users.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2">
-                        <i class="fas fa-users w-6 text-center {{ request()->routeIs('users.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
-                        <span class="sidebar-text ml-3">Gestión Usuarios</span>
-                    </a>
-                </li>
-                
-                <!-- Market Administration - Admin only -->
-                <li class="mt-1">
-                    <a href="{{ route('market-administration.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('market-administration.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 relative">
-                        <i class="fas fa-shield-alt w-6 text-center {{ request()->routeIs('market-administration.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
-                        <span class="sidebar-text ml-3">Admin. Mercados</span>
-                        <!-- Badge for expanded sidebar -->
-                        <span class="sidebar-text ml-auto" id="pending-markets-badge" style="display: none;">
-                            <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1">0</span>
-                        </span>
-                        <!-- Badge for collapsed sidebar -->
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" id="pending-markets-badge-collapsed" style="display: none;">
-                            <span class="text-xs font-bold">0</span>
-                        </span>
-                    </a>
-                </li>
-
-                <!-- Admin Productos - Admin only -->
-                <li class="mt-1">
-                    <a href="{{ route('admin-productos.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('admin-productos.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 relative">
-                        <i class="fas fa-clipboard-check w-6 text-center {{ request()->routeIs('admin-productos.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
-                        <span class="sidebar-text ml-3">Admin. Productos</span>
-                        <!-- Badge for expanded sidebar -->
-                        <span class="sidebar-text ml-auto" id="pending-productos-badge" style="display: none;">
-                            <span class="bg-orange-500 text-white text-xs rounded-full px-2 py-1">0</span>
-                        </span>
-                        
-                    </a>
-                </li>
-            @endif
+            
         </ul>
         
         <!-- Role Information -->
@@ -125,53 +88,3 @@
     </div>
 </aside>
 
-<!-- Script para cargar mercados pendientes (solo para admin) -->
-@if(Auth::user()->isAdmin())
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar conteo de mercados pendientes
-    fetch('{{ route("market-administration.pending-count") }}')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.count > 0) {
-            // Badge para sidebar expandido
-            const badge = document.getElementById('pending-markets-badge');
-            const countSpan = badge.querySelector('span');
-            badge.style.display = 'block';
-            countSpan.textContent = data.count;
-            
-            // Badge para sidebar contraído
-            const badgeCollapsed = document.getElementById('pending-markets-badge-collapsed');
-            const countSpanCollapsed = badgeCollapsed.querySelector('span');
-            badgeCollapsed.style.display = 'flex';
-            countSpanCollapsed.textContent = data.count;
-        }
-    })
-    .catch(error => {
-        console.log('No se pudo cargar el conteo de mercados pendientes');
-    });
-
-    // Cargar conteo de productos pendientes
-    fetch('{{ route("admin-productos.productos.api") }}?count_only=true')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.total > 0) {
-            // Badge para sidebar expandido
-            const badge = document.getElementById('pending-productos-badge');
-            const countSpan = badge.querySelector('span');
-            badge.style.display = 'block';
-            countSpan.textContent = data.total;
-            
-            // Badge para sidebar contraído
-            const badgeCollapsed = document.getElementById('pending-productos-badge-collapsed');
-            const countSpanCollapsed = badgeCollapsed.querySelector('span');
-            badgeCollapsed.style.display = 'flex';
-            countSpanCollapsed.textContent = data.total;
-        }
-    })
-    .catch(error => {
-        console.log('No se pudo cargar el conteo de productos pendientes');
-    });
-});
-</script>
-@endif
