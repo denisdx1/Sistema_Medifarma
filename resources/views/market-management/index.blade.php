@@ -23,69 +23,7 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-100 rounded-full">
-                        <i class="fas fa-chart-bar text-blue-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['total'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-100 rounded-full">
-                        <i class="fas fa-check-circle text-green-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Aprobados</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['aprobados'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-yellow-100 rounded-full">
-                        <i class="fas fa-clock text-yellow-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Pendientes</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['pendientes'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-emerald-100 rounded-full">
-                        <i class="fas fa-play text-emerald-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Activos</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['activos'] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 stats-card">
-                <div class="flex items-center">
-                    <div class="p-3 bg-red-100 rounded-full">
-                        <i class="fas fa-pause text-red-600"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Inactivos</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $stats['inactivos'] }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        
         <!-- Markets Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -161,7 +99,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                 <!-- Ver Productos Button -->
-                                <button onclick="viewMarketProducts({{ $market->idMercado }}, '{{ $market->mercado }}')"
+                                <button onclick="viewMarketProducts({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
                                         title="Ver productos del mercado">
                                     <i class="fas fa-box mr-1"></i>
@@ -169,7 +107,7 @@
                                 </button>
                                 
                                 <!-- Edit Market Button -->
-                                <button onclick="openEditModal({{ $market->idMercado }}, '{{ $market->mercado }}')"
+                                <button onclick="openEditModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
                                         title="Editar mercado">
                                     <i class="fas fa-edit mr-1"></i>
@@ -177,7 +115,7 @@
                                 </button>
                                 
                                 <!-- Toggle Status Button -->
-                                <button onclick="toggleMarketStatus({{ $market->idMercado }}, '{{ $market->mercado }}', '{{ $market->estado }}')"
+                                <button onclick="toggleMarketStatus({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}', '{{ $market->estado }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm
                                         {{ $market->estado == 'ACTIVO' ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }} 
                                         transition-colors duration-200">
@@ -185,7 +123,7 @@
                                     {{ $market->estado == 'ACTIVO' ? 'Desactivar' : 'Activar' }}
                                 </button>
                                 </span>
-                                @endif
+                                
                             </td>
                         </tr>
                         @endforeach
