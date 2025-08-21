@@ -593,3 +593,586 @@ $(document).ready(function() {
         }
     });
 });
+
+// Variables globales para asignación de productos
+let currentAssignMarketId = null;
+let currentAssignMarketName = null;
+let selectedProducts = [];
+let restoProducts = [];
+let currentRestoCursor = null;
+let isLoadingResto = false;
+
+// Función para abrir modal de asignación de productos
+function openAssignProductsModal(marketId, marketName) {
+    currentAssignMarketId = marketId;
+    currentAssignMarketName = marketName;
+    selectedProducts = [];
+    
+    // Actualizar título
+    document.getElementById('assign-market-name').textContent = marketName;
+    
+    // Limpiar búsqueda
+    document.getElementById('resto-product-search').value = '';
+    document.getElementById('clear-resto-search').classList.add('hidden');
+    
+    // Mostrar modal
+    document.getElementById('assign-products-modal').classList.remove('hidden');
+    
+    // Cargar productos RESTO
+    loadRestoProducts();
+    
+    // Configurar event listeners
+    setupRestoProductSearch();
+}
+
+// Función para cerrar modal
+function closeAssignProductsModal() {
+    document.getElementById('assign-products-modal').classList.add('hidden');
+    currentAssignMarketId = null;
+    currentAssignMarketName = null;
+    selectedProducts = [];
+    restoProducts = [];
+    currentRestoCursor = null;
+}
+
+// Configurar búsqueda de productos RESTO
+function setupRestoProductSearch() {
+    const searchInput = document.getElementById('resto-product-search');
+    const clearButton = document.getElementById('clear-resto-search');
+    
+    // Event listener para búsqueda
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        if (query.length > 0) {
+            clearButton.classList.remove('hidden');
+        } else {
+            clearButton.classList.add('hidden');
+        }
+        
+        // Debounce de 300ms
+        clearTimeout(window.restoSearchTimeout);
+        window.restoSearchTimeout = setTimeout(() => {
+            searchRestoProducts(query);
+        }, 300);
+    });
+    
+    // Event listener para limpiar búsqueda
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.classList.add('hidden');
+        loadRestoProducts();
+    });
+}
+
+// Cargar productos del mercado RESTO
+function loadRestoProducts(cursor = null, append = false, searchQuery = '') {
+    if (isLoadingResto) return;
+    
+    isLoadingResto = true;
+    showRestoLoadingState();
+    
+    const data = {
+        cursor: cursor,
+        search: searchQuery
+    };
+    
+    $.ajax({
+        url: '/market-management/resto-products',
+        method: 'GET',
+        data: data,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response.success) {
+                if (!append) {
+                    updateRestoProductsTable(response.data.products);
+                    currentRestoCursor = response.data.next_cursor;
+                } else {
+                    appendRestoProductsToTable(response.data.products);
+                    currentRestoCursor = response.data.next_cursor;
+                }
+                
+                updateRestoPaginationInfo(response.data);
+                
+                if (response.data.products.length === 0 && !append) {
+                    showRestoEmptyState();
+                }
+            } else {
+                showErrorNotification('Error al cargar productos RESTO: ' + response.message);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error loading resto products:', {xhr, textStatus, errorThrown});
+            showErrorNotification('Error al cargar productos RESTO');
+        },
+        complete: function() {
+            isLoadingResto = false;
+            hideRestoLoadingState();
+        }
+    });
+}
+
+// Buscar productos RESTO
+function searchRestoProducts(query) {
+    selectedProducts = []; // Limpiar selección en nueva búsqueda
+    updateSelectedCount();
+    currentRestoCursor = null;
+    loadRestoProducts(null, false, query);
+}
+
+// Mostrar estado de carga
+function showRestoLoadingState() {
+    document.getElementById('resto-loading-overlay').classList.remove('hidden');
+    document.getElementById('resto-search-loading').classList.remove('hidden');
+}
+
+// Ocultar estado de carga
+function hideRestoLoadingState() {
+    document.getElementById('resto-loading-overlay').classList.add('hidden');
+    document.getElementById('resto-search-loading').classList.add('hidden');
+}
+
+// Mostrar estado vacío
+function showRestoEmptyState() {
+    document.getElementById('resto-empty-state').classList.remove('hidden');
+    document.getElementById('resto-products-table-body').innerHTML = '';
+}
+
+// Actualizar tabla de productos RESTO
+function updateRestoProductsTable(products) {
+    const tbody = document.getElementById('resto-products-table-body');
+    tbody.innerHTML = '';
+    
+    document.getElementById('resto-empty-state').classList.add('hidden');
+    
+    products.forEach(product => {
+        tbody.appendChild(generateRestoProductRow(product));
+    });
+}
+
+// Añadir productos a la tabla
+function appendRestoProductsToTable(products) {
+    const tbody = document.getElementById('resto-products-table-body');
+    
+    products.forEach(product => {
+        tbody.appendChild(generateRestoProductRow(product));
+    });
+}
+
+// Generar fila de producto RESTO
+function generateRestoProductRow(product) {
+    const row = document.createElement('tr');
+    row.className = 'divide-x divide-gray-200 hover:bg-gray-50';
+    
+    const isSelected = selectedProducts.includes(product.codigoPresentacion);
+    
+    const marcaGenerico = product.marcaGenerico || '-';
+    const eticoPopular = product.eticoPopular || '-';
+    
+    row.innerHTML = `
+        <!-- Selección 4% -->
+        <td class="w-[4%] px-1 py-1 text-center">
+            <input type="checkbox" 
+                   class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                   data-product-code="${product.codigoPresentacion}"
+                   data-product-fuente="${product.fuente || 'IQV'}"
+                   onchange="toggleProductSelection('${product.codigoPresentacion}', '${product.fuente || 'IQV'}')"
+                   ${isSelected ? 'checked' : ''}>
+        </td>
+        <!-- Descripción 18% -->
+        <td class="w-[18%] px-1 py-1 text-xs text-gray-900 description-cell" title="${product.descripcionPresentacion || '-'}">
+            <div class="truncate font-medium" style="white-space: pre-wrap;">${product.descripcionPresentacion || '-'}</div>
+        </td>
+        <!-- M/G 8% -->
+        <td class="w-[8%] px-1 py-1 text-center text-xs hidden sm:table-cell">
+            <span class="lg:inline hidden">${marcaGenerico === 'MARCA' ? 'MARCA' : 'GENÉRICO'}</span>
+            <span class="lg:hidden">${marcaGenerico === 'MARCA' ? 'M' : 'G'}</span>
+        </td>
+        <!-- É/P 8% -->
+        <td class="w-[8%] px-1 py-1 text-center text-xs hidden sm:table-cell">
+            <span class="lg:inline hidden">${eticoPopular === 'ÉTICO' ? 'ÉTICO' : 'POPULAR'}</span>
+            <span class="lg:hidden">${eticoPopular === 'ÉTICO' ? 'É' : 'P'}</span>
+        </td>
+        <!-- Fuente 6% -->
+        <td class="w-[6%] px-1 py-1 text-center text-xs text-gray-500 single-line-cell">
+            <span class="text-blue-600 font-medium">${product.fuente || 'IQV'}</span>
+        </td>
+        <!-- Molécula 14% -->
+        <td class="w-[14%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell molecule-cell" title="${product.descripcionMolecula || '-'}">
+            <span class="text-gray-700">${product.descripcionMolecula || '-'}</span>
+        </td>
+        <!-- FF3 10% -->
+        <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${product.descripcionFF3 || '-'}">
+            <span class="truncate">${product.descripcionFF3 || '-'}</span>
+        </td>
+        <!-- ATC4 10% -->
+        <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${product.descripcionATC4 || '-'}">
+            <span class="truncate">${product.descripcionATC4 || '-'}</span>
+        </td>
+        <!-- Laboratorio 8% -->
+        <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell single-line-cell" title="${product.descripcionLaboratorio || '-'}">
+            <span class="truncate">${product.descripcionLaboratorio || '-'}</span>
+        </td>
+        <!-- Corporación 8% -->
+        <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden xl:table-cell single-line-cell" title="${product.descripcionCorporacion || '-'}">
+            <span class="truncate">${product.descripcionCorporacion || '-'}</span>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Toggle selección de producto
+function toggleProductSelection(productCode, fuente) {
+    // Asegurar que la fuente tenga un valor por defecto
+    const safeFuente = fuente || 'IQV';
+    
+    const index = selectedProducts.findIndex(p => p.code === productCode);
+    
+    if (index > -1) {
+        selectedProducts.splice(index, 1);
+    } else {
+        selectedProducts.push({
+            code: productCode,
+            fuente: safeFuente
+        });
+    }
+    
+    updateSelectedCount();
+    updateSelectAllCheckbox();
+}
+
+// Toggle todos los productos
+function toggleAllProducts() {
+    const selectAllCheckbox = document.getElementById('select-all-products');
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    
+    if (selectAllCheckbox.checked) {
+        // Seleccionar todos
+        productCheckboxes.forEach(checkbox => {
+            const productCode = checkbox.dataset.productCode;
+            const fuente = checkbox.dataset.productFuente || 'IQV'; // Fuente por defecto
+            
+            if (!selectedProducts.find(p => p.code === productCode)) {
+                selectedProducts.push({
+                    code: productCode,
+                    fuente: fuente
+                });
+                checkbox.checked = true;
+            }
+        });
+    } else {
+        // Deseleccionar todos
+        productCheckboxes.forEach(checkbox => {
+            const productCode = checkbox.dataset.productCode;
+            const index = selectedProducts.findIndex(p => p.code === productCode);
+            
+            if (index > -1) {
+                selectedProducts.splice(index, 1);
+                checkbox.checked = false;
+            }
+        });
+    }
+    
+    updateSelectedCount();
+}
+
+// Actualizar checkbox "Seleccionar todos"
+function updateSelectAllCheckbox() {
+    const selectAllCheckbox = document.getElementById('select-all-products');
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
+    
+    if (productCheckboxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (checkedCheckboxes.length === productCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else if (checkedCheckboxes.length > 0) {
+        selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
+    } else {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    }
+}
+
+// Actualizar contador de seleccionados
+function updateSelectedCount() {
+    document.getElementById('selected-count').textContent = selectedProducts.length;
+    
+    const assignBtn = document.getElementById('assign-selected-btn');
+    if (selectedProducts.length > 0) {
+        assignBtn.disabled = false;
+    } else {
+        assignBtn.disabled = true;
+    }
+}
+
+// Actualizar información de paginación
+function updateRestoPaginationInfo(data) {
+    const info = document.getElementById('resto-pagination-info');
+    const controls = document.getElementById('resto-pagination-controls');
+    
+    // Información de productos
+    info.textContent = `${data.products.length} de ${data.total} productos en RESTO`;
+    
+    // Limpiar controles anteriores
+    controls.innerHTML = '';
+    
+    // Solo mostrar paginación si hay más páginas o si no es la primera carga
+    if (data.has_more_pages || currentRestoCursor) {
+        let paginationHTML = '';
+        
+        // Botón "Cargar más" si hay más páginas
+        if (data.has_more_pages) {
+            paginationHTML += `
+                <button onclick="loadMoreRestoProducts()" 
+                        id="load-more-resto-btn"
+                        class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors duration-200 flex items-center">
+                    <i class="fas fa-chevron-down mr-1"></i>
+                    Cargar más productos
+                </button>
+            `;
+        }
+        
+        // Botón "Mostrar todo" si hay pocas páginas restantes
+        if (data.total > 0 && data.total <= 200) {
+            paginationHTML += `
+                <button onclick="loadAllRestoProducts()" 
+                        id="load-all-resto-btn"
+                        class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center ml-2">
+                    <i class="fas fa-list mr-1"></i>
+                    Mostrar todos
+                </button>
+            `;
+        }
+        
+        controls.innerHTML = paginationHTML;
+    } else if (data.total === 0) {
+        info.textContent = 'No se encontraron productos en RESTO';
+    }
+}
+
+// Cargar más productos RESTO
+function loadMoreRestoProducts() {
+    if (!currentRestoCursor || isLoadingResto) return;
+    
+    const searchQuery = document.getElementById('resto-product-search').value.trim();
+    loadRestoProducts(currentRestoCursor, true, searchQuery);
+}
+
+// Cargar todos los productos RESTO
+function loadAllRestoProducts() {
+    if (isLoadingResto) return;
+    
+    const searchQuery = document.getElementById('resto-product-search').value.trim();
+    
+    // Mostrar loading
+    isLoadingResto = true;
+    showRestoLoadingState();
+    
+    // Hacer petición para obtener todos los productos
+    const data = {
+        per_page: 200, // Máximo permitido
+        search: searchQuery
+    };
+    
+    $.ajax({
+        url: '/market-management/resto-products',
+        method: 'GET',
+        data: data,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response.success) {
+                updateRestoProductsTable(response.data.products);
+                currentRestoCursor = response.data.next_cursor;
+                updateRestoPaginationInfo(response.data);
+                
+                if (response.data.products.length === 0) {
+                    showRestoEmptyState();
+                }
+            } else {
+                showErrorNotification('Error al cargar todos los productos: ' + response.message);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error loading all resto products:', {xhr, textStatus, errorThrown});
+            showErrorNotification('Error al cargar todos los productos');
+        },
+        complete: function() {
+            isLoadingResto = false;
+            hideRestoLoadingState();
+        }
+    });
+}
+
+// Asignar productos seleccionados
+function assignSelectedProducts() {
+    if (selectedProducts.length === 0) {
+        showErrorNotification('No hay productos seleccionados');
+        return;
+    }
+    
+    if (!currentAssignMarketId) {
+        showErrorNotification('Error: No se ha seleccionado un mercado');
+        return;
+    }
+    
+    // Mostrar loading en botón
+    const btn = document.getElementById('assign-selected-btn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    btn.disabled = true;
+    
+    $.ajax({
+        url: '/market-management/assign-products',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+            idMercado: currentAssignMarketId,
+            products: selectedProducts
+        },
+        success: function(response) {
+            if (response.success) {
+                // Mensaje detallado de éxito
+                let successMessage = '';
+                if (response.assigned_count === 1) {
+                    successMessage = `1 producto asignado correctamente al mercado "${response.market_name}"`;
+                } else {
+                    successMessage = `${response.assigned_count} productos asignados correctamente al mercado "${response.market_name}"`;
+                }
+                
+                // Mostrar advertencias si las hay
+                if (response.warnings && response.warnings.length > 0) {
+                    successMessage += `\n\nAdvertencias:\n${response.warnings.join('\n')}`;
+                }
+                
+                showSuccessNotification(successMessage);
+                
+                // Cerrar modal y recargar productos RESTO
+                closeAssignProductsModal();
+                
+                // Opcional: Recargar la lista de productos RESTO para reflejar los cambios
+                setTimeout(() => {
+                    if (document.getElementById('assign-products-modal').classList.contains('hidden') === false) {
+                        loadRestoProducts();
+                    }
+                }, 1000);
+                
+            } else {
+                showErrorNotification('Error: ' + response.message);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error assigning products:', {xhr, textStatus, errorThrown});
+            let errorMessage = 'Error al asignar productos';
+            
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            
+            showErrorNotification('Error: ' + errorMessage);
+        },
+        complete: function() {
+            // Restaurar botón
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            btn.disabled = false;
+        }
+    });
+}
+
+// Funciones de notificación
+function showSuccessNotification(message) {
+    showNotification(message, 'success');
+}
+
+function showErrorNotification(message) {
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('toast-container') || document.body;
+    
+    // Crear el toast
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 max-w-sm w-full bg-white border border-gray-200 rounded-lg shadow-lg transform translate-x-full opacity-0 transition-all duration-300 ease-in-out z-50`;
+    
+    // Colores según el tipo
+    let iconClass, bgClass, borderClass, textClass;
+    
+    switch(type) {
+        case 'success':
+            iconClass = 'fas fa-check-circle text-green-600';
+            bgClass = 'bg-green-50';
+            borderClass = 'border-green-200';
+            textClass = 'text-green-800';
+            break;
+        case 'error':
+            iconClass = 'fas fa-exclamation-circle text-red-600';
+            bgClass = 'bg-red-50';
+            borderClass = 'border-red-200';
+            textClass = 'text-red-800';
+            break;
+        default:
+            iconClass = 'fas fa-info-circle text-blue-600';
+            bgClass = 'bg-blue-50';
+            borderClass = 'border-blue-200';
+            textClass = 'text-blue-800';
+    }
+    
+    toast.innerHTML = `
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="ml-3 w-0 flex-1">
+                    <p class="text-sm font-medium ${textClass}">
+                        ${message}
+                    </p>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex">
+                    <button onclick="this.parentElement.parentElement.parentElement.parentElement.style.transform='translateX(100%)'; setTimeout(() => this.parentElement.parentElement.parentElement.parentElement.remove(), 300);" 
+                            class="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir clases específicas del tipo
+    toast.classList.add(bgClass, borderClass);
+    
+    // Añadir al DOM
+    container.appendChild(toast);
+    
+    // Animación de entrada
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full', 'opacity-0');
+    }, 100);
+    
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 5000);
+}

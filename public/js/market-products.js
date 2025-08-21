@@ -24,14 +24,96 @@ $(document).ready(function() {
     let totalProductsLoaded = 0;
     let loadingTimer = null;
     let loadingStartTime = null;
+    
+    // Search variables
+    let searchTimeout = null;
+    let currentSearchQuery = '';
+    let isSearching = false;
+
+    // Initialize search functionality
+    initializeSearch();
 
     // Load initial products
     loadProducts();
 
-    function loadProducts(cursor = null, append = false) {
+    // Initialize search functionality
+    function initializeSearch() {
+        const searchInput = $('#product-search');
+        const clearButton = $('#clear-search');
+        const searchResults = $('#search-results-info');
+        const searchLoadingIndicator = $('#search-loading-indicator');
+
+        // Real-time search with debouncing
+        searchInput.on('input', function() {
+            const query = $(this).val().trim();
+            
+            // Show/hide clear button
+            if (query.length > 0) {
+                clearButton.removeClass('hidden');
+            } else {
+                clearButton.addClass('hidden');
+            }
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Set new timeout for search (300ms debounce)
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        // Clear search
+        clearButton.on('click', function() {
+            searchInput.val('');
+            clearButton.addClass('hidden');
+            searchResults.addClass('hidden');
+            currentSearchQuery = '';
+            loadProducts(); // Reload all products
+        });
+
+        // Handle Enter key
+        searchInput.on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                performSearch($(this).val().trim());
+            }
+        });
+    }
+
+    // Perform search function
+    function performSearch(query) {
+        // Minimum search length
+        if (query.length > 0 && query.length < 2) {
+            return;
+        }
+
+        currentSearchQuery = query;
+        
+        // Show search loading indicator
+        if (query.length > 0) {
+            $('#search-loading-indicator').removeClass('hidden');
+        }
+
+        // Reset pagination when searching
+        currentCursor = null;
+        
+        // Load products with search
+        loadProducts(null, false, query);
+    }
+
+    function loadProducts(cursor = null, append = false, searchQuery = null) {
         if (isLoading) return;
         
         isLoading = true;
+        
+        // Use current search query if none provided
+        const search = searchQuery !== null ? searchQuery : currentSearchQuery;
         
         // Solo mostrar loading overlay para carga completa (no para "cargar más")
         if (!append) {
@@ -47,10 +129,15 @@ $(document).ready(function() {
             params.append('cursor', cursor);
         }
 
+        // Add search parameter
+        if (search && search.length > 0) {
+            params.append('search', search);
+        }
+
         $.ajax({
             url: `${url}?${params}`,
             method: 'GET',
-            timeout: 120000, // 2 minutos (120 segundos) en lugar de 30 segundos por defecto
+            timeout: 30000, // Reducido a 30 segundos para mejor UX
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -68,11 +155,23 @@ $(document).ready(function() {
                     updatePaginationControls(response.pagination);
                     updateProductsInfo(response.loaded_count, append);
                     
-                    // Update total products counter with loaded count
-                    $('#total-products').text(totalProductsLoaded + (response.pagination.has_more_pages ? '+' : ''));
+                    // Update search results info
+                    updateSearchResultsInfo(response.search);
+                    
+                    // Update total products counter - Mejorado para mercados pequeños
+                    if (response.pagination.has_more_pages) {
+                        $('#total-products').text(totalProductsLoaded + '+');
+                    } else {
+                        // Si no hay más páginas, mostrar el total exacto
+                        $('#total-products').text(totalProductsLoaded);
+                    }
                     
                     if (response.data.length === 0 && !append) {
-                        showEmptyState();
+                        if (response.search && response.search.has_search) {
+                            showNoSearchResults(response.search.query);
+                        } else {
+                            showEmptyState();
+                        }
                     } else {
                         hideEmptyState();
                     }
@@ -100,8 +199,54 @@ $(document).ready(function() {
             complete: function() {
                 isLoading = false;
                 hideLoadingState();
+                // Hide search loading indicator
+                $('#search-loading-indicator').addClass('hidden');
             }
         });
+    }
+
+    // Search result functions
+    function updateSearchResultsInfo(searchInfo) {
+        const searchResults = $('#search-results-info');
+        const searchText = $('#search-results-text');
+        const searchLoadingIndicator = $('#search-loading-indicator');
+        
+        // Hide loading indicator
+        searchLoadingIndicator.addClass('hidden');
+        
+        if (searchInfo && searchInfo.has_search) {
+            const resultsText = searchInfo.results_count === 1 
+                ? `1 producto encontrado para "${searchInfo.query}"`
+                : `${searchInfo.results_count} productos encontrados para "${searchInfo.query}"`;
+            
+            searchText.html(`
+                <i class="fas fa-search mr-1"></i>
+                ${resultsText}
+            `);
+            searchResults.removeClass('hidden');
+        } else {
+            searchResults.addClass('hidden');
+        }
+    }
+
+    function showNoSearchResults(query) {
+        const tbody = $('#products-table-body');
+        tbody.html(`
+            <tr>
+                <td colspan="9" class="px-6 py-12 text-center">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">No se encontraron productos</h3>
+                        <p class="text-gray-600 mb-4">No hay productos que coincidan con la búsqueda: <strong>"${query}"</strong></p>
+                        <button onclick="$('#clear-search').click()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>
+                            Limpiar búsqueda
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `);
     }
 
     function updateProductsTable(products) {
@@ -149,61 +294,79 @@ $(document).ready(function() {
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         };
 
-        const codigoCorto = truncateText(product['codigoPresentacion'], 12);
-        const descripcionCorta = truncateText(product['descripcionPresentacion'], 60);
-        // NO truncar molécula - mostrar texto completo
-        const moleculaCompleta = product['molecula'] || '-';
+        const descripcionCompleta = product['descripcionPresentacion'] || '-';
+        const marcaGenerico = product['marcaGenerico'] || '-';
+        const eticoPopular = product['eticoPopular'] || '-';
+        const fuente = product['fuente'] || '-';
+        const molecula = product['molecula'] || '-';
+        const descripcionFF3 = product['descripcionFF3'] || '-';
+        const descripcionATC4 = product['descripcionATC4'] || '-';
+        const laboratorio = truncateText(product['descripcionLaboratorio'], 20);
+        const corporacion = truncateText(product['descripcionCorporacion'], 20);
         
         return `
-            <tr class="hover:bg-gray-50 product-row">
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm font-medium text-gray-900" title="${product['codigoPresentacion'] || '-'}">
-                    <span class="font-mono block truncate">${codigoCorto}</span>
-                </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-900" title="${product['descripcionPresentacion'] || '-'}">
-                    <div class="block truncate">
-                        <p class="font-medium truncate">${descripcionCorta}</p>
+            <tr class="hover:bg-gray-50 divide-x divide-gray-200">
+                <!-- Descripción 20% -->
+                <td class="w-[20%] px-1 py-1 text-xs text-gray-900 description-cell" title="${descripcionCompleta}">
+                    <div class="leading-tight font-medium" style="white-space: pre-wrap;">
+                        ${descripcionCompleta}
                     </div>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500">
-                    <span class="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getBrandClass(product['marcaGenerico'])}">
-                        <span class="hidden sm:inline">${product['marcaGenerico'] || '-'}</span>
-                        <span class="sm:hidden">${(product['marcaGenerico'] || '-').charAt(0)}</span>
+                <!-- M/G 8% -->
+                <td class="w-[8%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-l-2 border-gray-300">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getBrandClass(marcaGenerico)}" title="${marcaGenerico}">
+                        <span class="hidden lg:inline">${marcaGenerico}</span>
+                        <span class="lg:hidden">${marcaGenerico.substring(0, 1)}</span>
                     </span>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500 hidden sm:table-cell">
-                    <span class="inline-flex items-center justify-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getEthicClass(product['eticoPopular'])}">
-                        <span class="hidden lg:inline">${product['eticoPopular'] || '-'}</span>
-                        <span class="lg:hidden">${(product['eticoPopular'] || '-').charAt(0)}</span>
+                <!-- É/P 8% -->
+                <td class="w-[8%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-r-2 border-gray-300">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getEthicClass(eticoPopular)}" title="${eticoPopular}">
+                        <span class="hidden lg:inline">${eticoPopular}</span>
+                        <span class="lg:hidden">${eticoPopular.substring(0, 1)}</span>
                     </span>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500 molecule-cell">
-                    <div class="molecule-text">
-                        <span class="block leading-tight">${moleculaCompleta}</span>
+                <!-- Fuente 6% -->
+                <td class="w-[6%] px-1 py-1 text-center text-xs text-gray-500">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getFuenteClass(fuente)}" title="${fuente}">
+                        <i class="fas fa-database text-xs mr-0.5"></i>
+                        <span class="text-xs">${fuente.substring(0, 3)}</span>
+                    </span>
+                </td>
+                <!-- Molécula 14% -->
+                <td class="w-[14%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell molecule-cell" title="${molecula}">
+                    <div class="text-xs leading-tight">
+                        ${molecula}
                     </div>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500 text-center">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getFuenteClass(product['fuente'])}" title="${product['fuente'] || 'Sin fuente'}">
-                        <i class="fas fa-database text-xs"></i>
-                        <span class="hidden lg:inline ml-1">${(product['fuente'] || 'N/A').substring(0, 4)}</span>
-                    </span>
+                <!-- FF3 10% -->
+                <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionFF3}">
+                    <span class="truncate">${descripcionFF3}</span>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500 text-center hidden md:table-cell" title="${product['codigoFF3'] || '-'}">
-                    <span class="font-mono text-xs block truncate">${product['codigoFF3'] || '-'}</span>
+                <!-- ATC4 10% -->
+                <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionATC4}">
+                    <span class="truncate">${descripcionATC4}</span>
                 </td>
-                <td class="px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 text-xs sm:text-sm text-gray-500 text-center hidden md:table-cell" title="${product['codigoATC4'] || '-'}">
-                    <span class="font-mono text-xs block truncate">${product['codigoATC4'] || '-'}</span>
+                <!-- Laboratorio 8% -->
+                <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell single-line-cell" title="${product['descripcionLaboratorio'] || '-'}">
+                    <span class="truncate">${laboratorio}</span>
                 </td>
-                <td class="px-1 sm:px-2 lg:px-3 py-2 sm:py-3 lg:py-4 text-right">
-                    <div class="flex items-center justify-center space-x-0.5 sm:space-x-1 action-buttons">
+                <!-- Corporación 8% -->
+                <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden xl:table-cell single-line-cell" title="${product['descripcionCorporacion'] || '-'}">
+                    <span class="truncate">${corporacion}</span>
+                </td>
+                <!-- Acciones 2% -->
+                <td class="w-[2%] px-0.5 py-1 text-center">
+                    <div class="flex items-center justify-center space-x-1">
                         <button onclick="openRemoveProductModal('${product['codigoPresentacion'] || product['Código_Presentación']}', '${escapeForJs(product['descripcionPresentacion'] || product['Descripción_Presentación'])}')" 
-                                class="text-red-600 hover:text-red-900 transition-colors duration-200 p-1 rounded hover:bg-red-50 action-btn" 
+                                class="text-red-600 hover:text-red-900 transition-colors p-1.5 rounded hover:bg-red-50" 
                                 title="Quitar producto">
-                            <i class="fas fa-trash text-xs"></i>
+                            <i class="fas fa-trash text-sm"></i>
                         </button>
                         <button onclick="openChangeMarketModal('${product['codigoPresentacion'] || product['Código_Presentación']}', '${escapeForJs(product['descripcionPresentacion'] || product['Descripción_Presentación'])}')" 
-                                class="text-blue-600 hover:text-blue-900 transition-colors duration-200 p-1 rounded hover:bg-blue-50 action-btn" 
+                                class="text-blue-600 hover:text-blue-900 transition-colors p-1.5 rounded hover:bg-blue-50" 
                                 title="Cambiar mercado">
-                            <i class="fas fa-exchange-alt text-xs"></i>
+                            <i class="fas fa-exchange-alt text-sm"></i>
                         </button>
                     </div>
                 </td>
@@ -255,6 +418,13 @@ $(document).ready(function() {
                 ${pagination.has_more_pages ? '<span class="text-xs text-blue-600 font-medium">Más datos disponibles</span>' : '<span class="text-xs text-green-600 font-medium">Todos los datos cargados</span>'}
             </div>
         `);
+
+        // OPTIMIZACIÓN: Solo mostrar controles si hay paginación
+        if (!pagination.has_more_pages && !pagination.has_previous_pages) {
+            // Mercado pequeño sin paginación - ocultar controles
+            controls.html('<span class="text-xs text-gray-500">No se requiere paginación</span>');
+            return;
+        }
 
         // Contenedor para los botones
         const buttonContainer = $('<div class="flex items-center space-x-2"></div>');
@@ -366,12 +536,12 @@ $(document).ready(function() {
             $('#loading-timer').text(elapsed + 's');
             
             // Actualizar mensaje basado en tiempo transcurrido
-            if (elapsed > 30) {
+            if (elapsed > 15) {
                 $('#loading-text').text('Consultando base de datos...');
-                $('#loading-subtext').text('Este mercado tiene muchos productos, por favor espere');
-            } else if (elapsed > 60) {
+                $('#loading-subtext').text('Cargando productos del mercado');
+            } else if (elapsed > 30) {
                 $('#loading-text').text('Procesando datos...');
-                $('#loading-subtext').text('La consulta está tomando más tiempo de lo normal');
+                $('#loading-subtext').text('Este mercado puede tener muchos productos');
             }
         }, 1000);
     }
@@ -430,99 +600,47 @@ $(document).ready(function() {
     // Global functions for pagination buttons
     window.loadMoreProducts = function(cursor) {
         console.log('Loading more products with cursor:', cursor);
-        loadProducts(cursor, true); // append = true, agrega datos
+        loadProducts(cursor, true, currentSearchQuery); // append = true, agrega datos
     };
 
     window.loadNextPage = function(cursor) {
         console.log('Loading next page with cursor:', cursor);
         currentCursor = cursor;
-        loadProducts(cursor, false); // append = false, reemplaza datos
+        loadProducts(cursor, false, currentSearchQuery); // append = false, reemplaza datos
     };
 
     window.loadPreviousPage = function(cursor) {
         console.log('Loading previous page with cursor:', cursor);
         currentCursor = cursor;
-        loadProducts(cursor, false); // append = false, reemplaza datos
+        loadProducts(cursor, false, currentSearchQuery); // append = false, reemplaza datos
     };
 
     window.loadFirstPage = function() {
         console.log('Loading first page');
         currentCursor = null;
-        loadProducts(null, false); // Primera página, reemplaza datos
+        loadProducts(null, false, currentSearchQuery); // Primera página, reemplaza datos
     };
 
     // Variables globales para las modales
-    let currentProductCode = null;
-    let currentProductName = null;
-    let availableMarkets = [];
+    window.currentProductCode = null;
+    window.currentProductName = null;
+    window.availableMarkets = [];
 
-    // Función global para cambiar estado del producto
-    window.changeStatusMarket = function(){
-        if (!currentProductCode) {
+    // Función global para quitar producto del mercado usando SP_ASIGNAR_RESTO
+    window.removeProductFromMarket = function(){
+        if (!window.currentProductCode) {
             showErrorNotification('Error: No se ha seleccionado un producto válido');
             return;
         }
 
-        // Mostrar loading en el botón
-        const btn = $('#confirm-remove-btn');
-        const btnText = btn.find('.btn-text');
-        const btnLoading = btn.find('.btn-loading');
-        
-        btnText.addClass('hidden');
-        btnLoading.removeClass('hidden');
-        btn.prop('disabled', true);
-
-        $.ajax({
-            url: '/market-management/products/remove',
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            data: {
-                codigoPresentacion: currentProductCode
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Mostrar notificación de éxito simple
-                    showSuccessNotification('Estado del producto cambiado a ESPERA exitosamente');
-                    
-                    // Cerrar modal
-                    closeRemoveProductModal();
-                    
-                    // Recargar la tabla de productos para reflejar los cambios
-                    loadProducts();
-                } else {
-                    showErrorNotification('Error: ' + response.message);
-                }
-            },
-            error: function(xhr, textStatus, errorThrown) {
-                console.error('Error en removeProduct:', {xhr, textStatus, errorThrown});
-                let errorMessage = 'Error al procesar la operación';
-                
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                } else if (xhr.status === 422) {
-                    errorMessage = 'Datos de entrada inválidos';
-                } else if (xhr.status === 500) {
-                    errorMessage = 'Error interno del servidor';
-                }
-                
-                showErrorNotification('Error: ' + errorMessage);
-            },
-            complete: function() {
-                // Restaurar botón
-                btnText.removeClass('hidden');
-                btnLoading.addClass('hidden');
-                btn.prop('disabled', false);
-            }
-        });
+        // Abrir modal de confirmación final
+        openFinalConfirmationModal();
     };
 
     // Funciones para Modal de Quitar Producto
     window.openRemoveProductModal = function(productCode, productName) {
-        currentProductCode = productCode;
-        currentProductName = productName;
+        window.currentProductCode = productCode;
+        window.currentProductName = productName;
         
         document.getElementById('remove-product-name').textContent = productName;
         document.getElementById('remove-product-code').textContent = productCode;
@@ -531,14 +649,14 @@ $(document).ready(function() {
 
     window.closeRemoveProductModal = function() {
         document.getElementById('remove-product-modal').classList.add('hidden');
-        currentProductCode = null;
-        currentProductName = null;
+        window.currentProductCode = null;
+        window.currentProductName = null;
     };
 
     // Funciones para Modal de Cambiar Mercado
     window.openChangeMarketModal = function(productCode, productName) {
-        currentProductCode = productCode;
-        currentProductName = productName;
+        window.currentProductCode = productCode;
+        window.currentProductName = productName;
         
         document.getElementById('change-product-name').textContent = productName;
         document.getElementById('change-product-code').textContent = productCode;
@@ -561,19 +679,19 @@ $(document).ready(function() {
 
     window.closeChangeMarketModal = function() {
         document.getElementById('change-market-modal').classList.add('hidden');
-        currentProductCode = null;
-        currentProductName = null;
+        window.currentProductCode = null;
+        window.currentProductName = null;
         
         // Limpiar todo el estado del modal
         clearSelectedMarket();
         document.getElementById('market-search-input').value = '';
         document.getElementById('markets-dropdown').classList.add('hidden');
-        availableMarkets = [];
+        window.availableMarkets = [];
     };
 
     // Función global para cambiar mercado del producto
     window.changeProductMarket = function() {
-        if (!currentProductCode) {
+        if (!window.currentProductCode) {
             showErrorNotification('Error: No se ha seleccionado un producto válido');
             return;
         }
@@ -584,63 +702,8 @@ $(document).ready(function() {
             return;
         }
 
-        // Mostrar loading en el botón
-        const btn = $('#confirm-change-btn');
-        const btnText = btn.find('.btn-text');
-        const btnLoading = btn.find('.btn-loading');
-        
-        btnText.addClass('hidden');
-        btnLoading.removeClass('hidden');
-        btn.prop('disabled', true);
-
-        $.ajax({
-            url: '/market-management/products/change-market',
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            data: {
-                codigoPresentacion: currentProductCode,
-                nuevoMercadoId: parseInt(selectedMarketId)
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Mostrar notificación de éxito
-                    showSuccessNotification(response.message);
-                    
-                    // Cerrar modal
-                    closeChangeMarketModal();
-                    
-                    // Recargar la tabla de productos para reflejar los cambios
-                    loadProducts();
-                } else {
-                    showErrorNotification('Error: ' + response.message);
-                }
-            },
-            error: function(xhr, textStatus, errorThrown) {
-                console.error('Error en changeProductMarket:', {xhr, textStatus, errorThrown});
-                let errorMessage = 'Error al cambiar el mercado del producto';
-                
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                } else if (xhr.status === 422) {
-                    errorMessage = 'Datos de entrada inválidos o mercado no válido';
-                } else if (xhr.status === 404) {
-                    errorMessage = 'No se encontró la configuración del producto';
-                } else if (xhr.status === 500) {
-                    errorMessage = 'Error interno del servidor';
-                }
-                
-                showErrorNotification('Error: ' + errorMessage);
-            },
-            complete: function() {
-                // Restaurar botón
-                btnText.removeClass('hidden');
-                btnLoading.addClass('hidden');
-                btn.prop('disabled', false);
-            }
-        });
+        // Abrir modal de confirmación final
+        openFinalChangeConfirmationModal();
     };
 
     // Variables para el search
@@ -664,7 +727,7 @@ $(document).ready(function() {
             }
             
             // Mostrar dropdown si hay texto o mercados cargados
-            if (searchTerm.length > 0 || availableMarkets.length > 0) {
+            if (searchTerm.length > 0 || window.availableMarkets.length > 0) {
                 dropdown.classList.remove('hidden');
             }
             
@@ -676,7 +739,7 @@ $(document).ready(function() {
         
         // Event listener para focus - mostrar dropdown
         searchInput.addEventListener('focus', function() {
-            if (availableMarkets.length > 0) {
+            if (window.availableMarkets.length > 0) {
                 dropdown.classList.remove('hidden');
                 filterMarkets(this.value.trim().toLowerCase());
             }
@@ -699,7 +762,7 @@ $(document).ready(function() {
         const currentMarketId = window.marketId;
         
         // Filtrar mercados
-        const filteredMarkets = availableMarkets.filter(market => {
+        const filteredMarkets = window.availableMarkets.filter(market => {
             return market.idMercado !== currentMarketId && 
                    market.estado === 'ACTIVO' &&
                    (searchTerm === '' || 
@@ -773,7 +836,7 @@ $(document).ready(function() {
         document.getElementById('market-search-input').value = '';
         
         // Mostrar dropdown nuevamente si hay mercados
-        if (availableMarkets.length > 0) {
+        if (window.availableMarkets.length > 0) {
             document.getElementById('markets-dropdown').classList.remove('hidden');
             filterMarkets('');
         }
@@ -802,10 +865,10 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success && response.data) {
-                    availableMarkets = response.data;
+                    window.availableMarkets = response.data;
                     loadingState.classList.add('hidden');
                     filterMarkets(''); // Mostrar todos los mercados inicialmente
-                    console.log(`Cargados ${availableMarkets.length} mercados disponibles`);
+                    console.log(`Cargados ${window.availableMarkets.length} mercados disponibles`);
                 } else {
                     showError('Error al cargar los mercados disponibles');
                     showDropdownError('Error al cargar mercados');
@@ -923,3 +986,169 @@ function showErrorNotification(message) {
         }, 300);
     }, 7000);
 }
+
+// Funciones para Modal de Confirmación Final
+window.openFinalConfirmationModal = function() {
+    document.getElementById('final-confirmation-modal').classList.remove('hidden');
+};
+
+window.closeFinalConfirmationModal = function() {
+    document.getElementById('final-confirmation-modal').classList.add('hidden');
+};
+
+// Función que realmente procede con la eliminación
+window.proceedWithRemoval = function() {
+    if (!window.currentProductCode) {
+        showErrorNotification('Error: No se ha seleccionado un producto válido');
+        return;
+    }
+
+    // Mostrar loading en el botón de confirmación final
+    const btn = $('#final-confirm-btn');
+    const btnText = btn.find('.btn-text');
+    const btnLoading = btn.find('.btn-loading');
+    
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: '/market-management/products/remove',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+            codigoPresentacion: window.currentProductCode
+        },
+        success: function(response) {
+            if (response.success) {
+                // Mostrar notificación de éxito
+                showSuccessNotification('Producto removido del mercado exitosamente');
+                
+                // Cerrar ambas modales
+                closeFinalConfirmationModal();
+                closeRemoveProductModal();
+                
+                // Recargar la tabla de productos para reflejar los cambios
+                loadProducts();
+            } else {
+                showErrorNotification('Error: ' + response.message);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error en proceedWithRemoval:', {xhr, textStatus, errorThrown});
+            let errorMessage = 'Error al remover el producto del mercado';
+            
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.status === 422) {
+                errorMessage = 'Datos de entrada inválidos';
+            } else if (xhr.status === 500) {
+                errorMessage = 'Error interno del servidor';
+            } else if (xhr.status === 404) {
+                errorMessage = 'Producto no encontrado';
+            }
+            
+            showErrorNotification('Error: ' + errorMessage);
+        },
+        complete: function() {
+            // Restaurar botón
+            btnText.removeClass('hidden');
+            btnLoading.addClass('hidden');
+            btn.prop('disabled', false);
+        }
+    });
+};
+
+// Funciones para Modal de Confirmación Final de Cambio de Mercado
+window.openFinalChangeConfirmationModal = function() {
+    // Obtener información para mostrar en la confirmación
+    const productName = window.currentProductName || 'Producto seleccionado';
+    const selectedMarketName = document.getElementById('selected-market-name').textContent || 'Mercado seleccionado';
+    
+    // Actualizar textos en la modal de confirmación
+    document.getElementById('final-change-product-name').textContent = productName;
+    document.getElementById('final-change-market-name').textContent = selectedMarketName;
+    
+    // Mostrar modal
+    document.getElementById('final-change-confirmation-modal').classList.remove('hidden');
+};
+
+window.closeFinalChangeConfirmationModal = function() {
+    document.getElementById('final-change-confirmation-modal').classList.add('hidden');
+};
+
+// Función que realmente procede con el cambio de mercado
+window.proceedWithMarketChange = function() {
+    if (!window.currentProductCode) {
+        showErrorNotification('Error: No se ha seleccionado un producto válido');
+        return;
+    }
+
+    const selectedMarketId = document.getElementById('selected-market-id').value;
+    if (!selectedMarketId) {
+        showErrorNotification('Error: Debe seleccionar un mercado de destino');
+        return;
+    }
+
+    // Mostrar loading en el botón de confirmación final
+    const btn = $('#final-change-confirm-btn');
+    const btnText = btn.find('.btn-text');
+    const btnLoading = btn.find('.btn-loading');
+    
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: '/market-management/products/change-market',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+            codigoPresentacion: window.currentProductCode,
+            nuevoMercadoId: parseInt(selectedMarketId)
+        },
+        success: function(response) {
+            if (response.success) {
+                // Mostrar notificación de éxito
+                showSuccessNotification(response.message);
+                
+                // Cerrar ambas modales
+                closeFinalChangeConfirmationModal();
+                closeChangeMarketModal();
+                
+                // Recargar la tabla de productos para reflejar los cambios
+                loadProducts();
+            } else {
+                showErrorNotification('Error: ' + response.message);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error en proceedWithMarketChange:', {xhr, textStatus, errorThrown});
+            let errorMessage = 'Error al cambiar el mercado del producto';
+            
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            } else if (xhr.status === 422) {
+                errorMessage = 'Datos de entrada inválidos o mercado no válido';
+            } else if (xhr.status === 404) {
+                errorMessage = 'No se encontró la configuración del producto';
+            } else if (xhr.status === 500) {
+                errorMessage = 'Error interno del servidor';
+            }
+            
+            showErrorNotification('Error: ' + errorMessage);
+        },
+        complete: function() {
+            // Restaurar botón
+            btnText.removeClass('hidden');
+            btnLoading.addClass('hidden');
+            btn.prop('disabled', false);
+        }
+    });
+};

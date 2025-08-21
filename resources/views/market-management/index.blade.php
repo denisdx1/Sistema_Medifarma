@@ -106,6 +106,14 @@
                                     Productos
                                 </button>
                                 
+                                <!-- Asignar Productos Button -->
+                                <button onclick="openAssignProductsModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors duration-200"
+                                        title="Asignar productos desde RESTO">
+                                    <i class="fas fa-plus-circle mr-1"></i>
+                                    Asignar
+                                </button>
+                                
                                 <!-- Edit Market Button -->
                                 <button onclick="openEditModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
@@ -359,6 +367,200 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Asignar Productos -->
+<div id="assign-products-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-7xl max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-purple-50 flex-shrink-0">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-plus-circle text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Asignar Productos al Mercado</h3>
+                            <p class="text-sm text-gray-600">Mercado: <span id="assign-market-name" class="font-medium"></span></p>
+                        </div>
+                    </div>
+                    <button onclick="closeAssignProductsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="p-6 flex-1 overflow-hidden flex flex-col">
+                <!-- Search Bar -->
+                <div class="mb-6 flex-shrink-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div class="flex-1 max-w-md">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       id="resto-product-search" 
+                                       class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                       placeholder="Buscar en productos RESTO...">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <button type="button" 
+                                            id="clear-resto-search" 
+                                            class="text-gray-400 hover:text-gray-600 hidden"
+                                            title="Limpiar búsqueda">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <div id="resto-search-loading" class="hidden">
+                                        <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected products count -->
+                        <div class="text-sm text-gray-600">
+                            <span id="selected-count">0</span> productos seleccionados
+                        </div>
+                        
+                        <!-- Assign button -->
+                        <button id="assign-selected-btn" 
+                                onclick="assignSelectedProducts()"
+                                class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            <span class="btn-text">
+                                <i class="fas fa-plus mr-2"></i>
+                                Asignar Seleccionados
+                            </span>
+                            <span class="btn-loading hidden">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Asignando...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Products Table Container -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col relative">
+                    <!-- Loading Overlay -->
+                    <div id="resto-loading-overlay" class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-10 hidden">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                            <span class="text-gray-700 font-medium text-sm">Cargando productos RESTO...</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div class="flex-1 overflow-auto">
+                        <table class="min-w-full divide-y divide-gray-200 products-table text-xs">
+                            <thead class="bg-gray-50 sticky top-0 z-20">
+                                <tr class="divide-x divide-gray-200">
+                                    <!-- Selección: 4% -->
+                                    <th class="w-[4%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                        <input type="checkbox" id="select-all-products" onchange="toggleAllProducts()" 
+                                               class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                    </th>
+                                    <!-- Descripción: 18% -->
+                                    <th class="w-[18%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                        Descripción
+                                    </th>
+                                    <!-- M/G: 8% -->
+                                    <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-l-2 border-gray-300" title="Marca/Genérico">
+                                        <span class="hidden lg:inline">M/G</span>
+                                        <span class="lg:hidden">M</span>
+                                    </th>
+                                    <!-- É/P: 8% -->  
+                                    <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-r-2 border-gray-300" title="Ético/Popular">
+                                        <span class="hidden lg:inline">É/P</span>
+                                        <span class="lg:hidden">É</span>
+                                    </th>
+                                    <!-- Fuente: 6% -->
+                                    <th class="w-[6%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                        Fuente
+                                    </th>
+                                    <!-- Molécula: 14% -->
+                                    <th class="w-[14%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
+                                        Molécula
+                                    </th>
+                                    <!-- FF3: 10% -->
+                                    <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                                        <span class="hidden lg:inline">FF3</span>
+                                        <span class="lg:hidden">FF</span>
+                                    </th>
+                                    <!-- ATC4: 10% -->
+                                    <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                                        <span class="hidden lg:inline">ATC4</span>
+                                        <span class="lg:hidden">AT</span>
+                                    </th>
+                                    <!-- Laboratorio: 8% -->
+                                    <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
+                                        Laboratorio
+                                    </th>
+                                    <!-- Corporación: 8% -->
+                                    <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden xl:table-cell">
+                                        Corporación
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100 divide-x divide-gray-200" id="resto-products-table-body">
+                                <!-- Products will be loaded here via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="resto-empty-state" class="p-8 text-center hidden">
+                        <i class="fas fa-box-open text-gray-400 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">No hay productos en RESTO</h3>
+                        <p class="text-gray-600">Todos los productos están asignados a mercados específicos</p>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0" id="resto-pagination-container">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                            <div id="resto-pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
+                                Cargando productos...
+                            </div>
+                            <div id="resto-pagination-controls" class="flex items-center justify-center sm:justify-end space-x-2">
+                                <!-- Pagination buttons will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                    </th>
+                                    <!-- Corporación: 8% -->
+                                    <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden xl:table-cell">
+                                        Corporación
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100 divide-x divide-gray-200" id="resto-products-table-body">
+                                <!-- Products will be loaded here via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="resto-empty-state" class="p-8 text-center hidden">
+                        <i class="fas fa-box-open text-gray-400 text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">No hay productos en RESTO</h3>
+                        <p class="text-gray-600">Todos los productos están asignados a mercados específicos</p>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="px-4 py-4 border-t border-gray-200 bg-gray-50" id="resto-pagination-container">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                        <div id="resto-pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
+                            Cargando productos...
+                        </div>
+                        <div id="resto-pagination-controls" class="flex items-center justify-center sm:justify-end space-x-2">
+                            <!-- Pagination buttons will be generated here -->
+                        </div>
+                    </div>
         </div>
     </div>
 </div>
