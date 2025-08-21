@@ -41,80 +41,124 @@
         <!-- Products Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-                    <h2 class="text-lg font-medium text-gray-900">
-                        <i class="fas fa-pills mr-2"></i>
-                        Listado de Productos
-                    </h2>
-                    <div class="flex items-center space-x-4">
-                        <div class="text-sm text-gray-600" id="products-info">
-                            Cargando productos...
+                <div class="flex flex-col space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                        <h2 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-pills mr-2"></i>
+                            Listado de Productos
+                        </h2>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-600" id="products-info">
+                                Cargando productos...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div class="flex-1 max-w-md">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" 
+                                       id="product-search" 
+                                       class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="Buscar por código, descripción o molécula...">
+                                <!-- Clear button -->
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <button type="button" 
+                                            id="clear-search" 
+                                            class="text-gray-400 hover:text-gray-600 hidden"
+                                            title="Limpiar búsqueda">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <!-- Search loading indicator -->
+                                    <div id="search-loading-indicator" class="hidden">
+                                        <i class="fas fa-spinner fa-spin text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Search results info -->
+                        <div id="search-results-info" class="text-sm text-gray-600 hidden">
+                            <span id="search-results-text"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-x-auto relative table-container">
+            <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
                 <!-- Loading Overlay -->
                 <div id="loading-overlay" class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-10 hidden">
                     <div class="text-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <span class="text-gray-700 font-medium" id="loading-text">Cargando productos...</span>
-                        <p class="text-sm text-gray-500 mt-1" id="loading-subtext">Por favor espere</p>
-                        <div class="mt-3 text-xs text-gray-400">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                        <span class="text-gray-700 font-medium text-sm" id="loading-text">Cargando productos...</span>
+                        <p class="text-xs text-gray-500 mt-1" id="loading-subtext">Por favor espere</p>
+                        <div class="mt-2 text-xs text-gray-400">
                             <i class="fas fa-clock mr-1"></i>
                             <span id="loading-timer">0s</span>
                         </div>
                     </div>
                 </div>
 
-                <table class="min-w-full divide-y divide-gray-200 products-table">
-                    <thead class="bg-gray-50 sticky top-0 z-20">
-                        <tr>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <span class="hidden sm:inline">SKU</span>
-                                <span class="sm:hidden">Código</span>
-                            </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <!-- Tabla compacta con Tailwind -->
+                <div class="max-h-[calc(100vh-12rem)] overflow-y-auto relative">
+                    <table class="min-w-full divide-y divide-gray-200 products-table text-xs">
+                        <thead class="bg-gray-50 sticky top-0 z-20">
+                                                    <tr class="divide-x divide-gray-200">
+                            <!-- Descripción: 20% -->
+                            <th class="w-[20%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">
                                 Descripción
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <!-- M/G: 8% -->
+                            <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-l-2 border-gray-300" title="Marca/Genérico">
                                 <span class="hidden lg:inline">M/G</span>
-                                <span class="lg:hidden hidden sm:inline">Marca</span>
-                                <span class="sm:hidden">M</span>
+                                <span class="lg:hidden">M</span>
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                <span class="hidden lg:inline">Ét/Po</span>
-                                <span class="lg:hidden">Ético</span>
+                            <!-- É/P: 8% -->  
+                            <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-r-2 border-gray-300" title="Ético/Popular">
+                                <span class="hidden lg:inline">É/P</span>
+                                <span class="lg:hidden">É</span>
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <!-- Fuente: 6% -->
+                            <th class="w-[6%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                Fuente
+                            </th>
+                            <!-- Molécula: 14% -->
+                            <th class="w-[14%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
                                 Molécula
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                                <span class="hidden lg:inline">Fuente</span>
-                                <span class="lg:hidden">F</span>
+                            <!-- FF3: 10% -->
+                            <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                                <span class="hidden lg:inline">FF3</span>
+                                <span class="lg:hidden">FF</span>
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center hidden md:table-cell">
-                                <span class="hidden lg:inline">CodFF3</span>
-                                <span class="lg:hidden">FF3</span>
+                            <!-- ATC4: 10% -->
+                            <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                                <span class="hidden lg:inline">ATC4</span>
+                                <span class="lg:hidden">AT</span>
                             </th>
-                            <th class="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center hidden md:table-cell">
-                                <span class="hidden lg:inline">CodATC4</span>
-                                <span class="lg:hidden">ATC4</span>
+                            <!-- Laboratorio: 8% -->
+                            <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
+                                Laboratorio
                             </th>
-                            <th class="px-1 sm:px-2 lg:px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <span class="hidden sm:inline">Acc</span>
-                                <span class="sm:hidden">•••</span>
+                            <!-- Corporación: 8% -->
+                            <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden xl:table-cell">
+                                Corporación
                             </th>
-                                <span class="hidden sm:inline">Acc</span>
-                                <span class="sm:hidden">•••</span>
+                            <!-- Acciones: 2% -->
+                            <th class="w-[2%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                •
                             </th>
                         </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="products-table-body">
-                        <!-- Products will be loaded here via JavaScript -->
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100 divide-x divide-gray-200" id="products-table-body">
+                            <!-- Products will be loaded here via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Loading State (backup) -->
@@ -153,26 +197,28 @@
         <div class="mt-3 text-center">
             <!-- Icono de advertencia -->
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                <i class="fas fa-trash text-red-600 text-xl"></i>
             </div>
             <!-- Título -->
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Cambiar Estado a ESPERA</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Quitar Producto del Mercado</h3>
             <!-- Mensaje -->
             <div class="mt-2 px-7 py-3">
                 <p class="text-sm text-gray-500 mb-2">
-                    ¿Estás seguro de que deseas cambiar el estado del siguiente producto?
+                    ¿Estás seguro de que deseas quitar el siguiente producto de este mercado?
                 </p>
                 <div class="bg-gray-50 p-3 rounded-lg mb-4">
                     <p class="font-medium text-gray-900" id="remove-product-name">Nombre del producto</p>
                     <p class="text-sm text-gray-600">Código: <span id="remove-product-code"></span></p>
                 </div>
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                    <h4 class="text-sm font-medium text-blue-800 mb-2">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Esto realizará la siguiente acción:
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                    <h4 class="text-sm font-medium text-red-800 mb-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Esta acción:
                     </h4>
-                    <ul class="text-xs text-blue-700 space-y-1">
-                        <li>• El estado del producto cambiará a <strong>ESPERA</strong></li>
+                    <ul class="text-xs text-red-700 space-y-1">
+                        <li>• Removerá el producto de este mercado</li>
+                        <li>• El producto será asignado al categoria "RESTO"</li>
+                        <li>• Esta acción es reversible</li>
                     </ul>
                 </div>
             </div>
@@ -182,12 +228,12 @@
                         class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors duration-200">
                     Cancelar
                 </button>
-                <button id="confirm-remove-btn" onclick="changeStatusMarket()" 
-                        class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200">
-                    <span class="btn-text" >Cambiar a ESPERA</span>
+                <button id="confirm-remove-btn" onclick="removeProductFromMarket()" 
+                        class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200">
+                    <span class="btn-text">Quitar Producto</span>
                     <span class="btn-loading hidden">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
-                        Procesando...
+                        Quitando...
                     </span>
                 </button>
             </div>
@@ -292,6 +338,95 @@
                 <button id="confirm-change-btn" onclick="changeProductMarket()"
                         class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200">
                     <span class="btn-text">Cambiar Mercado</span>
+                    <span class="btn-loading hidden">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Cambiando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación Final para Quitar Producto -->
+<div id="final-confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[60] hidden flex items-center justify-center">
+    <div class="relative mx-auto p-6 border w-96 shadow-xl rounded-lg bg-white">
+        <div class="text-center">
+            <!-- Icono de advertencia crítica -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <!-- Título -->
+            <h3 class="text-xl font-bold text-gray-900 mb-3">¿Estás completamente seguro?</h3>
+            <!-- Mensaje -->
+            <div class="mb-6">
+                <p class="text-sm text-gray-600 mb-3">
+                    Esta acción quitará definitivamente el producto del mercado actual.
+                </p>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-red-800">
+                        El producto será movido a la categoría "RESTO"
+                    </p>
+                </div>
+            </div>
+            <!-- Botones -->
+            <div class="flex justify-center space-x-4">
+                <button onclick="closeFinalConfirmationModal()" 
+                        class="px-6 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors duration-200">
+                    No, cancelar
+                </button>
+                <button id="final-confirm-btn" onclick="proceedWithRemoval()" 
+                        class="px-6 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200">
+                    <span class="btn-text">Sí, quitar producto</span>
+                    <span class="btn-loading hidden">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Quitando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación Final para Cambiar Mercado -->
+<div id="final-change-confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[60] hidden flex items-center justify-center">
+    <div class="relative mx-auto p-6 border w-96 shadow-xl rounded-lg bg-white">
+        <div class="text-center">
+            <!-- Icono de cambio -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                <i class="fas fa-exchange-alt text-blue-600 text-2xl"></i>
+            </div>
+            <!-- Título -->
+            <h3 class="text-xl font-bold text-gray-900 mb-3">¿Confirmas el cambio de mercado?</h3>
+            <!-- Mensaje -->
+            <div class="mb-6">
+                <p class="text-sm text-gray-600 mb-3">
+                    Esta acción moverá el producto al nuevo mercado seleccionado.
+                </p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm font-medium text-blue-800 mb-1">
+                        Producto: <span id="final-change-product-name" class="font-normal"></span>
+                    </p>
+                    <p class="text-sm font-medium text-blue-800">
+                        Nuevo mercado: <span id="final-change-market-name" class="font-normal"></span>
+                    </p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p class="text-xs text-amber-700">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Esta acción es reversible y se puede cambiar nuevamente si es necesario
+                    </p>
+                </div>
+            </div>
+            <!-- Botones -->
+            <div class="flex justify-center space-x-4">
+                <button onclick="closeFinalChangeConfirmationModal()" 
+                        class="px-6 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-colors duration-200">
+                    No, cancelar
+                </button>
+                <button id="final-change-confirm-btn" onclick="proceedWithMarketChange()" 
+                        class="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200">
+                    <span class="btn-text">Sí, cambiar mercado</span>
                     <span class="btn-loading hidden">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         Cambiando...

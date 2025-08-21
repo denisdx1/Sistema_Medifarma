@@ -374,10 +374,104 @@ class MarketManagementController extends Controller
                 ], 404);
             }
 
-            // Tamaño de página optimizado (máximo 100, mínimo 10)
-            $perPage = min(max((int) $request->get('per_page', 25), 10), 100);
-            
-            // Obtener cursor de la request
+            // OPTIMIZACIÓN: Obtener parámetro de búsqueda
+            $search = $request->get('search', '');
+            $search = trim($search);
+
+            // Construir query base con filtros de búsqueda
+            $baseQueryForCount = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->where('v.MERCADO', $market->mercado);
+
+            // Aplicar filtros de búsqueda si existe
+            if (!empty($search)) {
+                $baseQueryForCount->where(function($query) use ($search) {
+                    $query->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                          ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $totalProducts = $baseQueryForCount->count();
+
+            // Si el mercado tiene 50 productos o menos (después de filtro), cargar todos de una vez
+            if ($totalProducts <= 50) {
+                $query = DB::connection('sqlsrv')
+                    ->table('dbo.VMAE_PROD_IQVIA as v')
+                    ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
+                        $join->on('v.codigoPresentacion', '=', 'c.codigo')
+                             ->where('c.idMercado', '=', $market->idMercado);
+                    })
+                    ->select([
+                        'v.codigoPresentacion',
+                        'v.descripcionPresentacion', 
+                        'v.marcaGenerico',
+                        'v.eticoPopular',
+                        'v.molecula',
+                        'v.descripcionFF3',
+                        'v.descripcionATC4',
+                        'v.descripcionLaboratorio',
+                        'v.descripcionCorporacion',
+                        'v.MERCADO',
+                        'c.fuente'
+                    ])
+                    ->where('v.MERCADO', $market->mercado);
+
+                // Aplicar filtros de búsqueda
+                if (!empty($search)) {
+                    $query->where(function($subQuery) use ($search) {
+                        $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                                 ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+                    });
+                }
+
+                $productos = $query->orderBy('v.codigoPresentacion')->get();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $productos->toArray(),
+                    'market' => [
+                        'id' => $market->idMercado,
+                        'name' => $market->mercado
+                    ],
+                    'pagination' => [
+                        'per_page' => $totalProducts,
+                        'next_cursor' => null,
+                        'prev_cursor' => null,
+                        'has_more_pages' => false,
+                        'has_previous_pages' => false,
+                    ],
+                    'loaded_count' => $productos->count(),
+                    'search' => [
+                        'query' => $search,
+                        'has_search' => !empty($search),
+                        'results_count' => $productos->count()
+                    ],
+                    'query_info' => [
+                        'optimization' => 'small_market_full_load',
+                        'total_products' => $totalProducts,
+                        'using_view' => 'dbo.VMAE_PROD_IQVIA',
+                        'joined_with' => 'ODS.TAB_CONFIGURACION',
+                        'market_filter' => $market->mercado,
+                        'market_id' => $market->idMercado,
+                        'includes_fuente' => true
+                    ]
+                ]);
+            }
+
+            // Para mercados grandes, usar paginación cursor
+            $perPage = min(max((int) $request->get('per_page', 25), 20), 100);
             $cursor = $request->get('cursor');
 
             // Query OPTIMIZADA con JOIN a TAB_CONFIGURACION para obtener la fuente
@@ -393,13 +487,30 @@ class MarketManagementController extends Controller
                     'v.marcaGenerico',
                     'v.eticoPopular',
                     'v.molecula',
-                    'v.codigoFF3',
-                    'v.codigoATC4',
+                    'v.descripcionFF3',
+                    'v.descripcionATC4',
+                    'v.descripcionLaboratorio',
+                    'v.descripcionCorporacion',
                     'v.MERCADO',
                     'c.fuente'
                 ])
-                ->where('v.MERCADO', $market->mercado)
-                ->orderBy('v.codigoPresentacion'); // Ordenado por campo con posible índice
+                ->where('v.MERCADO', $market->mercado);
+
+            // Aplicar filtros de búsqueda también para mercados grandes
+            if (!empty($search)) {
+                $baseQuery->where(function($subQuery) use ($search) {
+                    $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                             ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                             ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $baseQuery->orderBy('v.codigoPresentacion'); // Ordenado por campo con posible índice
 
             // Aplicar cursor pagination manualmente para mejor control
             if ($cursor) {
@@ -476,6 +587,11 @@ class MarketManagementController extends Controller
                     'has_previous_pages' => $hasPreviousPages,
                 ],
                 'loaded_count' => $productos->count(),
+                'search' => [
+                    'query' => $search,
+                    'has_search' => !empty($search),
+                    'results_count' => $productos->count()
+                ],
                 'query_info' => [
                     'using_view' => 'dbo.VMAE_PROD_IQVIA',
                     'joined_with' => 'ODS.TAB_CONFIGURACION',
@@ -683,6 +799,214 @@ class MarketManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al remover el producto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get products from RESTO market for assignment
+     */
+    public function getRestoProducts(Request $request)
+    {
+        try {
+            $search = $request->get('search', '');
+            $search = trim($search);
+            $cursor = $request->get('cursor');
+            $perPage = min(max((int) $request->get('per_page', 50), 20), 100);
+
+            // Query base para productos en RESTO (mercado = 'RESTO')
+            $baseQuery = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->select([
+                    'v.codigoPresentacion',
+                    'v.descripcionPresentacion', 
+                    'v.marcaGenerico',
+                    'v.eticoPopular',
+                    'v.molecula as descripcionMolecula',
+                    'v.descripcionFF3',
+                    'v.descripcionATC4',
+                    'v.descripcionLaboratorio',
+                    'v.descripcionCorporacion',
+                    'v.MERCADO',
+                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente") // Usar 'IQV' como fuente por defecto
+                ])
+                ->where('v.MERCADO', 'RESTO');
+
+            // Aplicar filtros de búsqueda si existe
+            if (!empty($search)) {
+                $baseQuery->where(function($query) use ($search) {
+                    $query->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                          ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                          ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Contar total
+            $totalProducts = $baseQuery->count();
+
+            $baseQuery->orderBy('v.codigoPresentacion');
+
+            // Aplicar cursor pagination si existe
+            if ($cursor) {
+                try {
+                    $decodedCursor = base64_decode($cursor);
+                    $cursorData = json_decode($decodedCursor, true);
+                    
+                    if ($cursorData && isset($cursorData['codigoPresentacion'])) {
+                        $baseQuery->where('v.codigoPresentacion', '>', $cursorData['codigoPresentacion']);
+                    }
+                } catch (\Exception $e) {
+                    // Si el cursor es inválido, ignorar
+                }
+            }
+
+            // Obtener productos con límite +1 para verificar si hay más páginas
+            $productos = $baseQuery->limit($perPage + 1)->get();
+            
+            // Verificar si hay más páginas
+            $hasMorePages = $productos->count() > $perPage;
+            if ($hasMorePages) {
+                $productos = $productos->take($perPage);
+            }
+
+            // Generar cursor para la siguiente página
+            $nextCursor = null;
+            if ($hasMorePages && $productos->isNotEmpty()) {
+                $lastItem = $productos->last();
+                $nextCursor = base64_encode(json_encode([
+                    'codigoPresentacion' => $lastItem->codigoPresentacion
+                ]));
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'products' => $productos->toArray(),
+                    'total' => $totalProducts,
+                    'next_cursor' => $nextCursor,
+                    'has_more_pages' => $hasMorePages
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener productos RESTO: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign multiple products to a market using stored procedure ODS.SP_INSERT_CONFIGURACION
+     */
+    public function assignProducts(Request $request)
+    {
+        $validated = $request->validate([
+            'idMercado' => 'required|integer',
+            'products' => 'required|array|min:1',
+            'products.*.code' => 'required|string',
+            'products.*.fuente' => 'required|string|min:1' // Asegurar que fuente no esté vacía
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            // Verificar que el mercado existe y está activo
+            $mercado = DB::connection('sqlsrv')
+                ->table('ODS.TAB_MERCADO as m')
+                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                ->select('m.idMercado', 'm.mercado', 'e.estado')
+                ->where('m.idMercado', $validated['idMercado'])
+                ->where('e.estado', 'ACTIVO')
+                ->first();
+                
+            if (!$mercado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El mercado no existe o no está activo'
+                ], 422);
+            }
+
+            $assignedCount = 0;
+            $errors = [];
+
+            // Procesar cada producto
+            foreach ($validated['products'] as $product) {
+                try {
+                    // Verificar que el producto existe en VMAE_PROD_IQVIA con mercado RESTO
+                    $productoExiste = DB::connection('sqlsrv')
+                        ->table('dbo.VMAE_PROD_IQVIA')
+                        ->where('codigoPresentacion', $product['code'])
+                        ->where('MERCADO', 'RESTO')
+                        ->exists();
+                        
+                    if (!$productoExiste) {
+                        $errors[] = "Producto {$product['code']} no encontrado en RESTO";
+                        continue;
+                    }
+
+                    // Verificar que el producto no esté ya asignado al mercado destino
+                    $yaAsignado = DB::connection('sqlsrv')
+                        ->table('ODS.TAB_CONFIGURACION')
+                        ->where('codigo', $product['code'])
+                        ->where('idMercado', $validated['idMercado'])
+                        ->exists();
+                        
+                    if ($yaAsignado) {
+                        $errors[] = "Producto {$product['code']} ya está asignado al mercado";
+                        continue;
+                    }
+
+                    // PASO 1: Eliminar la configuración existente del producto (que debería estar en RESTO)
+                    DB::connection('sqlsrv')
+                        ->table('ODS.TAB_CONFIGURACION')
+                        ->where('codigo', $product['code'])
+                        ->delete();
+
+                    // PASO 2: Ejecutar el stored procedure ODS.SP_INSERT_CONFIGURACION para el nuevo mercado
+                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?', [
+                        $validated['idMercado'],  // @idMercado
+                        $product['code'],         // @codigo
+                        $product['fuente']        // @fuente
+                    ]);
+
+                    $assignedCount++;
+
+                } catch (\Exception $e) {
+                    $errors[] = "Error asignando producto {$product['code']}: " . $e->getMessage();
+                }
+            }
+
+            DB::commit();
+
+            $response = [
+                'success' => true,
+                'assigned_count' => $assignedCount,
+                'total_requested' => count($validated['products']),
+                'market_name' => $mercado->mercado
+            ];
+
+            if (!empty($errors)) {
+                $response['warnings'] = $errors;
+                $response['message'] = "Se asignaron {$assignedCount} productos correctamente. " . count($errors) . " productos tuvieron errores.";
+            } else {
+                $response['message'] = "Todos los productos fueron asignados correctamente al mercado {$mercado->mercado}";
+            }
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar productos: ' . $e->getMessage()
             ], 500);
         }
     }
