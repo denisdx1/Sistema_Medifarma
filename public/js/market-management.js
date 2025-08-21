@@ -33,7 +33,7 @@ function closeCreateModal() {
 // Open edit modal
 function openEditModal(marketId, marketName) {
     $('#edit-market-id').val(marketId);
-    $('#edit-market-name').val(marketName);
+    $('#edit-market-name').val(marketName).data('original', marketName);
     $('#edit-modal').removeClass('hidden');
     $('#edit-market-name').focus();
 }
@@ -43,30 +43,164 @@ function closeEditModal() {
     $('#edit-modal').addClass('hidden');
 }
 
-// Toggle market status
-function toggleMarketStatus(marketId, marketName, currentStatus) {
-    const action = currentStatus === 'ACTIVO' ? 'desactivar' : 'activar';
+// Open create confirmation modal
+function openCreateConfirmationModal() {
+    const marketName = $('#market-name').val().trim();
     
-    if (confirm(`¿Estás seguro de que quieres ${action} el mercado "${marketName}"?`)) {
-        $.post(window.MarketManagementRoutes.toggleStatus, {
-            market_id: marketId,
-            _token: window.csrfToken
-        })
-        .done(function(response) {
-            if (response.success) {
-                showToast(response.message, 'success');
-                // Reload page to reflect changes
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                showToast(response.message, 'error');
-            }
-        })
-        .fail(function(xhr) {
-            showToast('Error al cambiar estado del mercado', 'error');
-        });
+    if (!marketName) {
+        showToast('Por favor ingresa un nombre para el mercado', 'error');
+        $('#market-name').focus();
+        return;
     }
+    
+    // Update confirmation modal with market name
+    $('#confirm-create-market-name').text(marketName);
+    
+    // Show confirmation modal
+    $('#create-confirmation-modal').removeClass('hidden');
+}
+
+// Close create confirmation modal
+function closeCreateConfirmationModal() {
+    $('#create-confirmation-modal').addClass('hidden');
+}
+
+// Confirm create market
+function confirmCreateMarket() {
+    const marketName = $('#market-name').val().trim();
+    const submitBtn = $('#confirm-create-btn');
+    const btnText = submitBtn.find('.btn-text');
+    const btnLoading = submitBtn.find('.btn-loading');
+    
+    // Show loading state
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    submitBtn.prop('disabled', true);
+    
+    // Submit form
+    $.post(window.MarketManagementRoutes.store, {
+        market_name: marketName,
+        _token: window.csrfToken
+    })
+    .done(function(response) {
+        if (response.success) {
+            showToast(response.message, 'success');
+            // Close both modals
+            closeCreateConfirmationModal();
+            closeCreateModal();
+            // Reload page to show new market
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showToast(response.message, 'error');
+        }
+    })
+    .fail(function(xhr) {
+        if (xhr.status === 422) {
+            const errors = xhr.responseJSON.errors;
+            if (errors.market_name) {
+                showToast(errors.market_name[0], 'error');
+            } else {
+                showToast('Error de validación', 'error');
+            }
+        } else {
+            showToast('Error al crear mercado', 'error');
+        }
+    })
+    .always(function() {
+        // Reset loading state
+        btnText.removeClass('hidden');
+        btnLoading.addClass('hidden');
+        submitBtn.prop('disabled', false);
+    });
+}
+
+// Open edit confirmation modal
+function openEditConfirmationModal() {
+    const currentName = $('#edit-market-name').data('original') || $('#edit-market-name').val();
+    const newName = $('#edit-market-name').val().trim();
+    
+    if (!newName) {
+        showToast('Por favor ingresa un nombre para el mercado', 'error');
+        $('#edit-market-name').focus();
+        return;
+    }
+    
+    if (currentName === newName) {
+        showToast('No hay cambios para guardar', 'warning');
+        return;
+    }
+    
+    // Update confirmation modal with names
+    $('#confirm-edit-current-name').text(currentName);
+    $('#confirm-edit-new-name').text(newName);
+    
+    // Show confirmation modal
+    $('#edit-confirmation-modal').removeClass('hidden');
+}
+
+// Close edit confirmation modal
+function closeEditConfirmationModal() {
+    $('#edit-confirmation-modal').addClass('hidden');
+}
+
+// Confirm edit market
+function confirmEditMarket() {
+    const marketId = $('#edit-market-id').val();
+    const marketName = $('#edit-market-name').val().trim();
+    const submitBtn = $('#confirm-edit-btn');
+    const btnText = submitBtn.find('.btn-text');
+    const btnLoading = submitBtn.find('.btn-loading');
+    
+    // Show loading state
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    submitBtn.prop('disabled', true);
+    
+    // Submit form
+    $.ajax({
+        url: window.MarketManagementRoutes.update,
+        method: 'POST',
+        data: {
+            market_id: marketId,
+            market_name: marketName,
+            _token: window.csrfToken,
+            _method: 'PUT'
+        }
+    })
+    .done(function(response) {
+        if (response.success) {
+            showToast(response.message, 'success');
+            // Close both modals
+            closeEditConfirmationModal();
+            closeEditModal();
+            // Reload page to show updated market
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            showToast(response.message, 'error');
+        }
+    })
+    .fail(function(xhr) {
+        if (xhr.status === 422) {
+            const errors = xhr.responseJSON.errors;
+            if (errors.market_name) {
+                showToast(errors.market_name[0], 'error');
+            } else {
+                showToast('Error de validación', 'error');
+            }
+        } else {
+            showToast('Error al actualizar mercado', 'error');
+        }
+    })
+    .always(function() {
+        // Reset loading state
+        btnText.removeClass('hidden');
+        btnLoading.addClass('hidden');
+        submitBtn.prop('disabled', false);
+    });
 }
 
 // View market products
@@ -484,100 +618,17 @@ $(document).ready(function() {
         }, 500); // Debounce search for 500ms
     });
 
-    // Handle create form submission
-    $('#create-market-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = $('#create-submit-btn');
-        submitBtn.prop('disabled', true);
-        submitBtn.find('.btn-text').hide();
-        submitBtn.find('.btn-loading').show();
-        
-        $.post(window.MarketManagementRoutes.create, $(this).serialize())
-        .done(function(response) {
-            if (response.success) {
-                showToast(response.message, 'success');
-                closeCreateModal();
-                // Redirect to the last page to show the new market
-                setTimeout(() => {
-                    if (response.redirect_to_page) {
-                        window.location.href = `${window.MarketManagementRoutes.index}?page=${response.redirect_to_page}`;
-                    } else {
-                        location.reload();
-                    }
-                }, 1500);
-            } else {
-                showToast(response.message, 'error');
-            }
-        })
-        .fail(function(xhr) {
-            const response = xhr.responseJSON;
-            if (response && response.errors) {
-                const firstError = Object.values(response.errors)[0][0];
-                showToast(firstError, 'error');
-            } else {
-                showToast('Error al crear mercado', 'error');
-            }
-        })
-        .always(function() {
-            submitBtn.prop('disabled', false);
-            submitBtn.find('.btn-text').show();
-            submitBtn.find('.btn-loading').hide();
-        });
-    });
-
-    // Handle edit form submission
-    $('#edit-market-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        const submitBtn = $('#edit-submit-btn');
-        submitBtn.prop('disabled', true);
-        submitBtn.find('.btn-text').hide();
-        submitBtn.find('.btn-loading').show();
-        
-        $.ajax({
-            url: window.MarketManagementRoutes.update,
-            method: 'PUT',
-            data: $(this).serialize(),
-            headers: {
-                'X-CSRF-TOKEN': window.csrfToken
-            }
-        })
-        .done(function(response) {
-            if (response.success) {
-                showToast(response.message, 'success');
-                closeEditModal();
-                // Reload page to show changes
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                showToast(response.message, 'error');
-            }
-        })
-        .fail(function(xhr) {
-            const response = xhr.responseJSON;
-            if (response && response.errors) {
-                const firstError = Object.values(response.errors)[0][0];
-                showToast(firstError, 'error');
-            } else {
-                showToast('Error al actualizar mercado', 'error');
-            }
-        })
-        .always(function() {
-            submitBtn.prop('disabled', false);
-            submitBtn.find('.btn-text').show();
-            submitBtn.find('.btn-loading').hide();
-        });
-    });
-
     // Close modal when clicking outside
-    $(document).on('click', '#create-modal, #edit-modal', function(e) {
+    $(document).on('click', '#create-modal, #edit-modal, #create-confirmation-modal, #edit-confirmation-modal', function(e) {
         if (e.target === this) {
             if (this.id === 'create-modal') {
                 closeCreateModal();
             } else if (this.id === 'edit-modal') {
                 closeEditModal();
+            } else if (this.id === 'create-confirmation-modal') {
+                closeCreateConfirmationModal();
+            } else if (this.id === 'edit-confirmation-modal') {
+                closeEditConfirmationModal();
             }
         }
     });
@@ -585,7 +636,11 @@ $(document).ready(function() {
     // Close modal with Escape key
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
-            if (!$('#create-modal').hasClass('hidden')) {
+            if (!$('#create-confirmation-modal').hasClass('hidden')) {
+                closeCreateConfirmationModal();
+            } else if (!$('#edit-confirmation-modal').hasClass('hidden')) {
+                closeEditConfirmationModal();
+            } else if (!$('#create-modal').hasClass('hidden')) {
                 closeCreateModal();
             } else if (!$('#edit-modal').hasClass('hidden')) {
                 closeEditModal();
@@ -602,6 +657,25 @@ let restoProducts = [];
 let currentRestoCursor = null;
 let isLoadingResto = false;
 
+// Filter variables for resto products modal
+let currentRestoFilters = {
+    descripcionFF3: '',
+    descripcionATC4: '',
+    descripcionLaboratorio: '',
+    fuente: '',
+    molecula: '',
+    descripcionCorporacion: ''
+};
+let restoFilterOptions = {
+    descripcionFF3: [],
+    descripcionATC4: [],
+    descripcionLaboratorio: [],
+    fuente: [],
+    molecula: [],
+    descripcionCorporacion: []
+};
+let restoFilterTimeout = null;
+
 // Función para abrir modal de asignación de productos
 function openAssignProductsModal(marketId, marketName) {
     currentAssignMarketId = marketId;
@@ -615,6 +689,9 @@ function openAssignProductsModal(marketId, marketName) {
     document.getElementById('resto-product-search').value = '';
     document.getElementById('clear-resto-search').classList.add('hidden');
     
+    // Limpiar filtros
+    clearAllRestoFilters();
+    
     // Mostrar modal
     document.getElementById('assign-products-modal').classList.remove('hidden');
     
@@ -623,6 +700,10 @@ function openAssignProductsModal(marketId, marketName) {
     
     // Configurar event listeners
     setupRestoProductSearch();
+    setupRestoFilters();
+    
+    // Cargar opciones de filtros
+    loadRestoFilterOptions();
 }
 
 // Función para cerrar modal
@@ -661,7 +742,152 @@ function setupRestoProductSearch() {
     clearButton.addEventListener('click', function() {
         searchInput.value = '';
         clearButton.classList.add('hidden');
+        
+        // Also clear all filters when clearing search
+        clearAllRestoFilters();
+        
         loadRestoProducts();
+    });
+}
+
+// Setup resto filters functionality
+function setupRestoFilters() {
+    // Initialize each filter select
+    Object.keys(currentRestoFilters).forEach(filterKey => {
+        const filterSelect = $(`#resto-filter-${filterKey}`);
+        const clearButton = $(`#clear-resto-filter-${filterKey}`);
+
+        // Filter change event
+        filterSelect.on('change', function() {
+            const value = $(this).val();
+            currentRestoFilters[filterKey] = value;
+            
+            // Show/hide clear button
+            if (value) {
+                clearButton.removeClass('hidden');
+            } else {
+                clearButton.addClass('hidden');
+            }
+
+            // Clear previous timeout
+            if (restoFilterTimeout) {
+                clearTimeout(restoFilterTimeout);
+            }
+
+            // Set new timeout for filter (300ms debounce)
+            restoFilterTimeout = setTimeout(() => {
+                applyRestoFilters();
+            }, 300);
+        });
+
+        // Clear individual filter
+        clearButton.on('click', function() {
+            filterSelect.val('');
+            clearButton.addClass('hidden');
+            currentRestoFilters[filterKey] = '';
+            applyRestoFilters();
+        });
+    });
+
+    // Clear all filters button
+    $('#clear-all-resto-filters').on('click', function() {
+        clearAllRestoFilters();
+        applyRestoFilters();
+    });
+
+    // Toggle filters panel
+    $('#toggle-resto-filters').on('click', function() {
+        const filtersPanel = $('#resto-filters-panel');
+        const icon = $(this).find('i:last');
+        
+        filtersPanel.toggleClass('hidden');
+        
+        if (filtersPanel.hasClass('hidden')) {
+            icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            $(this).find('span').text('Mostrar Filtros');
+        } else {
+            icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            $(this).find('span').text('Ocultar Filtros');
+        }
+    });
+}
+
+// Clear all resto filters
+function clearAllRestoFilters() {
+    Object.keys(currentRestoFilters).forEach(filterKey => {
+        currentRestoFilters[filterKey] = '';
+        $(`#resto-filter-${filterKey}`).val('');
+        $(`#clear-resto-filter-${filterKey}`).addClass('hidden');
+    });
+    updateRestoFilterStatus();
+}
+
+// Apply resto filters
+function applyRestoFilters() {
+    // Reset pagination when filtering
+    currentRestoCursor = null;
+    
+    // Update filter status
+    updateRestoFilterStatus();
+    
+    // Load products with current filters
+    const searchQuery = document.getElementById('resto-product-search').value.trim();
+    loadRestoProducts(null, false, searchQuery);
+}
+
+// Update filter status display
+function updateRestoFilterStatus() {
+    const activeFilters = Object.values(currentRestoFilters).filter(value => value.length > 0);
+    const statusDiv = $('#resto-filter-status');
+    const countSpan = $('#resto-filter-count');
+    const clearAllBtn = $('#clear-all-resto-filters');
+    
+    if (activeFilters.length > 0) {
+        countSpan.text(activeFilters.length);
+        statusDiv.removeClass('hidden');
+        clearAllBtn.removeClass('hidden');
+    } else {
+        statusDiv.addClass('hidden');
+        clearAllBtn.addClass('hidden');
+    }
+}
+
+// Load filter options from API
+function loadRestoFilterOptions() {
+    $.ajax({
+        url: '/market-management/resto-filter-options',
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                restoFilterOptions = response.data;
+                populateRestoFilterSelects();
+            }
+        },
+        error: function(xhr) {
+            console.error('Error loading filter options:', xhr);
+        }
+    });
+}
+
+// Populate filter select elements
+function populateRestoFilterSelects() {
+    Object.keys(restoFilterOptions).forEach(filterKey => {
+        const select = $(`#resto-filter-${filterKey}`);
+        const options = restoFilterOptions[filterKey];
+        
+        // Clear existing options except the first one
+        select.find('option:not(:first)').remove();
+        
+        // Add new options
+        options.forEach(option => {
+            if (option && option.trim()) {
+                select.append(`<option value="${option}">${option}</option>`);
+            }
+        });
     });
 }
 
@@ -676,6 +902,13 @@ function loadRestoProducts(cursor = null, append = false, searchQuery = '') {
         cursor: cursor,
         search: searchQuery
     };
+    
+    // Add filter parameters
+    Object.keys(currentRestoFilters).forEach(filterKey => {
+        if (currentRestoFilters[filterKey] && currentRestoFilters[filterKey].length > 0) {
+            data[`filter_${filterKey}`] = currentRestoFilters[filterKey];
+        }
+    });
     
     $.ajax({
         url: '/market-management/resto-products',

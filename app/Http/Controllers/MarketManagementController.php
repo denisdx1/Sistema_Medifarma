@@ -374,13 +374,27 @@ class MarketManagementController extends Controller
                 ], 404);
             }
 
-            // OPTIMIZACIÓN: Obtener parámetro de búsqueda
+            // OPTIMIZACIÓN: Obtener parámetros de búsqueda y filtros
             $search = $request->get('search', '');
             $search = trim($search);
+
+            // Obtener filtros individuales
+            $filters = [
+                'descripcionFF3' => trim($request->get('filter_descripcionFF3', '')),
+                'descripcionATC4' => trim($request->get('filter_descripcionATC4', '')),
+                'descripcionLaboratorio' => trim($request->get('filter_descripcionLaboratorio', '')),
+                'fuente' => trim($request->get('filter_fuente', '')),
+                'molecula' => trim($request->get('filter_molecula', '')),
+                'descripcionCorporacion' => trim($request->get('filter_descripcionCorporacion', ''))
+            ];
 
             // Construir query base con filtros de búsqueda
             $baseQueryForCount = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
+                    $join->on('v.codigoPresentacion', '=', 'c.codigo')
+                         ->where('c.idMercado', '=', $market->idMercado);
+                })
                 ->where('v.MERCADO', $market->mercado);
 
             // Aplicar filtros de búsqueda si existe
@@ -396,6 +410,9 @@ class MarketManagementController extends Controller
                           ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
                 });
             }
+
+            // Aplicar filtros individuales
+            $this->applyIndividualFilters($baseQueryForCount, $filters);
 
             $totalProducts = $baseQueryForCount->count();
 
@@ -436,6 +453,9 @@ class MarketManagementController extends Controller
                     });
                 }
 
+                // Aplicar filtros individuales
+                $this->applyIndividualFilters($query, $filters);
+
                 $productos = $query->orderBy('v.codigoPresentacion')->get();
 
                 return response()->json([
@@ -457,6 +477,10 @@ class MarketManagementController extends Controller
                         'query' => $search,
                         'has_search' => !empty($search),
                         'results_count' => $productos->count()
+                    ],
+                    'filters' => [
+                        'active_filters' => array_filter($filters),
+                        'filter_count' => count(array_filter($filters))
                     ],
                     'query_info' => [
                         'optimization' => 'small_market_full_load',
@@ -509,6 +533,9 @@ class MarketManagementController extends Controller
                              ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
                 });
             }
+
+            // Aplicar filtros individuales
+            $this->applyIndividualFilters($baseQuery, $filters);
 
             $baseQuery->orderBy('v.codigoPresentacion'); // Ordenado por campo con posible índice
 
@@ -591,6 +618,10 @@ class MarketManagementController extends Controller
                     'query' => $search,
                     'has_search' => !empty($search),
                     'results_count' => $productos->count()
+                ],
+                'filters' => [
+                    'active_filters' => array_filter($filters),
+                    'filter_count' => count(array_filter($filters))
                 ],
                 'query_info' => [
                     'using_view' => 'dbo.VMAE_PROD_IQVIA',
@@ -814,6 +845,16 @@ class MarketManagementController extends Controller
             $cursor = $request->get('cursor');
             $perPage = min(max((int) $request->get('per_page', 50), 20), 100);
 
+            // Obtener filtros individuales
+            $filters = [
+                'descripcionFF3' => trim($request->get('filter_descripcionFF3', '')),
+                'descripcionATC4' => trim($request->get('filter_descripcionATC4', '')),
+                'descripcionLaboratorio' => trim($request->get('filter_descripcionLaboratorio', '')),
+                'fuente' => trim($request->get('filter_fuente', '')),
+                'molecula' => trim($request->get('filter_molecula', '')),
+                'descripcionCorporacion' => trim($request->get('filter_descripcionCorporacion', ''))
+            ];
+
             // Query base para productos en RESTO (mercado = 'RESTO')
             $baseQuery = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
@@ -846,6 +887,9 @@ class MarketManagementController extends Controller
                           ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
                 });
             }
+
+            // Aplicar filtros individuales
+            $this->applyIndividualFilters($baseQuery, $filters);
 
             // Contar total
             $totalProducts = $baseQuery->count();
@@ -898,6 +942,101 @@ class MarketManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener productos RESTO: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get filter options for resto products modal
+     */
+    public function getRestoFilterOptions(Request $request)
+    {
+        try {
+            // Get distinct values for each filter field from RESTO products
+            $filterOptions = [];
+
+            // FF3 options
+            $ff3Options = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO')
+                ->whereNotNull('descripcionFF3')
+                ->where('descripcionFF3', '<>', '')
+                ->distinct()
+                ->orderBy('descripcionFF3')
+                ->pluck('descripcionFF3')
+                ->toArray();
+
+            // ATC4 options
+            $atc4Options = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO')
+                ->whereNotNull('descripcionATC4')
+                ->where('descripcionATC4', '<>', '')
+                ->distinct()
+                ->orderBy('descripcionATC4')
+                ->pluck('descripcionATC4')
+                ->toArray();
+
+            // Laboratorio options
+            $laboratorioOptions = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO')
+                ->whereNotNull('descripcionLaboratorio')
+                ->where('descripcionLaboratorio', '<>', '')
+                ->distinct()
+                ->orderBy('descripcionLaboratorio')
+                ->pluck('descripcionLaboratorio')
+                ->toArray();
+
+            // Fuente options
+            $fuenteOptions = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->where('v.MERCADO', 'RESTO')
+                ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"))
+                ->distinct()
+                ->orderBy('fuente')
+                ->pluck('fuente')
+                ->toArray();
+
+            // Molecula options
+            $moleculaOptions = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO')
+                ->whereNotNull('molecula')
+                ->where('molecula', '<>', '')
+                ->distinct()
+                ->orderBy('molecula')
+                ->pluck('molecula')
+                ->toArray();
+
+            // Corporacion options
+            $corporacionOptions = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO')
+                ->whereNotNull('descripcionCorporacion')
+                ->where('descripcionCorporacion', '<>', '')
+                ->distinct()
+                ->orderBy('descripcionCorporacion')
+                ->pluck('descripcionCorporacion')
+                ->toArray();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'descripcionFF3' => array_values($ff3Options),
+                    'descripcionATC4' => array_values($atc4Options),
+                    'descripcionLaboratorio' => array_values($laboratorioOptions),
+                    'fuente' => array_values($fuenteOptions),
+                    'molecula' => array_values($moleculaOptions),
+                    'descripcionCorporacion' => array_values($corporacionOptions)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar opciones de filtros: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1008,6 +1147,37 @@ class MarketManagementController extends Controller
                 'success' => false,
                 'message' => 'Error al asignar productos: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Aplicar filtros individuales a la consulta
+     */
+    private function applyIndividualFilters($query, $filters)
+    {
+        foreach ($filters as $field => $value) {
+            if (!empty($value)) {
+                switch ($field) {
+                    case 'descripcionFF3':
+                        $query->where('v.descripcionFF3', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionATC4':
+                        $query->where('v.descripcionATC4', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionLaboratorio':
+                        $query->where('v.descripcionLaboratorio', 'LIKE', "%{$value}%");
+                        break;
+                    case 'fuente':
+                        $query->where('c.fuente', 'LIKE', "%{$value}%");
+                        break;
+                    case 'molecula':
+                        $query->where('v.molecula', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionCorporacion':
+                        $query->where('v.descripcionCorporacion', 'LIKE', "%{$value}%");
+                        break;
+                }
+            }
         }
     }
 }

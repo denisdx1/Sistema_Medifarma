@@ -9,7 +9,7 @@ Route::get('/', function () {
     
     // CÓDIGO ORIGINAL COMENTADO - Descomentar cuando la autenticación esté lista
     if (Auth::check()) {
-        return redirect()->route('market-configuration.index');
+        return redirect()->route('market-management.index');
     }
     return redirect()->route('login');
 });
@@ -18,7 +18,6 @@ Route::get('/', function () {
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\MarketConfigurationController;
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -42,16 +41,6 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('test.markets');
     
-    // Market Configuration Routes - All roles can access with different permissions
-    // Market Configuration Routes - Productos IQVIA
-    Route::prefix('market-configuration')->name('market-configuration.')->group(function () {
-        // Ruta principal para mostrar la página
-        Route::get('/', [MarketConfigurationController::class, 'index'])->name('index');
-        
-        // Ruta para obtener productos con paginación y chunks
-        Route::get('/productos', [MarketConfigurationController::class, 'getProductos'])->name('get-productos');
-    });
-    
     // Market Management Routes - For Admin and Product Manager users
     // TEMPORAL: Middleware de autenticación comentado
     // Route::prefix('market-management')->name('market-management.')->group(function () {
@@ -70,13 +59,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/market-management/products/remove', [App\Http\Controllers\MarketManagementController::class, 'removeProduct'])->name('market-management.products.remove');
     Route::post('/market-management/products/change-market', [App\Http\Controllers\MarketManagementController::class, 'changeProductMarket'])->name('market-management.products.change-market');
     Route::get('/market-management/resto-products', [App\Http\Controllers\MarketManagementController::class, 'getRestoProducts'])->name('market-management.resto-products');
+    Route::get('/market-management/resto-filter-options', [App\Http\Controllers\MarketManagementController::class, 'getRestoFilterOptions'])->name('market-management.resto-filter-options');
     Route::post('/market-management/assign-products', [App\Http\Controllers\MarketManagementController::class, 'assignProducts'])->name('market-management.assign-products');
-    
-    // API routes
-    Route::prefix('api')->name('api.')->group(function () {
-        Route::get('/markets', [MarketConfigurationController::class, 'getMarketsAPI'])->name('markets');
-        Route::get('/product-details/{sku}', [MarketConfigurationController::class, 'getProductDetails'])->name('product-details');
-    });
     
     // User Management Routes - Available for authenticated users
     Route::prefix('users')->name('users.')->group(function () {

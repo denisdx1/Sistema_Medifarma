@@ -30,8 +30,22 @@ $(document).ready(function() {
     let currentSearchQuery = '';
     let isSearching = false;
 
+    // Filter variables
+    let currentFilters = {
+        descripcionFF3: '',
+        descripcionATC4: '',
+        descripcionLaboratorio: '',
+        fuente: '',
+        molecula: '',
+        descripcionCorporacion: ''
+    };
+    let filterTimeout = null;
+
     // Initialize search functionality
     initializeSearch();
+
+    // Initialize filter functionality
+    initializeFilters();
 
     // Load initial products
     loadProducts();
@@ -71,6 +85,14 @@ $(document).ready(function() {
             clearButton.addClass('hidden');
             searchResults.addClass('hidden');
             currentSearchQuery = '';
+            
+            // Also clear all filters when clearing search
+            Object.keys(currentFilters).forEach(filterKey => {
+                currentFilters[filterKey] = '';
+                $(`#filter-${filterKey}`).val('');
+                $(`#clear-filter-${filterKey}`).addClass('hidden');
+            });
+            
             loadProducts(); // Reload all products
         });
 
@@ -84,6 +106,92 @@ $(document).ready(function() {
                 performSearch($(this).val().trim());
             }
         });
+    }
+
+    // Initialize filter functionality
+    function initializeFilters() {
+        // Initialize each filter input
+        Object.keys(currentFilters).forEach(filterKey => {
+            const filterInput = $(`#filter-${filterKey}`);
+            const clearButton = $(`#clear-filter-${filterKey}`);
+
+            // Real-time filter with debouncing
+            filterInput.on('input', function() {
+                const value = $(this).val().trim();
+                currentFilters[filterKey] = value;
+                
+                // Show/hide clear button
+                if (value.length > 0) {
+                    clearButton.removeClass('hidden');
+                } else {
+                    clearButton.addClass('hidden');
+                }
+
+                // Clear previous timeout
+                if (filterTimeout) {
+                    clearTimeout(filterTimeout);
+                }
+
+                // Set new timeout for filter (300ms debounce)
+                filterTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300);
+            });
+
+            // Clear individual filter
+            clearButton.on('click', function() {
+                filterInput.val('');
+                clearButton.addClass('hidden');
+                currentFilters[filterKey] = '';
+                applyFilters();
+            });
+
+            // Handle Enter key
+            filterInput.on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (filterTimeout) {
+                        clearTimeout(filterTimeout);
+                    }
+                    applyFilters();
+                }
+            });
+        });
+
+        // Clear all filters button
+        $('#clear-all-filters').on('click', function() {
+            Object.keys(currentFilters).forEach(filterKey => {
+                currentFilters[filterKey] = '';
+                $(`#filter-${filterKey}`).val('');
+                $(`#clear-filter-${filterKey}`).addClass('hidden');
+            });
+            applyFilters();
+        });
+
+        // Toggle filters panel
+        $('#toggle-filters').on('click', function() {
+            const filtersPanel = $('#filters-panel');
+            const icon = $(this).find('i');
+            
+            filtersPanel.toggleClass('hidden');
+            
+            if (filtersPanel.hasClass('hidden')) {
+                icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                $(this).find('span').text('Mostrar Filtros');
+            } else {
+                icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                $(this).find('span').text('Ocultar Filtros');
+            }
+        });
+    }
+
+    // Apply filters function
+    function applyFilters() {
+        // Reset pagination when filtering
+        currentCursor = null;
+        
+        // Load products with current filters
+        loadProducts(null, false, currentSearchQuery);
     }
 
     // Perform search function
@@ -134,6 +242,13 @@ $(document).ready(function() {
             params.append('search', search);
         }
 
+        // Add filter parameters
+        Object.keys(currentFilters).forEach(filterKey => {
+            if (currentFilters[filterKey] && currentFilters[filterKey].length > 0) {
+                params.append(`filter_${filterKey}`, currentFilters[filterKey]);
+            }
+        });
+
         $.ajax({
             url: `${url}?${params}`,
             method: 'GET',
@@ -167,8 +282,11 @@ $(document).ready(function() {
                     }
                     
                     if (response.data.length === 0 && !append) {
+                        const activeFilters = Object.values(currentFilters).filter(value => value.length > 0);
                         if (response.search && response.search.has_search) {
                             showNoSearchResults(response.search.query);
+                        } else if (activeFilters.length > 0) {
+                            showNoSearchResults(null); // No search but has filters
                         } else {
                             showEmptyState();
                         }
@@ -214,10 +332,23 @@ $(document).ready(function() {
         // Hide loading indicator
         searchLoadingIndicator.addClass('hidden');
         
-        if (searchInfo && searchInfo.has_search) {
-            const resultsText = searchInfo.results_count === 1 
-                ? `1 producto encontrado para "${searchInfo.query}"`
-                : `${searchInfo.results_count} productos encontrados para "${searchInfo.query}"`;
+        // Count active filters
+        const activeFilters = Object.values(currentFilters).filter(value => value.length > 0);
+        const hasActiveFilters = activeFilters.length > 0;
+        const hasSearch = searchInfo && searchInfo.has_search;
+        
+        if (hasSearch || hasActiveFilters) {
+            let resultsText = '';
+            
+            if (hasSearch && hasActiveFilters) {
+                resultsText = `${searchInfo.results_count} productos encontrados para "${searchInfo.query}" con ${activeFilters.length} filtro(s) aplicado(s)`;
+            } else if (hasSearch) {
+                resultsText = searchInfo.results_count === 1 
+                    ? `1 producto encontrado para "${searchInfo.query}"`
+                    : `${searchInfo.results_count} productos encontrados para "${searchInfo.query}"`;
+            } else if (hasActiveFilters) {
+                resultsText = `Productos filtrados con ${activeFilters.length} filtro(s) aplicado(s)`;
+            }
             
             searchText.html(`
                 <i class="fas fa-search mr-1"></i>
@@ -231,18 +362,56 @@ $(document).ready(function() {
 
     function showNoSearchResults(query) {
         const tbody = $('#products-table-body');
+        const activeFilters = Object.values(currentFilters).filter(value => value.length > 0);
+        const hasActiveFilters = activeFilters.length > 0;
+        
+        let message = '';
+        let actionButton = '';
+        
+        if (query && hasActiveFilters) {
+            message = `No hay productos que coincidan con la búsqueda: <strong>"${query}"</strong> y los ${activeFilters.length} filtro(s) aplicado(s)`;
+            actionButton = `
+                <button onclick="$('#clear-search').click()" 
+                        class="mr-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Limpiar búsqueda y filtros
+                </button>
+                <button onclick="$('#clear-all-filters').click()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-eraser mr-2"></i>
+                    Solo limpiar filtros
+                </button>
+            `;
+        } else if (query) {
+            message = `No hay productos que coincidan con la búsqueda: <strong>"${query}"</strong>`;
+            actionButton = `
+                <button onclick="$('#clear-search').click()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Limpiar búsqueda
+                </button>
+            `;
+        } else if (hasActiveFilters) {
+            message = `No hay productos que coincidan con los ${activeFilters.length} filtro(s) aplicado(s)`;
+            actionButton = `
+                <button onclick="$('#clear-all-filters').click()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-eraser mr-2"></i>
+                    Limpiar filtros
+                </button>
+            `;
+        }
+        
         tbody.html(`
             <tr>
                 <td colspan="9" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center">
                         <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
                         <h3 class="text-lg font-medium text-gray-800 mb-2">No se encontraron productos</h3>
-                        <p class="text-gray-600 mb-4">No hay productos que coincidan con la búsqueda: <strong>"${query}"</strong></p>
-                        <button onclick="$('#clear-search').click()" 
-                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-times mr-2"></i>
-                            Limpiar búsqueda
-                        </button>
+                        <p class="text-gray-600 mb-4">${message}</p>
+                        <div class="space-x-2">
+                            ${actionButton}
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -293,7 +462,6 @@ $(document).ready(function() {
             if (!text) return '-';
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         };
-
         const descripcionCompleta = product['descripcionPresentacion'] || '-';
         const marcaGenerico = product['marcaGenerico'] || '-';
         const eticoPopular = product['eticoPopular'] || '-';
@@ -308,7 +476,7 @@ $(document).ready(function() {
             <tr class="hover:bg-gray-50 divide-x divide-gray-200">
                 <!-- Descripción 20% -->
                 <td class="w-[20%] px-1 py-1 text-xs text-gray-900 description-cell" title="${descripcionCompleta}">
-                    <div class="leading-tight font-medium" style="white-space: pre-wrap;">
+                    <div class="leading-tight font-medium whitespace-normal break-words text-left">
                         ${descripcionCompleta}
                     </div>
                 </td>
