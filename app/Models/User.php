@@ -33,6 +33,7 @@ class User extends Authenticatable
         'usuario',
         'login',
         'password',
+        'franquicia',
         'fechaRegistro',
         'idEstado'
     ];
@@ -59,37 +60,36 @@ class User extends Authenticatable
             'idRol' => 'integer',
             'usuario' => 'string',
             'login' => 'string',
+            'franquicia' => 'string',
             'fechaRegistro' => 'date',
             'idEstado' => 'integer',
-            // No usar hashed para password ya que viene como varbinary
+            // No usar hashed para password ya que viene como varbinary(32)
         ];
     }
 
     /**
-     * Role constants - mapeo con IDs de la nueva tabla
+     * Role constants - basado en datos reales de la BD
+     * Según la exploración: tenemos usuarios con idRol = 1 y idRol = 2
      */
     public const ROLE_ADMIN = 1;
-    public const ROLE_PRODUCT_MANAGER = 2;
-    public const ROLE_BUSINESS_INTELLIGENCE = 3;
+    public const ROLE_GERENTE_PRODUCTO = 2;
 
     /**
      * Role mapping for compatibility
      */
     private const ROLE_MAPPING = [
         1 => 'administrador',
-        2 => 'gerente_producto', 
-        3 => 'business_intelligence'
+        2 => 'gerente_producto'
     ];
 
     /**
-     * Get all available roles
+     * Get all available roles - basado en datos reales
      */
     public static function getRoles(): array
     {
         return [
             1 => 'Administrador',
             2 => 'Gerente de Producto (GP)',
-            3 => 'Business Intelligence (BI)',
         ];
     }
 
@@ -122,17 +122,17 @@ class User extends Authenticatable
     /**
      * Verificar si el usuario es gerente de producto
      */
-    public function isProductManager()
+    public function isGerenteProducto()
     {
-        return $this->idRol === self::ROLE_PRODUCT_MANAGER;
+        return $this->idRol === self::ROLE_GERENTE_PRODUCTO;
     }
 
     /**
-     * Verificar si el usuario es de business intelligence
+     * Verificar si el usuario es gerente de producto (alias para compatibilidad)
      */
-    public function isBusinessIntelligence()
+    public function isProductManager()
     {
-        return $this->idRol === self::ROLE_BUSINESS_INTELLIGENCE;
+        return $this->isGerenteProducto();
     }
 
     /**
@@ -305,11 +305,40 @@ class User extends Authenticatable
         $usuario->idRol = $datos['idRol'];
         $usuario->usuario = $datos['usuario'];
         $usuario->login = $datos['login'];
-        $usuario->password = $datos['password']; // Debe venir ya hasheada
+        $usuario->password = $datos['password']; // Debe venir ya hasheada en SHA2_256
+        $usuario->franquicia = $datos['franquicia'] ?? null;
         $usuario->fechaRegistro = $datos['fechaRegistro'] ?? now()->format('Y-m-d');
         $usuario->idEstado = $datos['idEstado'] ?? 1;
         $usuario->save();
         
         return $usuario;
+    }
+
+    /**
+     * Accessor para 'franquicia'
+     */
+    public function getFranquiciaAttribute($value)
+    {
+        return $value;
+    }
+
+    /**
+     * Obtener información completa del usuario para debug
+     */
+    public function getDebugInfo()
+    {
+        return [
+            'idUsuario' => $this->idUsuario,
+            'idRol' => $this->idRol,
+            'rol_nombre' => $this->getRoleDisplayName(),
+            'usuario' => $this->usuario,
+            'login' => $this->login,
+            'franquicia' => $this->franquicia,
+            'fechaRegistro' => $this->fechaRegistro,
+            'idEstado' => $this->idEstado,
+            'is_active' => $this->is_active,
+            'is_admin' => $this->isAdmin(),
+            'is_gerente_producto' => $this->isGerenteProducto()
+        ];
     }
 }
