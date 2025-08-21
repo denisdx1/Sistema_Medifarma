@@ -1,0 +1,374 @@
+/* Market Management Styles */
+
+/* Toast Container */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 300px;
+}
+
+.toast-success {
+    background-color: #d1fae5;
+    border: 1px solid #86efac;
+    color: #065f46;
+}
+
+.toast-error {
+    background-color: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+}
+
+.toast-info {
+    background-color: #dbeafe;
+    border: 1px solid #93c5fd;
+    color: #1e40af;
+}
+
+/* Button Loading States */
+.btn-loading {
+    display: none;
+}
+
+/* Modal animations */
+#create-modal,
+#edit-modal {
+    backdrop-filter: blur(4px);
+}
+
+#create-modal .bg-white,
+#edit-modal .bg-white {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+#create-modal.hidden .bg-white,
+#edit-modal.hidden .bg-white {
+    animation: modalSlideOut 0.3s ease-in;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+/* Table hover effects */
+.market-row:hover {
+    background-color: #f9fafb;
+    transition: background-color 0.2s ease;
+}
+
+/* Button focus states */
+button:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+button:focus-visible {
+    outline: 2px solid #7c3aed;
+    outline-offset: 2px;
+}
+
+/* Pagination styles */
+.pagination-container a,
+.pagination-container span {
+    transition: all 0.2s ease-in-out;
+    min-width: 28px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-container a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact pagination */
+.pagination-container .px-2 {
+    min-width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Active page styling */
+.pagination-container .bg-purple-600 {
+    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
+}
+
+/* Disabled pagination buttons */
+.pagination-container .cursor-not-allowed {
+    opacity: 0.5;
+}
+
+/* Ellipsis styling */
+.pagination-container .text-gray-400 {
+    font-weight: bold;
+    user-select: none;
+}
+
+/* Search input focus */
+#search-input:focus {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    transform: scale(1.02);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Products button special styling */
+.products-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.products-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Statistics cards hover effect */
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading state for buttons */
+.btn-loading-state {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-loading-state::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: loading-shine 1.5s infinite;
+}
+
+@keyframes loading-shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Action buttons styling */
+.action-btn {
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Edit button */
+.edit-btn {
+    background-color: #fef3c7;
+    color: #d97706;
+    border-color: #fbbf24;
+}
+
+.edit-btn:hover {
+    background-color: #fde68a;
+    border-color: #f59e0b;
+}
+
+/* Status toggle button */
+.status-btn-active {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+.status-btn-active:hover {
+    background-color: #fecaca;
+    border-color: #f87171;
+}
+
+.status-btn-inactive {
+    background-color: #d1fae5;
+    color: #059669;
+    border-color: #86efac;
+}
+
+.status-btn-inactive:hover {
+    background-color: #a7f3d0;
+    border-color: #34d399;
+}
+
+/* Products button */
+.products-btn {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+    border-color: #93c5fd;
+}
+
+.products-btn:hover {
+    background-color: #bfdbfe;
+    border-color: #60a5fa;
+}
+
+/* Empty state styling */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+}
+
+.empty-state h3 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+/* Search loading animation */
+.search-loading {
+    position: relative;
+}
+
+.search-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #7c3aed;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    #search-input {
+        width: 100%;
+        max-width: none;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .pagination-container .px-2 {
+        min-width: 20px;
+        height: 20px;
+        font-size: 0.625rem;
+    }
+}
+
+/* Status badge animations */
+.status-badge {
+    transition: all 0.2s ease;
+}
+
+.status-badge:hover {
+    transform: scale(1.05);
+}
+
+/* Form input focus states */
+.form-input:focus {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    border-color: #7c3aed;
+    transition: all 0.2s ease;
+}
+
+/* Card hover effects */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Icon animations */
+.icon-hover {
+    transition: transform 0.2s ease;
+}
+
+.icon-hover:hover {
+    transform: scale(1.1);
+}
+
+/* Gradient backgrounds */
+.gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.gradient-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.gradient-red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}

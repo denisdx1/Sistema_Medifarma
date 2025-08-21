@@ -19,7 +19,6 @@ class TabConfiguracion extends Model
         'codigo',
         'fuente',
         'fechaRegistro',
-        'idSolicitud',
         'idEstado'
     ];
 
@@ -27,7 +26,6 @@ class TabConfiguracion extends Model
         'fechaRegistro' => 'date',
         'idConfiguracion' => 'integer',
         'idMercado' => 'integer',
-        'idSolicitud' => 'integer',
         'idEstado' => 'integer'
     ];
 
@@ -45,14 +43,6 @@ class TabConfiguracion extends Model
     public function estado()
     {
         return $this->belongsTo(\App\Models\Estado::class, 'idEstado', 'idEstado');
-    }
-
-    /**
-     * Relación con la solicitud
-     */
-    public function solicitud()
-    {
-        return $this->belongsTo(\App\Models\Solicitud::class, 'idSolicitud', 'idSolicitud');
     }
 
     /**
@@ -94,7 +84,7 @@ class TabConfiguracion extends Model
      */
     public static function conRelaciones()
     {
-        return static::with(['mercado', 'estado', 'solicitud', 'productoIqvia']);
+        return static::with(['mercado', 'estado', 'productoIqvia']);
     }
 
     /**
