@@ -1,6 +1,6 @@
 // Market Configuration New - JavaScript para productos IQVIA con Cursor Pagination
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('Market Configuration New JavaScript loaded');
+    // JavaScript cargado correctamente
 
     $(document).ready(function () {
         // Variables globales para cursor pagination

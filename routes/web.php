@@ -52,17 +52,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/productos', [MarketConfigurationController::class, 'getProductos'])->name('get-productos');
     });
     
-    // Market Administration Routes - Only for Admin users
-    // TEMPORAL: Middleware de autenticación comentado
-    Route::prefix('market-administration')->name('market-administration.')->middleware(['auth', 'role:administrador'])->group(function () {
-        Route::get('/', [App\Http\Controllers\MarketAdministrationController::class, 'index'])->name('index');
-        Route::post('/approve', [App\Http\Controllers\MarketAdministrationController::class, 'approve'])->name('approve');
-        Route::post('/deny', [App\Http\Controllers\MarketAdministrationController::class, 'deny'])->name('deny');
-        Route::post('/change-status', [App\Http\Controllers\MarketAdministrationController::class, 'changeStatus'])->name('change-status');
-        Route::get('/pending-count', [App\Http\Controllers\MarketAdministrationController::class, 'getPendingCount'])->name('pending-count');
-        Route::get('/search', [App\Http\Controllers\MarketAdministrationController::class, 'search'])->name('search');
-    });
-
     // Market Management Routes - For Admin and Product Manager users
     // TEMPORAL: Middleware de autenticación comentado
     // Route::prefix('market-management')->name('market-management.')->group(function () {
@@ -95,14 +84,6 @@ Route::middleware('auth')->group(function () {
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
-    });
-    
-    // Admin Productos Routes - Admin module for product approval workflow
-    Route::prefix('admin-productos')->name('admin-productos.')->middleware(['auth', 'role:administrador'])->group(function () {
-        Route::get('/', [App\Http\Controllers\AdminProductosController::class, 'index'])->name('index');
-        Route::post('/aprobar', [App\Http\Controllers\AdminProductosController::class, 'aprobar'])->name('aprobar');
-        Route::post('/denegar', [App\Http\Controllers\AdminProductosController::class, 'denegar'])->name('denegar');
-        Route::get('/api/productos', [App\Http\Controllers\AdminProductosController::class, 'getProductosApi'])->name('productos.api');
     });
 
 });

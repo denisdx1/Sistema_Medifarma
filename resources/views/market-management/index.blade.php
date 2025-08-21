@@ -99,7 +99,7 @@
                         <div class="relative">
                             <input type="text" 
                                    id="search-input"
-                                   placeholder="Buscar por nombre, ID, estado o solicitud..."
+                                   placeholder="Buscar por nombre, ID o estado..."
                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 w-80">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <i class="fas fa-search text-gray-400"></i>
@@ -128,9 +128,6 @@
                                 Fecha Registro
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Solicitud
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Estado
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -157,13 +154,6 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $market->solicitud == 'APROBADO' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                    <i class="fas {{ $market->solicitud == 'APROBADO' ? 'fa-check' : 'fa-clock' }} mr-1"></i>
-                                    {{ $market->solicitud }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $market->estado == 'ACTIVO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                     <i class="fas {{ $market->estado == 'ACTIVO' ? 'fa-play' : 'fa-pause' }} mr-1"></i>
                                     {{ $market->estado }}
@@ -178,18 +168,15 @@
                                     Productos
                                 </button>
                                 
-                                <!-- Edit Market Button (only for approved markets) -->
-                                @if($market->solicitud == 'APROBADO')
+                                <!-- Edit Market Button -->
                                 <button onclick="openEditModal({{ $market->idMercado }}, '{{ $market->mercado }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
                                         title="Editar mercado">
                                     <i class="fas fa-edit mr-1"></i>
                                     Editar
                                 </button>
-                                @endif
                                 
-                                <!-- Toggle Status Button (only for approved markets) -->
-                                @if($market->solicitud == 'APROBADO')
+                                <!-- Toggle Status Button -->
                                 <button onclick="toggleMarketStatus({{ $market->idMercado }}, '{{ $market->mercado }}', '{{ $market->estado }}')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm
                                         {{ $market->estado == 'ACTIVO' ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200' }} 
@@ -197,10 +184,6 @@
                                     <i class="fas {{ $market->estado == 'ACTIVO' ? 'fa-pause' : 'fa-play' }} mr-1"></i>
                                     {{ $market->estado == 'ACTIVO' ? 'Desactivar' : 'Activar' }}
                                 </button>
-                                @else
-                                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-500">
-                                    <i class="fas fa-lock mr-1"></i>
-                                    Pendiente aprobación
                                 </span>
                                 @endif
                             </td>
@@ -750,7 +733,7 @@ function generateMarketRow(market) {
     const escapedMarketName = escapeHtml(market.mercado);
     
     // Generate status badge with icon
-    const statusBadge = generateStatusBadge(market.solicitud);
+    const statusBadge = generateStateBadge(market.estado);
     const stateBadge = generateStateBadge(market.estado);
     
     // Generate action buttons based on market status
@@ -786,36 +769,7 @@ function generateMarketRow(market) {
 }
 
 // Function to generate status badge with icon
-function generateStatusBadge(solicitud) {
-    let badgeClass, icon;
-    
-    switch(solicitud) {
-        case 'APROBADO':
-            badgeClass = 'bg-green-100 text-green-800';
-            icon = 'fa-check';
-            break;
-        case 'ESPERA':
-            badgeClass = 'bg-yellow-100 text-yellow-800';
-            icon = 'fa-clock';
-            break;
-        case 'DENEGADO':
-            badgeClass = 'bg-red-100 text-red-800';
-            icon = 'fa-times';
-            break;
-        default:
-            badgeClass = 'bg-gray-100 text-gray-800';
-            icon = 'fa-question';
-    }
-    
-    return `
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
-            <i class="fas ${icon} mr-1"></i>
-            ${solicitud}
-        </span>
-    `;
-}
-
-// Function to generate state badge with icon
+// Function to generate state badge with icon (removed solicitud function)
 function generateStateBadge(estado) {
     let badgeClass, icon;
     
@@ -869,41 +823,32 @@ function generateActionButtons(market) {
         `;
     }
     
-    if (market.solicitud === 'APROBADO') {
-        // Escapar el nombre del mercado de manera segura para JavaScript
-        const safeMarketName = escapeForJs(market.mercado || '');
-        
-        // Edit Market Button - Only for approved markets
-        buttons += `
-            <button onclick="openEditModal(${market.idMercado}, '${safeMarketName}')"
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
-                    title="Editar mercado">
-                <i class="fas fa-edit mr-1"></i>
-                Editar
-            </button>
-        `;
-        
-        // Toggle Status Button - Only for approved markets
-        const isActive = market.estado === 'ACTIVO';
-        const toggleClass = isActive ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200';
-        const toggleIcon = isActive ? 'fa-pause' : 'fa-play';
-        const toggleText = isActive ? 'Desactivar' : 'Activar';
-        
-        buttons += `
-            <button onclick="toggleMarketStatus(${market.idMercado}, '${safeMarketName}', '${market.estado}')"
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm ${toggleClass} transition-colors duration-200">
-                <i class="fas ${toggleIcon} mr-1"></i>
-                ${toggleText}
-            </button>
-        `;
-    } else {
-        // Pending approval message
-        buttons += `
-            <span class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-500">
-                <i class="fas fa-lock mr-1"></i>
-                Pendiente aprobación
-            </span>
-        `;
+    // Escapar el nombre del mercado de manera segura para JavaScript
+    const safeMarketName = escapeForJs(market.mercado || '');
+    
+    // Edit Market Button
+    buttons += `
+        <button onclick="openEditModal(${market.idMercado}, '${safeMarketName}')"
+                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
+                title="Editar mercado">
+            <i class="fas fa-edit mr-1"></i>
+            Editar
+        </button>
+    `;
+    
+    // Toggle Status Button
+    const isActive = market.estado === 'ACTIVO';
+    const toggleClass = isActive ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200';
+    const toggleIcon = isActive ? 'fa-pause' : 'fa-play';
+    const toggleText = isActive ? 'Desactivar' : 'Activar';
+    
+    buttons += `
+        <button onclick="toggleMarketStatus(${market.idMercado}, '${safeMarketName}', '${market.estado}')"
+                class="inline-flex items-center px-3 py-1 rounded-md text-sm ${toggleClass} transition-colors duration-200">
+            <i class="fas ${toggleIcon} mr-1"></i>
+            ${toggleText}
+        </button>
+    `;
     }
     
     return buttons;

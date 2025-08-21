@@ -770,7 +770,7 @@ $(document).ready(function() {
             },
             error: function(xhr, textStatus, errorThrown) {
                 console.error('Error en removeProduct:', {xhr, textStatus, errorThrown});
-                let errorMessage = 'Error al procesar la solicitud';
+                let errorMessage = 'Error al procesar la operación';
                 
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
@@ -901,8 +901,7 @@ $(document).ready(function() {
         // Filtrar mercados
         const filteredMarkets = availableMarkets.filter(market => {
             return market.idMercado !== currentMarketId && 
-                   market.estado === 'ACTIVO' && 
-                   market.solicitud === 'APROBADO' &&
+                   market.estado === 'ACTIVO' &&
                    (searchTerm === '' || 
                     market.mercado.toLowerCase().includes(searchTerm) ||
                     market.idMercado.toString().includes(searchTerm));

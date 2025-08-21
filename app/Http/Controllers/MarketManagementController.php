@@ -5,14 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Traits\HasAuditTrail;
-use App\Services\StoredProcedureAuditService;
 use App\Models\VmaeProductoIqvia;
 
 class MarketManagementController extends Controller
 {
-    use HasAuditTrail;
     /**
      * Display all markets with management capabilities
      */
@@ -21,19 +17,17 @@ class MarketManagementController extends Controller
         try {
             $search = $request->get('search'); // Parámetro de búsqueda
 
-            // Query base para mercados (excluir mercados DENEGADOS)
+            // Query base para mercados activos
             $marketsQuery = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
                 ->select(
                     'm.idMercado',
                     'm.mercado',
                     'm.fechaRegistro',
-                    's.solicitud',
                     'e.estado'
                 )
-                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
+                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos
                 ->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global si se proporciona un término
@@ -41,7 +35,7 @@ class MarketManagementController extends Controller
                 $searchTerm = '%' . $search . '%';
                 $marketsQuery->where(function($q) use ($searchTerm) {
                     $q->where('m.mercado', 'LIKE', $searchTerm)
-                      ->orWhere('s.solicitud', 'LIKE', $searchTerm)
+                      ->orWhere('e.estado', 'LIKE', $searchTerm)
                       ->orWhere('e.estado', 'LIKE', $searchTerm)
                       ->orWhere('m.idMercado', 'LIKE', $searchTerm);
                 });
@@ -51,41 +45,34 @@ class MarketManagementController extends Controller
             $markets = $marketsQuery->paginate(10);
             $markets->appends($request->all()); // Mantener parámetros en paginación
 
-            // Obtener estadísticas (sin paginación para el total real, excluyendo denegados)
+            // Obtener estadísticas (sin paginación para el total real)
             $allMarkets = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
-                ->select('s.solicitud', 'e.estado')
-                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados de las estadísticas
+                ->select('e.estado')
+                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos de las estadísticas
                 ->get();
 
             $stats = [
                 'total' => $allMarkets->count(),
-                'aprobados' => $allMarkets->where('solicitud', 'APROBADO')->count(),
-                'pendientes' => $allMarkets->where('solicitud', 'ESPERA')->count(),
                 'activos' => $allMarkets->where('estado', 'ACTIVO')->count(),
                 'inactivos' => $allMarkets->where('estado', 'INACTIVO')->count()
             ];
 
-            // Log de consulta de mercados
-            $this->auditView('TAB_MERCADO', 'Consulta de lista de mercados', [
-                'total_mercados' => $stats['total'],
-                'page' => $request->get('page', 1)
+            // Consulta de mercados ejecutada correctamente
+            return view('market-management.index', [
+                'markets' => $markets,
+                'search' => $search
             ]);
 
-            return view('market-management.index', compact('markets', 'stats'));
-
         } catch (\Exception $e) {
-            // Log del error
-            $this->auditError('VIEW', 'TAB_MERCADO', $e->getMessage(), 'Error al cargar lista de mercados');
+            // Error al cargar lista de mercados
             return back()->with('error', 'Error al cargar mercados: ' . $e->getMessage());
         }
     }
 
     /**
      * Create a new market using stored procedure ODS.SP_INSERT_MERCADO
-     * Crea el mercado con solicitud "ESPERA" para aprobación del administrador
      */
     public function createMarket(Request $request)
     {
@@ -116,11 +103,11 @@ class MarketManagementController extends Controller
             
             DB::commit();
             
-            // Calcular la página donde aparecerá el nuevo mercado (al final, excluyendo denegados)
+            // Calcular la página donde aparecerá el nuevo mercado
             $totalMarkets = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
-                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados del conteo
+                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos del conteo
                 ->count() + 1; // +1 por el que acabamos de crear
             
             $itemsPerPage = 10;
@@ -128,9 +115,9 @@ class MarketManagementController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'El mercado "' . $marketName . '" ha sido creado y enviado para aprobación del administrador',
+                'message' => 'El mercado "' . $marketName . '" ha sido creado exitosamente',
                 'market_name' => $marketName,
-                'status' => 'ESPERA',
+                'status' => 'ACTIVO',
                 'timestamp' => now()->format('H:i:s'),
                 'redirect_to_page' => $lastPage
             ]);
@@ -277,19 +264,17 @@ class MarketManagementController extends Controller
             $search = $request->get('search');
             $perPage = 10;
 
-            // Query base para búsqueda (excluir mercados DENEGADOS)
+            // Query base para búsqueda
             $query = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
                 ->select(
                     'm.idMercado',
                     'm.mercado',
                     'm.fechaRegistro',
-                    's.solicitud',
                     'e.estado'
                 )
-                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
+                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos
                 ->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global
@@ -297,7 +282,6 @@ class MarketManagementController extends Controller
                 $searchTerm = '%' . $search . '%';
                 $query->where(function($q) use ($searchTerm) {
                     $q->where('m.mercado', 'LIKE', $searchTerm)
-                      ->orWhere('s.solicitud', 'LIKE', $searchTerm)
                       ->orWhere('e.estado', 'LIKE', $searchTerm)
                       ->orWhere('m.idMercado', 'LIKE', $searchTerm);
                 });
@@ -332,12 +316,11 @@ class MarketManagementController extends Controller
     public function showProducts($marketId)
     {
         try {
-            // Log de acceso
-            Log::info('Acceso a productos del mercado', ['market_id' => $marketId]);
+            // Acceso a productos del mercado
             
             // Validar que marketId sea un número válido
             if (!is_numeric($marketId) || $marketId <= 0) {
-                Log::warning('ID de mercado inválido', ['market_id' => $marketId]);
+                // ID de mercado inválido
                 return redirect()->route('market-management.index')
                     ->with('error', 'ID de mercado inválido: ' . $marketId);
             }
@@ -349,20 +332,16 @@ class MarketManagementController extends Controller
                 ->first();
 
             if (!$market) {
-                Log::warning('Mercado no encontrado', ['market_id' => $marketId]);
+                // Mercado no encontrado
                 return redirect()->route('market-management.index')
                     ->with('error', 'El mercado con ID ' . $marketId . ' no existe');
             }
 
-            Log::info('Mercado encontrado', ['market' => $market]);
+            // Mercado encontrado correctamente
             return view('market-management.products', compact('market'));
 
         } catch (\Exception $e) {
-            Log::error('Error al cargar productos del mercado', [
-                'market_id' => $marketId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // Error al cargar productos del mercado
             return redirect()->route('market-management.index')
                 ->with('error', 'Error al cargar productos del mercado: ' . $e->getMessage());
         }
@@ -458,19 +437,17 @@ class MarketManagementController extends Controller
     public function getMarketsApi(Request $request)
     {
         try {
-            // Obtener todos los mercados con su estado y solicitud (excluir DENEGADOS)
+            // Obtener todos los mercados activos con su estado
             $markets = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_SOLICITUD as s', 'm.idSolicitud', '=', 's.idSolicitud')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
                 ->select(
                     'm.idMercado',
                     'm.mercado',
                     'm.fechaRegistro',
-                    's.solicitud',
                     'e.estado'
                 )
-                ->where('s.solicitud', '!=', 'DENEGADO') // Excluir mercados denegados
+                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos
                 ->orderBy('m.mercado', 'asc')
                 ->get();
 
@@ -481,12 +458,7 @@ class MarketManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error en getMarketsApi: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            // Error en getMarketsApi
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener la lista de mercados: ' . $e->getMessage()
@@ -511,12 +483,7 @@ class MarketManagementController extends Controller
                 'message' => 'Estado del producto actualizado exitosamente.'
             ]);
         } catch (\Exception $e) {
-            Log::error('Error en changeStatusMarket: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            // Error en changeStatusMarket
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar el estado del producto: ' . $e->getMessage()
@@ -539,14 +506,7 @@ class MarketManagementController extends Controller
                 $validated['codigoPresentacion']
             ]);
 
-            // Log de la operación para auditoría
-            Log::info('Solicitud para quitar producto ejecutada', [
-                'codigoPresentacion' => $validated['codigoPresentacion'],
-                'usuario' => Auth::user()->name ?? 'Usuario no identificado',
-                'timestamp' => now(),
-                'executed' => $executed
-            ]);
-
+            // Solicitud para quitar producto ejecutada correctamente
             return response()->json([
                 'success' => true,
                 'message' => 'El estado del producto ha sido cambiado a ESPERA exitosamente.',
@@ -554,13 +514,7 @@ class MarketManagementController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error al solicitar quitar producto: ' . $e->getMessage(), [
-                'codigoPresentacion' => $validated['codigoPresentacion'],
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            // Error al solicitar quitar producto
             return response()->json([
                 'success' => false,
                 'message' => 'Error al procesar la solicitud: ' . $e->getMessage()
