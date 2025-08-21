@@ -16,6 +16,7 @@ class MarketManagementController extends Controller
     {
         try {
             $search = $request->get('search'); // Parámetro de búsqueda
+            $user = Auth::user(); // Usuario autenticado
 
             // Query base para mercados activos
             $marketsQuery = DB::connection('sqlsrv')
@@ -27,8 +28,27 @@ class MarketManagementController extends Controller
                     'm.fechaRegistro',
                     'e.estado'
                 )
-                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos
-                ->orderBy('m.fechaRegistro', 'asc');
+                ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos
+
+            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                // Obtener mercados que pertenecen a la franquicia del usuario
+                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
+                    ->distinct()
+                    ->where('Franquicia', $user->franquicia)
+                    ->whereNotNull('MERCADO')
+                    ->pluck('MERCADO')
+                    ->toArray();
+
+                if (!empty($mercadosDeFranquicia)) {
+                    $marketsQuery->whereIn('m.mercado', $mercadosDeFranquicia);
+                } else {
+                    // Si no hay mercados para esta franquicia, no mostrar ninguno
+                    $marketsQuery->whereRaw('1 = 0');
+                }
+            }
+
+            $marketsQuery->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global si se proporciona un término
             if (!empty($search)) {
@@ -46,12 +66,29 @@ class MarketManagementController extends Controller
             $markets->appends($request->all()); // Mantener parámetros en paginación
 
             // Obtener estadísticas (sin paginación para el total real)
-            $allMarkets = DB::connection('sqlsrv')
+            $statsQuery = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO as m')
                 ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
                 ->select('e.estado')
-                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos de las estadísticas
-                ->get();
+                ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos de las estadísticas
+
+            // Aplicar el mismo filtro de franquicia a las estadísticas
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
+                    ->distinct()
+                    ->where('Franquicia', $user->franquicia)
+                    ->whereNotNull('MERCADO')
+                    ->pluck('MERCADO')
+                    ->toArray();
+
+                if (!empty($mercadosDeFranquicia)) {
+                    $statsQuery->whereIn('m.mercado', $mercadosDeFranquicia);
+                } else {
+                    $statsQuery->whereRaw('1 = 0');
+                }
+            }
+
+            $allMarkets = $statsQuery->get();
 
             $stats = [
                 'total' => $allMarkets->count(),
@@ -62,7 +99,9 @@ class MarketManagementController extends Controller
             // Consulta de mercados ejecutada correctamente
             return view('market-management.index', [
                 'markets' => $markets,
-                'search' => $search
+                'search' => $search,
+                'userFranquicia' => $user ? $user->franquicia : null,
+                'isGerenteProducto' => $user ? $user->idRol == 2 : false
             ]);
 
         } catch (\Exception $e) {
@@ -131,7 +170,7 @@ class MarketManagementController extends Controller
     }
 
     /**
-     * Update market name
+     * Update market name using stored procedure SP_UPDATE_MERCADO
      */
     public function updateMarket(Request $request)
     {
@@ -172,11 +211,11 @@ class MarketManagementController extends Controller
                 ], 422);
             }
             
-            // Actualizar el nombre del mercado
-            DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('idMercado', $request->market_id)
-                ->update(['mercado' => $marketName]);
+            // Llamar al stored procedure para actualizar el mercado
+            DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_MERCADO ?, ?', [
+                $request->market_id,  // @idMercado
+                $marketName          // @mercado
+            ]);
             
             DB::commit();
             
@@ -263,6 +302,7 @@ class MarketManagementController extends Controller
         try {
             $search = $request->get('search');
             $perPage = 10;
+            $user = Auth::user(); // Usuario autenticado
 
             // Query base para búsqueda
             $query = DB::connection('sqlsrv')
@@ -274,8 +314,27 @@ class MarketManagementController extends Controller
                     'm.fechaRegistro',
                     'e.estado'
                 )
-                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos
-                ->orderBy('m.fechaRegistro', 'asc');
+                ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos
+
+            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                // Obtener mercados que pertenecen a la franquicia del usuario
+                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
+                    ->distinct()
+                    ->where('Franquicia', $user->franquicia)
+                    ->whereNotNull('MERCADO')
+                    ->pluck('MERCADO')
+                    ->toArray();
+
+                if (!empty($mercadosDeFranquicia)) {
+                    $query->whereIn('m.mercado', $mercadosDeFranquicia);
+                } else {
+                    // Si no hay mercados para esta franquicia, no mostrar ninguno
+                    $query->whereRaw('1 = 0');
+                }
+            }
+
+            $query->orderBy('m.fechaRegistro', 'asc');
 
             // Aplicar búsqueda global
             if (!empty($search)) {
@@ -348,7 +407,7 @@ class MarketManagementController extends Controller
     }
 
     /**
-     * Get products for a specific market with cursor pagination - OPTIMIZED
+     * Get products for a specific market with cursor pagination - ULTRA OPTIMIZED
      */
     public function getMarketProducts(Request $request, $marketId)
     {
@@ -361,11 +420,15 @@ class MarketManagementController extends Controller
                 ], 400);
             }
 
-            // Verificar que el mercado existe
-            $market = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('idMercado', $marketId)
-                ->first();
+            // OPTIMIZACIÓN 1: Cache del mercado para evitar consulta repetida
+            static $marketCache = [];
+            if (!isset($marketCache[$marketId])) {
+                $marketCache[$marketId] = DB::connection('sqlsrv')
+                    ->table('ODS.TAB_MERCADO')
+                    ->where('idMercado', $marketId)
+                    ->first();
+            }
+            $market = $marketCache[$marketId];
 
             if (!$market) {
                 return response()->json([
@@ -374,138 +437,98 @@ class MarketManagementController extends Controller
                 ], 404);
             }
 
-            // OPTIMIZACIÓN: Obtener parámetros de búsqueda y filtros
-            $search = $request->get('search', '');
-            $search = trim($search);
+            // OPTIMIZACIÓN 2: Parámetros de búsqueda y paginación optimizados
+            $search = trim($request->get('search', ''));
+            $perPage = min(max((int) $request->get('per_page', 30), 20), 100);
+            $cursor = $request->get('cursor');
 
-            // Obtener filtros individuales
-            $filters = [
+            // Obtener filtros - solo los que tienen valor
+            $filters = array_filter([
                 'descripcionFF3' => trim($request->get('filter_descripcionFF3', '')),
                 'descripcionATC4' => trim($request->get('filter_descripcionATC4', '')),
                 'descripcionLaboratorio' => trim($request->get('filter_descripcionLaboratorio', '')),
                 'fuente' => trim($request->get('filter_fuente', '')),
                 'molecula' => trim($request->get('filter_molecula', '')),
                 'descripcionCorporacion' => trim($request->get('filter_descripcionCorporacion', ''))
-            ];
+            ]);
 
-            // Construir query base con filtros de búsqueda
-            $baseQueryForCount = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA as v')
-                ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
-                    $join->on('v.codigoPresentacion', '=', 'c.codigo')
-                         ->where('c.idMercado', '=', $market->idMercado);
-                })
-                ->where('v.MERCADO', $market->mercado);
+            // OPTIMIZACIÓN 3: Query base simplificado - SIN JOIN inicial para count
+            $hasFilters = !empty($filters) || !empty($search);
+            
+            // Determinar si necesitamos JOIN para fuente
+            $needsFuenteJoin = isset($filters['fuente']) || ($hasFilters && $perPage > 100);
 
-            // Aplicar filtros de búsqueda si existe
-            if (!empty($search)) {
-                $baseQueryForCount->where(function($query) use ($search) {
-                    $query->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
-                          ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
-                          ->orWhere('v.molecula', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
-                });
-            }
-
-            // Aplicar filtros individuales
-            $this->applyIndividualFilters($baseQueryForCount, $filters);
-
-            $totalProducts = $baseQueryForCount->count();
-
-            // Si el mercado tiene 50 productos o menos (después de filtro), cargar todos de una vez
-            if ($totalProducts <= 50) {
-                $query = DB::connection('sqlsrv')
+            // OPTIMIZACIÓN 4: Count rápido sin JOIN si no es necesario
+            if (!$needsFuenteJoin) {
+                $countQuery = DB::connection('sqlsrv')
                     ->table('dbo.VMAE_PROD_IQVIA as v')
-                    ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
-                        $join->on('v.codigoPresentacion', '=', 'c.codigo')
-                             ->where('c.idMercado', '=', $market->idMercado);
-                    })
-                    ->select([
-                        'v.codigoPresentacion',
-                        'v.descripcionPresentacion', 
-                        'v.marcaGenerico',
-                        'v.eticoPopular',
-                        'v.molecula',
-                        'v.descripcionFF3',
-                        'v.descripcionATC4',
-                        'v.descripcionLaboratorio',
-                        'v.descripcionCorporacion',
-                        'v.MERCADO',
-                        'c.fuente'
-                    ])
                     ->where('v.MERCADO', $market->mercado);
+                    
+                $this->applySearchAndFiltersNoJoin($countQuery, $search, $filters);
+                $totalProducts = $countQuery->count();
+                
+                // Para mercados pequeños (<=100), cargar todo sin JOIN
+                if ($totalProducts <= 100) {
+                    $productos = $countQuery
+                        ->select([
+                            'v.codigoPresentacion',
+                            'v.descripcionPresentacion', 
+                            'v.marcaGenerico',
+                            'v.eticoPopular',
+                            'v.molecula',
+                            'v.descripcionFF3',
+                            'v.descripcionATC4',
+                            'v.descripcionLaboratorio',
+                            'v.descripcionCorporacion',
+                            'v.MERCADO',
+                            DB::raw("'IQV' as fuente") // Fuente por defecto
+                        ])
+                        ->orderBy('v.codigoPresentacion')
+                        ->get();
 
-                // Aplicar filtros de búsqueda
-                if (!empty($search)) {
-                    $query->where(function($subQuery) use ($search) {
-                        $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.molecula', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
-                                 ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
-                    });
+                    return response()->json([
+                        'success' => true,
+                        'data' => $productos->toArray(),
+                        'market' => ['id' => $market->idMercado, 'name' => $market->mercado],
+                        'pagination' => [
+                            'per_page' => $totalProducts,
+                            'next_cursor' => null,
+                            'prev_cursor' => null,
+                            'has_more_pages' => false,
+                            'has_previous_pages' => false,
+                        ],
+                        'loaded_count' => $productos->count(),
+                        'search' => [
+                            'query' => $search,
+                            'has_search' => !empty($search),
+                            'results_count' => $productos->count()
+                        ],
+                        'filters' => [
+                            'active_filters' => $filters,
+                            'filter_count' => count($filters)
+                        ],
+                        'query_info' => [
+                            'optimization' => 'ultra_fast_no_join',
+                            'total_products' => $totalProducts,
+                            'market_filter' => $market->mercado,
+                            'includes_fuente' => false
+                        ]
+                    ]);
                 }
-
-                // Aplicar filtros individuales
-                $this->applyIndividualFilters($query, $filters);
-
-                $productos = $query->orderBy('v.codigoPresentacion')->get();
-
-                return response()->json([
-                    'success' => true,
-                    'data' => $productos->toArray(),
-                    'market' => [
-                        'id' => $market->idMercado,
-                        'name' => $market->mercado
-                    ],
-                    'pagination' => [
-                        'per_page' => $totalProducts,
-                        'next_cursor' => null,
-                        'prev_cursor' => null,
-                        'has_more_pages' => false,
-                        'has_previous_pages' => false,
-                    ],
-                    'loaded_count' => $productos->count(),
-                    'search' => [
-                        'query' => $search,
-                        'has_search' => !empty($search),
-                        'results_count' => $productos->count()
-                    ],
-                    'filters' => [
-                        'active_filters' => array_filter($filters),
-                        'filter_count' => count(array_filter($filters))
-                    ],
-                    'query_info' => [
-                        'optimization' => 'small_market_full_load',
-                        'total_products' => $totalProducts,
-                        'using_view' => 'dbo.VMAE_PROD_IQVIA',
-                        'joined_with' => 'ODS.TAB_CONFIGURACION',
-                        'market_filter' => $market->mercado,
-                        'market_id' => $market->idMercado,
-                        'includes_fuente' => true
-                    ]
-                ]);
             }
 
-            // Para mercados grandes, usar paginación cursor
-            $perPage = min(max((int) $request->get('per_page', 25), 20), 100);
-            $cursor = $request->get('cursor');
-
-            // Query OPTIMIZADA con JOIN a TAB_CONFIGURACION para obtener la fuente
+            // OPTIMIZACIÓN 5: Para mercados grandes, usar paginación con JOIN mínimo
             $baseQuery = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA as v')
-                ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
+                ->table('dbo.VMAE_PROD_IQVIA as v');
+
+            // Solo hacer JOIN si realmente necesitamos la fuente
+            if ($needsFuenteJoin) {
+                $baseQuery->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
                     $join->on('v.codigoPresentacion', '=', 'c.codigo')
                          ->where('c.idMercado', '=', $market->idMercado);
-                })
-                ->select([
+                });
+                
+                $selectFields = [
                     'v.codigoPresentacion',
                     'v.descripcionPresentacion', 
                     'v.marcaGenerico',
@@ -516,54 +539,58 @@ class MarketManagementController extends Controller
                     'v.descripcionLaboratorio',
                     'v.descripcionCorporacion',
                     'v.MERCADO',
-                    'c.fuente'
-                ])
-                ->where('v.MERCADO', $market->mercado);
-
-            // Aplicar filtros de búsqueda también para mercados grandes
-            if (!empty($search)) {
-                $baseQuery->where(function($subQuery) use ($search) {
-                    $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
-                             ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
-                             ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
-                             ->orWhere('v.molecula', 'LIKE', "%{$search}%")
-                             ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
-                             ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
-                             ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
-                             ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
-                });
+                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente")
+                ];
+            } else {
+                $selectFields = [
+                    'v.codigoPresentacion',
+                    'v.descripcionPresentacion', 
+                    'v.marcaGenerico',
+                    'v.eticoPopular',
+                    'v.molecula',
+                    'v.descripcionFF3',
+                    'v.descripcionATC4',
+                    'v.descripcionLaboratorio',
+                    'v.descripcionCorporacion',
+                    'v.MERCADO',
+                    DB::raw("'IQV' as fuente")
+                ];
             }
 
-            // Aplicar filtros individuales
-            $this->applyIndividualFilters($baseQuery, $filters);
+            $baseQuery->select($selectFields)->where('v.MERCADO', $market->mercado);
 
-            $baseQuery->orderBy('v.codigoPresentacion'); // Ordenado por campo con posible índice
+            // Aplicar filtros optimizados
+            if ($needsFuenteJoin) {
+                $this->applySearchAndFiltersWithJoin($baseQuery, $search, $filters);
+            } else {
+                $this->applySearchAndFiltersNoJoin($baseQuery, $search, $filters);
+            }
 
-            // Aplicar cursor pagination manualmente para mejor control
+            // OPTIMIZACIÓN 6: Cursor pagination optimizado
             if ($cursor) {
-                // Decodificar cursor
                 try {
                     $decodedCursor = base64_decode($cursor);
                     $cursorData = json_decode($decodedCursor, true);
                     
                     if ($cursorData && isset($cursorData['codigoPresentacion'])) {
-                        $baseQuery->where('codigoPresentacion', '>', $cursorData['codigoPresentacion']);
+                        $baseQuery->where('v.codigoPresentacion', '>', $cursorData['codigoPresentacion']);
                     }
                 } catch (\Exception $e) {
-                    // Si el cursor es inválido, ignorar y comenzar desde el principio
+                    // Cursor inválido, ignorar
                 }
             }
 
-            // Obtener productos con límite +1 para verificar si hay más páginas
+            $baseQuery->orderBy('v.codigoPresentacion');
+
+            // Obtener productos con límite +1 para verificar paginación
             $productos = $baseQuery->limit($perPage + 1)->get();
             
-            // Verificar si hay más páginas
             $hasMorePages = $productos->count() > $perPage;
             if ($hasMorePages) {
-                $productos = $productos->take($perPage); // Remover el elemento extra
+                $productos = $productos->take($perPage);
             }
 
-            // Generar cursor para la siguiente página
+            // Generar cursor siguiente
             $nextCursor = null;
             if ($hasMorePages && $productos->isNotEmpty()) {
                 $lastItem = $productos->last();
@@ -572,46 +599,16 @@ class MarketManagementController extends Controller
                 ]));
             }
 
-            // Generar cursor para la página anterior (simplificado para performance)
-            $prevCursor = null;
-            $hasPreviousPages = false;
-            
-            if ($cursor && $productos->isNotEmpty()) {
-                $firstItem = $productos->first();
-                
-                // Verificar si hay elementos anteriores con una consulta rápida
-                $hasPreviousPages = DB::connection('sqlsrv')
-                    ->table('dbo.VMAE_PROD_IQVIA as v')
-                    ->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
-                        $join->on('v.codigoPresentacion', '=', 'c.codigo')
-                             ->where('c.idMercado', '=', $market->idMercado);
-                    })
-                    ->where('v.MERCADO', $market->mercado)
-                    ->where('v.codigoPresentacion', '<', $firstItem->codigoPresentacion)
-                    ->exists();
-                    
-                if ($hasPreviousPages) {
-                    // Para simplificar, usar un cursor genérico para página anterior
-                    $prevCursor = base64_encode(json_encode([
-                        'codigoPresentacion' => $firstItem->codigoPresentacion,
-                        'direction' => 'prev'
-                    ]));
-                }
-            }
-
-            $response = [
+            return response()->json([
                 'success' => true,
                 'data' => $productos->toArray(),
-                'market' => [
-                    'id' => $market->idMercado,
-                    'name' => $market->mercado
-                ],
+                'market' => ['id' => $market->idMercado, 'name' => $market->mercado],
                 'pagination' => [
                     'per_page' => $perPage,
                     'next_cursor' => $nextCursor,
-                    'prev_cursor' => $prevCursor,
+                    'prev_cursor' => null,
                     'has_more_pages' => $hasMorePages,
-                    'has_previous_pages' => $hasPreviousPages,
+                    'has_previous_pages' => false,
                 ],
                 'loaded_count' => $productos->count(),
                 'search' => [
@@ -620,20 +617,16 @@ class MarketManagementController extends Controller
                     'results_count' => $productos->count()
                 ],
                 'filters' => [
-                    'active_filters' => array_filter($filters),
-                    'filter_count' => count(array_filter($filters))
+                    'active_filters' => $filters,
+                    'filter_count' => count($filters)
                 ],
                 'query_info' => [
-                    'using_view' => 'dbo.VMAE_PROD_IQVIA',
-                    'joined_with' => 'ODS.TAB_CONFIGURACION',
+                    'optimization' => 'ultra_optimized_cursor',
                     'market_filter' => $market->mercado,
-                    'market_id' => $market->idMercado,
-                    'cursor_applied' => $cursor !== null,
-                    'includes_fuente' => true
+                    'uses_join' => $needsFuenteJoin,
+                    'cursor_applied' => $cursor !== null
                 ]
-            ];
-
-            return response()->json($response);
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -844,6 +837,7 @@ class MarketManagementController extends Controller
             $search = trim($search);
             $cursor = $request->get('cursor');
             $perPage = min(max((int) $request->get('per_page', 50), 20), 100);
+            $user = Auth::user(); // Usuario autenticado
 
             // Obtener filtros individuales
             $filters = [
@@ -870,9 +864,15 @@ class MarketManagementController extends Controller
                     'v.descripcionLaboratorio',
                     'v.descripcionCorporacion',
                     'v.MERCADO',
+                    'v.Franquicia', // Agregar franquicia para filtrado
                     DB::raw("COALESCE(c.fuente, 'IQV') as fuente") // Usar 'IQV' como fuente por defecto
                 ])
                 ->where('v.MERCADO', 'RESTO');
+
+            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                $baseQuery->where('v.Franquicia', $user->franquicia);
+            }
 
             // Aplicar filtros de búsqueda si existe
             if (!empty($search)) {
@@ -934,7 +934,9 @@ class MarketManagementController extends Controller
                     'products' => $productos->toArray(),
                     'total' => $totalProducts,
                     'next_cursor' => $nextCursor,
-                    'has_more_pages' => $hasMorePages
+                    'has_more_pages' => $hasMorePages,
+                    'user_franquicia' => $user ? $user->franquicia : null,
+                    'filtered_by_franquicia' => $user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN'
                 ]
             ]);
 
@@ -952,13 +954,23 @@ class MarketManagementController extends Controller
     public function getRestoFilterOptions(Request $request)
     {
         try {
+            $user = Auth::user(); // Usuario autenticado
+            
+            // Base query para RESTO products con filtro de franquicia si aplica
+            $baseQuery = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA')
+                ->where('MERCADO', 'RESTO');
+
+            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                $baseQuery->where('Franquicia', $user->franquicia);
+            }
+
             // Get distinct values for each filter field from RESTO products
             $filterOptions = [];
 
             // FF3 options
-            $ff3Options = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
-                ->where('MERCADO', 'RESTO')
+            $ff3Options = (clone $baseQuery)
                 ->whereNotNull('descripcionFF3')
                 ->where('descripcionFF3', '<>', '')
                 ->distinct()
@@ -967,9 +979,7 @@ class MarketManagementController extends Controller
                 ->toArray();
 
             // ATC4 options
-            $atc4Options = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
-                ->where('MERCADO', 'RESTO')
+            $atc4Options = (clone $baseQuery)
                 ->whereNotNull('descripcionATC4')
                 ->where('descripcionATC4', '<>', '')
                 ->distinct()
@@ -978,9 +988,7 @@ class MarketManagementController extends Controller
                 ->toArray();
 
             // Laboratorio options
-            $laboratorioOptions = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
-                ->where('MERCADO', 'RESTO')
+            $laboratorioOptions = (clone $baseQuery)
                 ->whereNotNull('descripcionLaboratorio')
                 ->where('descripcionLaboratorio', '<>', '')
                 ->distinct()
@@ -988,11 +996,18 @@ class MarketManagementController extends Controller
                 ->pluck('descripcionLaboratorio')
                 ->toArray();
 
-            // Fuente options
-            $fuenteOptions = DB::connection('sqlsrv')
+            // Fuente options (con JOIN a TAB_CONFIGURACION)
+            $fuenteQuery = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                ->where('v.MERCADO', 'RESTO')
+                ->where('v.MERCADO', 'RESTO');
+            
+            // Aplicar filtro de franquicia también aquí
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                $fuenteQuery->where('v.Franquicia', $user->franquicia);
+            }
+            
+            $fuenteOptions = $fuenteQuery
                 ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"))
                 ->distinct()
                 ->orderBy('fuente')
@@ -1000,9 +1015,7 @@ class MarketManagementController extends Controller
                 ->toArray();
 
             // Molecula options
-            $moleculaOptions = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
-                ->where('MERCADO', 'RESTO')
+            $moleculaOptions = (clone $baseQuery)
                 ->whereNotNull('molecula')
                 ->where('molecula', '<>', '')
                 ->distinct()
@@ -1011,9 +1024,7 @@ class MarketManagementController extends Controller
                 ->toArray();
 
             // Corporacion options
-            $corporacionOptions = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
-                ->where('MERCADO', 'RESTO')
+            $corporacionOptions = (clone $baseQuery)
                 ->whereNotNull('descripcionCorporacion')
                 ->where('descripcionCorporacion', '<>', '')
                 ->distinct()
@@ -1030,6 +1041,10 @@ class MarketManagementController extends Controller
                     'fuente' => array_values($fuenteOptions),
                     'molecula' => array_values($moleculaOptions),
                     'descripcionCorporacion' => array_values($corporacionOptions)
+                ],
+                'user_info' => [
+                    'franquicia' => $user ? $user->franquicia : null,
+                    'filtered_by_franquicia' => $user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN'
                 ]
             ]);
 
@@ -1151,7 +1166,7 @@ class MarketManagementController extends Controller
     }
 
     /**
-     * Aplicar filtros individuales a la consulta
+     * Aplicar filtros individuales a la consulta CON JOIN
      */
     private function applyIndividualFilters($query, $filters)
     {
@@ -1179,5 +1194,71 @@ class MarketManagementController extends Controller
                 }
             }
         }
+    }
+
+    /**
+     * Aplicar búsqueda y filtros optimizados SIN JOIN (ultra rápido)
+     */
+    private function applySearchAndFiltersNoJoin($query, $search, $filters)
+    {
+        // Aplicar búsqueda global
+        if (!empty($search)) {
+            $query->where(function($subQuery) use ($search) {
+                $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                         ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                         ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Aplicar filtros individuales (excluyendo fuente)
+        foreach ($filters as $field => $value) {
+            if (!empty($value) && $field !== 'fuente') {
+                switch ($field) {
+                    case 'descripcionFF3':
+                        $query->where('v.descripcionFF3', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionATC4':
+                        $query->where('v.descripcionATC4', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionLaboratorio':
+                        $query->where('v.descripcionLaboratorio', 'LIKE', "%{$value}%");
+                        break;
+                    case 'molecula':
+                        $query->where('v.molecula', 'LIKE', "%{$value}%");
+                        break;
+                    case 'descripcionCorporacion':
+                        $query->where('v.descripcionCorporacion', 'LIKE', "%{$value}%");
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Aplicar búsqueda y filtros CON JOIN (cuando se necesita fuente)
+     */
+    private function applySearchAndFiltersWithJoin($query, $search, $filters)
+    {
+        // Aplicar búsqueda global
+        if (!empty($search)) {
+            $query->where(function($subQuery) use ($search) {
+                $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
+                         ->orWhere('v.marcaGenerico', 'LIKE', "%{$search}%")
+                         ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionFF3', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionATC4', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionLaboratorio', 'LIKE', "%{$search}%")
+                         ->orWhere('v.descripcionCorporacion', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Aplicar todos los filtros incluyendo fuente
+        $this->applyIndividualFilters($query, $filters);
     }
 }

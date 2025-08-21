@@ -13,7 +13,12 @@
                         <i class="fas fa-store text-purple-600 mr-2"></i>
                         Gestión de Mercados
                     </h1>
-                    <p class="text-gray-600 mt-1">Administra todos los mercados del sistema</p>
+                    <p class="text-gray-600 mt-1">
+                        Administra todos los mercados del sistema
+                        @if($isGerenteProducto && $userFranquicia && $userFranquicia !== 'ADMIN')
+                            <span class="text-purple-600 font-medium"> - Franquicia: {{ $userFranquicia }}</span>
+                        @endif
+                    </p>
                 </div>
                 <button onclick="openCreateModal()" 
                         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center">
@@ -22,6 +27,24 @@
                 </button>
             </div>
         </div>
+
+        <!-- Notificación de filtrado por franquicia -->
+        @if($isGerenteProducto && $userFranquicia && $userFranquicia !== 'ADMIN')
+        <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        <span class="font-medium">Vista filtrada por franquicia:</span> 
+                        Estás viendo únicamente los mercados asociados a tu franquicia 
+                        <span class="font-semibold">{{ $userFranquicia }}</span>.
+                    </p>
+                </div>
+            </div>
+        </div>
+        @endif
 
         
         <!-- Markets Table -->

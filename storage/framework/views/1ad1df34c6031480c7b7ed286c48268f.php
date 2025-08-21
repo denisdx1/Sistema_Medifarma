@@ -18,11 +18,6 @@
                 <a href="<?php echo e(route('market-management.index')); ?>" class="flex items-center px-4 py-2.5 <?php echo e(request()->routeIs('market-management.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'); ?> rounded-lg mx-2">
                     <i class="fas fa-clipboard-list w-6 text-center <?php echo e(request()->routeIs('market-management.*') ? 'text-purple-600' : 'text-gray-400'); ?>"></i>
                     <span class="sidebar-text ml-3">Gestión Mercados</span>
-                    <?php if(Auth::user()->isBusinessIntelligence()): ?>
-                        <span class="ml-auto">
-                            <i class="fas fa-eye text-xs text-blue-500" title="Solo lectura"></i>
-                        </span>
-                    <?php endif; ?>
                 </a>
             </li>
 
@@ -61,10 +56,8 @@
                 <p class="text-xs text-gray-500">
                     <?php if(Auth::user()->isAdmin()): ?>
                         <span class="text-red-600 font-medium">Admin</span>
-                    <?php elseif(Auth::user()->isProductManager()): ?>
+                    <?php elseif(Auth::user()->isGerenteProducto()): ?>
                         <span class="text-green-600 font-medium">GP</span>
-                    <?php elseif(Auth::user()->isBusinessIntelligence()): ?>
-                        <span class="text-blue-600 font-medium">BI</span>
                     <?php endif; ?>
                 </p>
             </div>

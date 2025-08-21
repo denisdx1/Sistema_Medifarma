@@ -50,13 +50,17 @@ class VmaeProductoIqvia extends Model
         'descripcionCorporacion',
         'MERCADO',
         'origenCapital',
-        'Fuente'
+        'Fuente',
+        'Franquicia',
+        'Gerente_Producto'
     ];
 
     protected $casts = [
         'Size_Pack' => 'integer',
         'Stgh_Val' => 'float',
-        'Volu_Val' => 'float'
+        'Volu_Val' => 'float',
+        'Franquicia' => 'string',
+        'Gerente_Producto' => 'string'
     ];
 
     /**
@@ -89,6 +93,22 @@ class VmaeProductoIqvia extends Model
     public function scopeByFuente($query, $fuente)
     {
         return $query->where('Fuente', $fuente);
+    }
+
+    /**
+     * Scope para filtrar por franquicia
+     */
+    public function scopeByFranquicia($query, $franquicia)
+    {
+        return $query->where('Franquicia', $franquicia);
+    }
+
+    /**
+     * Scope para filtrar por gerente de producto
+     */
+    public function scopeByGerenteProducto($query, $gerente)
+    {
+        return $query->where('Gerente_Producto', $gerente);
     }
 
     /**
@@ -134,7 +154,9 @@ class VmaeProductoIqvia extends Model
             'mercado',
             'codigoInterno',
             'laboratorio',
-            'fuente'
+            'fuente',
+            'Franquicia',
+            'Gerente_Producto'
         ]);
 
         // Aplicar filtros
@@ -148,6 +170,14 @@ class VmaeProductoIqvia extends Model
 
         if (isset($filtros['fuente'])) {
             $query->byFuente($filtros['fuente']);
+        }
+
+        if (isset($filtros['franquicia'])) {
+            $query->byFranquicia($filtros['franquicia']);
+        }
+
+        if (isset($filtros['gerente_producto'])) {
+            $query->byGerenteProducto($filtros['gerente_producto']);
         }
 
         if (isset($filtros['etico_popular'])) {
@@ -175,6 +205,14 @@ class VmaeProductoIqvia extends Model
 
         if (isset($filtros['fuente'])) {
             $query->byFuente($filtros['fuente']);
+        }
+
+        if (isset($filtros['franquicia'])) {
+            $query->byFranquicia($filtros['franquicia']);
+        }
+
+        if (isset($filtros['gerente_producto'])) {
+            $query->byGerenteProducto($filtros['gerente_producto']);
         }
 
         return $query;
@@ -214,5 +252,29 @@ class VmaeProductoIqvia extends Model
                     ->whereNotNull('Corporación')
                     ->orderBy('Corporación')
                     ->get();
+    }
+
+    /**
+     * Obtener franquicias únicas
+     */
+    public static function getFranquicias()
+    {
+        return static::select('Franquicia')
+                    ->distinct()
+                    ->whereNotNull('Franquicia')
+                    ->orderBy('Franquicia')
+                    ->pluck('Franquicia');
+    }
+
+    /**
+     * Obtener gerentes de producto únicos
+     */
+    public static function getGerentesProducto()
+    {
+        return static::select('Gerente_Producto')
+                    ->distinct()
+                    ->whereNotNull('Gerente_Producto')
+                    ->orderBy('Gerente_Producto')
+                    ->pluck('Gerente_Producto');
     }
 }
