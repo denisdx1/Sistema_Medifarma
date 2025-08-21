@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasAuditTrail;
+// ...existing code...
 
 class TabConfiguracion extends Model
 {
-    use HasAuditTrail;
+    // ...existing code...
 
     protected $connection = 'sqlsrv';
     protected $table = 'ODS.TAB_CONFIGURACION';

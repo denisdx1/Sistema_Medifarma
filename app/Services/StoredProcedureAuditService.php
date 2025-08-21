@@ -2,11 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-
-class StoredProcedureAuditService
-{
+// Servicio eliminado por solicitud del usuario. Contenía lógica de logs y auditoría.
+?>
     /**
      * Ejecutar SP_INSERT_MERCADO con auditoría automática
      */

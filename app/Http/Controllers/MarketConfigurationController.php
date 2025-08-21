@@ -52,16 +52,16 @@ class MarketConfigurationController extends Controller
 
             // Query base con solo las columnas necesarias
             $query = VmaeProductoIqvia::select([
-                'Código_Presentación',
-                'Descripción_Presentación',
-                'Marca_Genérico',
-                'Ético_Popular',
-                'Molécula',
-                'Código_FF_3',
-                'Código_ATC_4',
-                'Descripción_Laboratorio',
+                'codigoPresentacion',
+                'descripcionPresentacion',
+                'marcaGenerico',
+                'eticoPopular',
+                'molecula',
+                'codigoFF3',
+                'codigoATC4',
+                'descripcionLaboratorio',
                 'MERCADO'
-            ])->orderBy('Descripción_Presentación');
+            ])->orderBy('descripcionPresentacion');
 
             // Aplicar cursor si existe
             if ($cursor) {

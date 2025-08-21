@@ -2,11 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-
-class SimpleAuditService
-{
+// Servicio eliminado por solicitud del usuario. Contenía lógica de logs y auditoría.
+?>
     /**
      * Registrar un log de auditoría simple
      */

@@ -52,17 +52,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/productos', [MarketConfigurationController::class, 'getProductos'])->name('get-productos');
     });
     
-    // Market Administration Routes - Only for Admin users
-    // TEMPORAL: Middleware de autenticación comentado
-    Route::prefix('market-administration')->name('market-administration.')->middleware(['auth', 'role:administrador'])->group(function () {
-        Route::get('/', [App\Http\Controllers\MarketAdministrationController::class, 'index'])->name('index');
-        Route::post('/approve', [App\Http\Controllers\MarketAdministrationController::class, 'approve'])->name('approve');
-        Route::post('/deny', [App\Http\Controllers\MarketAdministrationController::class, 'deny'])->name('deny');
-        Route::post('/change-status', [App\Http\Controllers\MarketAdministrationController::class, 'changeStatus'])->name('change-status');
-        Route::get('/pending-count', [App\Http\Controllers\MarketAdministrationController::class, 'getPendingCount'])->name('pending-count');
-        Route::get('/search', [App\Http\Controllers\MarketAdministrationController::class, 'search'])->name('search');
-    });
-
     // Market Management Routes - For Admin and Product Manager users
     // TEMPORAL: Middleware de autenticación comentado
     // Route::prefix('market-management')->name('market-management.')->group(function () {
@@ -77,6 +66,8 @@ Route::middleware('auth')->group(function () {
     // Temporary routes without middleware for testing
     Route::get('/market-management/market/{marketId}/products', [App\Http\Controllers\MarketManagementController::class, 'showProducts'])->name('market-management.products')->where('marketId', '[0-9]+');
     Route::get('/market-management/market/{marketId}/products/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketProducts'])->name('market-management.products.api')->where('marketId', '[0-9]+');
+    Route::get('/market-management/markets/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketsApi'])->name('market-management.markets.api');
+    Route::post('/market-management/products/remove', [App\Http\Controllers\MarketManagementController::class, 'removeProduct'])->name('market-management.products.remove');
     
     // API routes
     Route::prefix('api')->name('api.')->group(function () {
@@ -94,6 +85,5 @@ Route::middleware('auth')->group(function () {
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/stats', [UserManagementController::class, 'getStats'])->name('stats');
     });
-    
 
 });
