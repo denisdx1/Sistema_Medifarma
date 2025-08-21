@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Gestión de Mercados'); ?>
 
-@section('title', 'Gestión de Mercados')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -51,7 +49,7 @@
                 </div>
             </div>
 
-            @if($markets->count() > 0)
+            <?php if($markets->count() > 0): ?>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -74,32 +72,35 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="markets-table-body">
-                        @foreach($markets as $market)
-                        <tr class="hover:bg-gray-50 market-row" data-market-id="{{ $market->idMercado }}">
+                        <?php $__currentLoopData = $markets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $market): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <tr class="hover:bg-gray-50 market-row" data-market-id="<?php echo e($market->idMercado); ?>">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $market->idMercado }}
+                                <?php echo e($market->idMercado); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
                                         <i class="fas fa-store text-purple-600 text-xs"></i>
                                     </div>
-                                    <div class="font-medium text-gray-900">{{ $market->mercado }}</div>
+                                    <div class="font-medium text-gray-900"><?php echo e($market->mercado); ?></div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ \Carbon\Carbon::parse($market->fechaRegistro)->format('d/m/Y') }}
+                                <?php echo e(\Carbon\Carbon::parse($market->fechaRegistro)->format('d/m/Y')); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $market->estado == 'ACTIVO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                    <i class="fas {{ $market->estado == 'ACTIVO' ? 'fa-play' : 'fa-pause' }} mr-1"></i>
-                                    {{ $market->estado }}
+                                    <?php echo e($market->estado == 'ACTIVO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'); ?>">
+                                    <i class="fas <?php echo e($market->estado == 'ACTIVO' ? 'fa-play' : 'fa-pause'); ?> mr-1"></i>
+                                    <?php echo e($market->estado); ?>
+
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                 <!-- Ver Productos Button -->
-                                <button onclick="viewMarketProducts({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
+                                <button onclick="viewMarketProducts(<?php echo e($market->idMercado); ?>, '<?php echo e(addslashes($market->mercado)); ?>')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
                                         title="Ver productos del mercado">
                                     <i class="fas fa-box mr-1"></i>
@@ -107,7 +108,7 @@
                                 </button>
                                 
                                 <!-- Asignar Productos Button -->
-                                <button onclick="openAssignProductsModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
+                                <button onclick="openAssignProductsModal(<?php echo e($market->idMercado); ?>, '<?php echo e(addslashes($market->mercado)); ?>')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors duration-200"
                                         title="Asignar productos desde RESTO">
                                     <i class="fas fa-plus-circle mr-1"></i>
@@ -115,7 +116,7 @@
                                 </button>
                                 
                                 <!-- Edit Market Button -->
-                                <button onclick="openEditModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
+                                <button onclick="openEditModal(<?php echo e($market->idMercado); ?>, '<?php echo e(addslashes($market->mercado)); ?>')"
                                         class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
                                         title="Editar mercado">
                                     <i class="fas fa-edit mr-1"></i>
@@ -125,7 +126,7 @@
                                 
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
@@ -134,66 +135,66 @@
             <div class="px-6 py-3 border-t border-gray-200 bg-gray-50" id="pagination-container">
                 <div class="flex items-center justify-between">
                     <div class="text-xs text-gray-600" id="pagination-info">
-                        {{ $markets->firstItem() }} - {{ $markets->lastItem() }} de {{ $markets->total() }} mercados
+                        <?php echo e($markets->firstItem()); ?> - <?php echo e($markets->lastItem()); ?> de <?php echo e($markets->total()); ?> mercados
                     </div>
                     <div class="flex items-center space-x-1" id="pagination-links">
-                        {{-- Previous Page Link --}}
-                        @if ($markets->onFirstPage())
+                        
+                        <?php if($markets->onFirstPage()): ?>
                             <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
                                 <i class="fas fa-chevron-left"></i>
                             </span>
-                        @else
-                            <a href="{{ $markets->previousPageUrl() }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        <?php else: ?>
+                            <a href="<?php echo e($markets->previousPageUrl()); ?>" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
-                        @endif
+                        <?php endif; ?>
 
-                        {{-- Pagination Elements --}}
-                        @php
+                        
+                        <?php
                             $start = max($markets->currentPage() - 2, 1);
                             $end = min($start + 4, $markets->lastPage());
                             $start = max($end - 4, 1);
-                        @endphp
+                        ?>
 
-                        {{-- First page if not in range --}}
-                        @if($start > 1)
-                            <a href="{{ $markets->url(1) }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">1</a>
-                            @if($start > 2)
+                        
+                        <?php if($start > 1): ?>
+                            <a href="<?php echo e($markets->url(1)); ?>" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">1</a>
+                            <?php if($start > 2): ?>
                                 <span class="px-1 text-xs text-gray-400">...</span>
-                            @endif
-                        @endif
+                            <?php endif; ?>
+                        <?php endif; ?>
 
-                        {{-- Page Numbers --}}
-                        @for($page = $start; $page <= $end; $page++)
-                            @if ($page == $markets->currentPage())
-                                <span class="px-2 py-1 text-xs text-white bg-purple-600 rounded font-medium">{{ $page }}</span>
-                            @else
-                                <a href="{{ $markets->url($page) }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">{{ $page }}</a>
-                            @endif
-                        @endfor
+                        
+                        <?php for($page = $start; $page <= $end; $page++): ?>
+                            <?php if($page == $markets->currentPage()): ?>
+                                <span class="px-2 py-1 text-xs text-white bg-purple-600 rounded font-medium"><?php echo e($page); ?></span>
+                            <?php else: ?>
+                                <a href="<?php echo e($markets->url($page)); ?>" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"><?php echo e($page); ?></a>
+                            <?php endif; ?>
+                        <?php endfor; ?>
 
-                        {{-- Last page if not in range --}}
-                        @if($end < $markets->lastPage())
-                            @if($end < $markets->lastPage() - 1)
+                        
+                        <?php if($end < $markets->lastPage()): ?>
+                            <?php if($end < $markets->lastPage() - 1): ?>
                                 <span class="px-1 text-xs text-gray-400">...</span>
-                            @endif
-                            <a href="{{ $markets->url($markets->lastPage()) }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">{{ $markets->lastPage() }}</a>
-                        @endif
+                            <?php endif; ?>
+                            <a href="<?php echo e($markets->url($markets->lastPage())); ?>" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"><?php echo e($markets->lastPage()); ?></a>
+                        <?php endif; ?>
 
-                        {{-- Next Page Link --}}
-                        @if ($markets->hasMorePages())
-                            <a href="{{ $markets->nextPageUrl() }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                        
+                        <?php if($markets->hasMorePages()): ?>
+                            <a href="<?php echo e($markets->nextPageUrl()); ?>" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
-                        @else
+                        <?php else: ?>
                             <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
                                 <i class="fas fa-chevron-right"></i>
                             </span>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-            @else
+            <?php else: ?>
             <div class="p-8 text-center">
                 <i class="fas fa-store text-gray-400 text-4xl mb-4"></i>
                 <h3 class="text-lg font-medium text-gray-800 mb-2">No hay mercados registrados</h3>
@@ -204,7 +205,7 @@
                     Crear Primer Mercado
                 </button>
             </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -231,7 +232,7 @@
             
             <!-- Form -->
             <form id="create-market-form">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <div class="mb-6">
                     <label for="market-name" class="block text-sm font-medium text-gray-700 mb-2">
                         Nombre del Mercado *
@@ -303,8 +304,8 @@
             
             <!-- Form -->
             <form id="edit-market-form">
-                @csrf
-                @method('PUT')
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('PUT'); ?>
                 <input type="hidden" id="edit-market-id" name="market_id">
                 
                 <div class="mb-6">
@@ -849,24 +850,26 @@
 
 <!-- Toast Container -->
 <div id="toast-container" class="toast-container"></div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/market-management.css') }}">
-@endpush
+<?php $__env->startPush('styles'); ?>
+<link rel="stylesheet" href="<?php echo e(asset('css/market-management.css')); ?>">
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // Define routes for JavaScript
 window.MarketManagementRoutes = {
-    index: '{{ route("market-management.index") }}',
-    create: '{{ route("market-management.create") }}',
-    update: '{{ route("market-management.update") }}',
-    toggleStatus: '{{ route("market-management.toggle-status") }}',
-    search: '{{ route("market-management.search") }}'
+    index: '<?php echo e(route("market-management.index")); ?>',
+    create: '<?php echo e(route("market-management.create")); ?>',
+    update: '<?php echo e(route("market-management.update")); ?>',
+    toggleStatus: '<?php echo e(route("market-management.toggle-status")); ?>',
+    search: '<?php echo e(route("market-management.search")); ?>'
 };
 
-window.csrfToken = '{{ csrf_token() }}';
+window.csrfToken = '<?php echo e(csrf_token()); ?>';
 </script>
-<script src="{{ asset('js/market-management.js') }}"></script>
-@endpush
+<script src="<?php echo e(asset('js/market-management.js')); ?>"></script>
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/market-management/index.blade.php ENDPATH**/ ?>

@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('page-title', 'Productos del Mercado'); ?>
 
-@section('page-title', 'Productos del Mercado')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
@@ -10,7 +8,7 @@
             <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
                 <div class="flex-1">
                     <div class="flex items-center mb-2">
-                        <a href="{{ route('market-management.index') }}" 
+                        <a href="<?php echo e(route('market-management.index')); ?>" 
                            class="text-purple-600 hover:text-purple-700 mr-3 transition-colors">
                             <i class="fas fa-arrow-left"></i>
                         </a>
@@ -24,7 +22,7 @@
                             <i class="fas fa-store text-purple-600 text-xs"></i>
                         </div>
                         <div>
-                            <p class="text-lg lg:text-xl font-medium text-gray-800">{{ $market->mercado ?? 'Mercado no encontrado' }}</p>
+                            <p class="text-lg lg:text-xl font-medium text-gray-800"><?php echo e($market->mercado ?? 'Mercado no encontrado'); ?></p>
                             
                         </div>
                     </div>
@@ -562,18 +560,20 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
-<!-- Debug Info: Market ID = {{ $market->idMercado ?? 'NULL' }}, Market Name = {{ $market->mercado ?? 'NULL' }} -->
+<?php $__env->startPush('scripts'); ?>
+<!-- Debug Info: Market ID = <?php echo e($market->idMercado ?? 'NULL'); ?>, Market Name = <?php echo e($market->mercado ?? 'NULL'); ?> -->
 <script>
 // Configurar variables globales para el archivo externo
-window.marketId = {{ $market->idMercado ?? 'null' }};
-window.marketData = @json($market ?? null);
+window.marketId = <?php echo e($market->idMercado ?? 'null'); ?>;
+window.marketData = <?php echo json_encode($market ?? null, 15, 512) ?>;
 </script>
-<script src="{{ asset('js/market-products.js') }}"></script>
-@endpush
+<script src="<?php echo e(asset('js/market-products.js')); ?>"></script>
+<?php $__env->stopPush(); ?>
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/market-products.css') }}">
-@endpush
+<?php $__env->startPush('styles'); ?>
+<link rel="stylesheet" href="<?php echo e(asset('css/market-products.css')); ?>">
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/market-management/products.blade.php ENDPATH**/ ?>
