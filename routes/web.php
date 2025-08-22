@@ -30,26 +30,13 @@ Route::get('/logout-now', [AuthController::class, 'logout'])->name('logout.now')
 
 Route::middleware('auth')->group(function () {
     Route::post('/products/{product}/generate-sku', [ProductController::class, 'generateAndAssignSku'])->name('products.generateSku');
-    
-    // Test endpoint for API
-    Route::get('/test-markets-api', function() {
-        $markets = \App\Models\Market::where('is_active', true)->get();
-        return response()->json([
-            'success' => true,
-            'markets' => $markets,
-            'count' => $markets->count()
-        ]);
-    })->name('test.markets');
-    
-    // Market Management Routes - For Admin and Product Manager users
-    // TEMPORAL: Middleware de autenticación comentado
-    // Route::prefix('market-management')->name('market-management.')->group(function () {
     Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');
         Route::post('/create', [App\Http\Controllers\MarketManagementController::class, 'createMarket'])->name('create');
         Route::put('/update', [App\Http\Controllers\MarketManagementController::class, 'updateMarket'])->name('update');
         Route::post('/toggle-status', [App\Http\Controllers\MarketManagementController::class, 'toggleStatus'])->name('toggle-status');
         Route::get('/search', [App\Http\Controllers\MarketManagementController::class, 'search'])->name('search');
+        Route::get('/audit', [App\Http\Controllers\MarketManagementController::class, 'getMarketAudit'])->name('audit');
     });
     
     // Temporary routes without middleware for testing

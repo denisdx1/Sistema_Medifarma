@@ -111,7 +111,7 @@ class MarketManagementController extends Controller
     }
 
     /**
-     * Create a new market using stored procedure ODS.SP_INSERT_MERCADO
+     * Create a new market using stored procedure ODS.SP_INSERT_MERCADO with audit
      */
     public function createMarket(Request $request)
     {
@@ -123,6 +123,7 @@ class MarketManagementController extends Controller
             DB::beginTransaction();
             
             $marketName = trim($request->market_name);
+            $userId = Auth::id();
             
             // Verificar si ya existe un mercado con el mismo nombre
             $existingMarket = DB::connection('sqlsrv')
@@ -135,6 +136,11 @@ class MarketManagementController extends Controller
                     'success' => false,
                     'message' => 'Ya existe un mercado con ese nombre'
                 ], 422);
+            }
+            
+            // Establecer contexto de usuario para auditoría automática
+            if ($userId) {
+                DB::connection('sqlsrv')->statement('EXEC ODS.SP_SET_USER_CONTEXT ?', [$userId]);
             }
             
             // Llamar al stored procedure para insertar el mercado
@@ -170,7 +176,7 @@ class MarketManagementController extends Controller
     }
 
     /**
-     * Update market name using stored procedure SP_UPDATE_MERCADO
+     * Update market name using stored procedure SP_UPDATE_MERCADO with audit
      */
     public function updateMarket(Request $request)
     {
@@ -183,6 +189,7 @@ class MarketManagementController extends Controller
             DB::beginTransaction();
             
             $marketName = trim($request->market_name);
+            $userId = Auth::id();
             
             // Verificar que el mercado existe
             $existingMarket = DB::connection('sqlsrv')
@@ -210,7 +217,7 @@ class MarketManagementController extends Controller
                     'message' => 'Ya existe otro mercado con ese nombre'
                 ], 422);
             }
-            
+
             // Llamar al stored procedure para actualizar el mercado
             DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_MERCADO ?, ?', [
                 $request->market_id,  // @idMercado
@@ -872,6 +879,20 @@ class MarketManagementController extends Controller
             // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
             if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
                 $baseQuery->where('v.Franquicia', $user->franquicia);
+                
+                // Log para debugging
+                \Log::info('Filtro RESTO por franquicia aplicado', [
+                    'user_id' => $user->idUsuario,
+                    'user_role' => $user->idRol,
+                    'franquicia' => $user->franquicia
+                ]);
+            } else {
+                // Log para debugging cuando no se aplica filtro
+                \Log::info('Filtro RESTO por franquicia NO aplicado', [
+                    'user_id' => $user ? $user->idUsuario : 'no-user',
+                    'user_role' => $user ? $user->idRol : 'no-role',
+                    'franquicia' => $user ? $user->franquicia : 'no-franquicia'
+                ]);
             }
 
             // Aplicar filtros de búsqueda si existe
@@ -911,7 +932,21 @@ class MarketManagementController extends Controller
             }
 
             // Obtener productos con límite +1 para verificar si hay más páginas
+            
+            // Log para debugging - SQL query
+            \Log::info('SQL Query RESTO products', [
+                'sql' => $baseQuery->toSql(),
+                'bindings' => $baseQuery->getBindings()
+            ]);
+            
             $productos = $baseQuery->limit($perPage + 1)->get();
+            
+            // Log para debugging - resultados
+            \Log::info('RESTO products query results', [
+                'count' => $productos->count(),
+                'first_product_franquicia' => $productos->isNotEmpty() ? $productos->first()->Franquicia : null,
+                'user_franquicia' => $user ? $user->franquicia : null
+            ]);
             
             // Verificar si hay más páginas
             $hasMorePages = $productos->count() > $perPage;
@@ -935,8 +970,14 @@ class MarketManagementController extends Controller
                     'total' => $totalProducts,
                     'next_cursor' => $nextCursor,
                     'has_more_pages' => $hasMorePages,
-                    'user_franquicia' => $user ? $user->franquicia : null,
-                    'filtered_by_franquicia' => $user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN'
+                    'debug_info' => [
+                        'user_franquicia' => $user ? $user->franquicia : null,
+                        'user_role' => $user ? $user->idRol : null,
+                        'filter_applied' => $user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN',
+                        'total_count' => $totalProducts,
+                        'returned_count' => $productos->count(),
+                        'first_product_franquicia' => $productos->isNotEmpty() ? $productos->first()->Franquicia : null
+                    ]
                 ]
             ]);
 
@@ -964,6 +1005,13 @@ class MarketManagementController extends Controller
             // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
             if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
                 $baseQuery->where('Franquicia', $user->franquicia);
+                
+                // Log para debugging
+                \Log::info('Filtro opciones RESTO por franquicia aplicado', [
+                    'user_id' => $user->idUsuario,
+                    'user_role' => $user->idRol,
+                    'franquicia' => $user->franquicia
+                ]);
             }
 
             // Get distinct values for each filter field from RESTO products
@@ -1260,5 +1308,114 @@ class MarketManagementController extends Controller
 
         // Aplicar todos los filtros incluyendo fuente
         $this->applyIndividualFilters($query, $filters);
+    }
+    
+    /**
+     * Obtener auditoría de mercados
+     */
+    public function getMarketAudit(Request $request)
+    {
+        try {
+            $marketId = $request->get('market_id');
+            $userId = $request->get('user_id');
+            $action = $request->get('action');
+            $dateFrom = $request->get('date_from');
+            $dateTo = $request->get('date_to');
+            $limit = min(max((int) $request->get('limit', 50), 10), 200);
+            
+            // Query base usando la vista de auditoría
+            $query = DB::connection('sqlsrv')
+                ->table('ODS.VW_MERCADO_AUDIT')
+                ->select([
+                    'idAuditMercado',
+                    'idUsuario',
+                    'nombre_usuario',
+                    'email_usuario',
+                    'idMercado',
+                    'nombre_mercado_actual',
+                    'accion',
+                    'fecha',
+                    'mercado_anterior',
+                    'mercado_nuevo',
+                    'estado_anterior_desc',
+                    'estado_nuevo_desc',
+                    'observaciones',
+                    'tiempo_transcurrido'
+                ])
+                ->orderBy('fecha', 'desc');
+            
+            // Aplicar filtros
+            if ($marketId) {
+                $query->where('idMercado', $marketId);
+            }
+            
+            if ($userId) {
+                $query->where('idUsuario', $userId);
+            }
+            
+            if ($action) {
+                $query->where('accion', $action);
+            }
+            
+            if ($dateFrom) {
+                $query->where('fecha', '>=', $dateFrom);
+            }
+            
+            if ($dateTo) {
+                $query->where('fecha', '<=', $dateTo . ' 23:59:59');
+            }
+            
+            // Obtener resultados
+            $auditRecords = $query->limit($limit)->get();
+            
+            // Obtener estadísticas adicionales
+            $statsQuery = DB::connection('sqlsrv')
+                ->table('ODS.VW_MERCADO_AUDIT');
+                
+            if ($dateFrom) {
+                $statsQuery->where('fecha', '>=', $dateFrom);
+            }
+            
+            if ($dateTo) {
+                $statsQuery->where('fecha', '<=', $dateTo . ' 23:59:59');
+            }
+            
+            $stats = [
+                'total_registros' => $statsQuery->count(),
+                'por_accion' => $statsQuery
+                    ->select('accion')
+                    ->selectRaw('COUNT(*) as total')
+                    ->groupBy('accion')
+                    ->get()
+                    ->pluck('total', 'accion'),
+                'usuarios_activos' => $statsQuery
+                    ->distinct()
+                    ->count('idUsuario'),
+                'mercados_modificados' => $statsQuery
+                    ->distinct()
+                    ->count('idMercado')
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'data' => $auditRecords->toArray(),
+                'total' => $auditRecords->count(),
+                'stats' => $stats,
+                'filters' => [
+                    'market_id' => $marketId,
+                    'user_id' => $userId,
+                    'action' => $action,
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo,
+                    'limit' => $limit
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error obteniendo auditoría de mercados: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

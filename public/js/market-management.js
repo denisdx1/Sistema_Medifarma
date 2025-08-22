@@ -692,6 +692,16 @@ function openAssignProductsModal(marketId, marketName) {
     // Limpiar filtros
     clearAllRestoFilters();
     
+    // Resetear estado del panel de filtros (siempre colapsado al abrir)
+    const filtersPanel = $('#resto-filters-panel');
+    const toggleButton = $('#toggle-resto-filters');
+    const toggleIcon = toggleButton.find('i').last();
+    const toggleText = toggleButton.find('span');
+    
+    filtersPanel.addClass('hidden');
+    toggleIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    toggleText.text('Mostrar Filtros');
+    
     // Mostrar modal
     document.getElementById('assign-products-modal').classList.remove('hidden');
     
@@ -752,10 +762,18 @@ function setupRestoProductSearch() {
 
 // Setup resto filters functionality
 function setupRestoFilters() {
+    // Remove existing event listeners to prevent duplicates
+    $('#toggle-resto-filters').off('click');
+    $('#clear-all-resto-filters').off('click');
+    
     // Initialize each filter select
     Object.keys(currentRestoFilters).forEach(filterKey => {
         const filterSelect = $(`#resto-filter-${filterKey}`);
         const clearButton = $(`#clear-resto-filter-${filterKey}`);
+
+        // Remove existing listeners
+        filterSelect.off('change');
+        clearButton.off('click');
 
         // Filter change event
         filterSelect.on('change', function() {
@@ -796,18 +814,26 @@ function setupRestoFilters() {
     });
 
     // Toggle filters panel
-    $('#toggle-resto-filters').on('click', function() {
+    $('#toggle-resto-filters').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Toggle filters clicked'); // Debug log
+        
         const filtersPanel = $('#resto-filters-panel');
-        const icon = $(this).find('i:last');
+        const icon = $(this).find('.fa-chevron-down, .fa-chevron-up');
+        const textSpan = $(this).find('span');
         
         filtersPanel.toggleClass('hidden');
         
         if (filtersPanel.hasClass('hidden')) {
             icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-            $(this).find('span').text('Mostrar Filtros');
+            textSpan.text('Mostrar Filtros');
+            console.log('Filters collapsed'); // Debug log
         } else {
             icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-            $(this).find('span').text('Ocultar Filtros');
+            textSpan.text('Ocultar Filtros');
+            console.log('Filters expanded'); // Debug log
         }
     });
 }
