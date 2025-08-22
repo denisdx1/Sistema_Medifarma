@@ -440,7 +440,7 @@
                         onclick="confirmCreateMarket()"
                         id="confirm-create-btn"
                         class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors duration-200 font-medium">
-                    <span class="btn-text">
+                    <span class="btn-text ">
                         <i class="fas fa-check mr-2"></i>
                         Sí, Crear Mercado
                     </span>
@@ -836,37 +836,6 @@
                     </div>
                 </div>
             </div>
-                                    </th>
-                                    <!-- Corporación: 8% -->
-                                    <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden xl:table-cell">
-                                        Corporación
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100 divide-x divide-gray-200" id="resto-products-table-body">
-                                <!-- Products will be loaded here via JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Empty State -->
-                    <div id="resto-empty-state" class="p-8 text-center hidden">
-                        <i class="fas fa-box-open text-gray-400 text-4xl mb-4"></i>
-                        <h3 class="text-lg font-medium text-gray-800 mb-2">No hay productos en RESTO</h3>
-                        <p class="text-gray-600">Todos los productos están asignados a mercados específicos</p>
-                    </div>
-                </div>
-                
-                <!-- Pagination -->
-                <div class="px-4 py-4 border-t border-gray-200 bg-gray-50" id="resto-pagination-container">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                        <div id="resto-pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
-                            Cargando productos...
-                        </div>
-                        <div id="resto-pagination-controls" class="flex items-center justify-center sm:justify-end space-x-2">
-                            <!-- Pagination buttons will be generated here -->
-                        </div>
-                    </div>
         </div>
     </div>
 </div>
