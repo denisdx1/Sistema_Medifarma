@@ -1,0 +1,75 @@
+/* Global theme variables and overrides for Sistema Medifarma */
+:root {
+    --primary: #ff0732; /* main red */
+    --muted: #949697;   /* gray 1 */
+    --muted-2: #bcbdbf; /* gray 2 */
+    --white: #ffffff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --info: #3b82f6;
+}
+
+/* Ensure background remains white across app */
+body {
+    background: var(--white) !important;
+}
+
+/* Toasts */
+.toast-success { background-color: #d1fae5; color: var(--success); }
+.toast-error   { background-color: #fee2e2; color: var(--danger); }
+.toast-info    { background-color: #dbeafe; color: var(--info); }
+
+/* Primary action buttons */
+.btn-primary,
+.products-btn,
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #cc0628 100%);
+    color: var(--white) !important;
+    border-color: transparent !important;
+}
+.btn-primary:hover,
+.products-btn:hover,
+.action-btn.primary:hover {
+    filter: brightness(0.95);
+}
+
+/* Edit / warning buttons - use muted tones */
+.edit-btn {
+    background-color: var(--muted-2);
+    color: #7a7a7a;
+    border-color: var(--muted);
+}
+
+/* Status badges and buttons */
+.status-btn-active {
+    background-color: #fee2e2;
+    color: var(--danger);
+    border-color: #fca5a5;
+}
+.status-btn-inactive {
+    background-color: #d1fae5;
+    color: #059669;
+    border-color: #86efac;
+}
+
+/* Form focus states */
+.form-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 7, 50, 0.08);
+    border-color: var(--primary);
+}
+
+/* Search loading spinner color */
+.search-loading::after { border-top-color: var(--primary); }
+
+/* Pagination active color accent */
+.pagination-container .bg-red-600 {
+    box-shadow: 0 1px 3px rgba(255, 7, 50, 0.18);
+}
+
+/* Utility helpers */
+.text-primary { color: var(--primary) !important; }
+.bg-primary   { background-color: var(--primary) !important; }
+.border-primary { border-color: var(--primary) !important; }
+
+/* Gradients mapping - keep originals but map red gradient to primary */
+.gradient-red { background: linear-gradient(135deg, var(--primary) 0%, #cc0628 100%); }

@@ -280,7 +280,7 @@ function showLoadingState() {
         <tr>
             <td colspan="6" class="px-6 py-8 text-center">
                 <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mr-3"></div>
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mr-3"></div>
                     <span class="text-gray-600">Buscando...</span>
                 </div>
             </td>
@@ -340,8 +340,8 @@ function generateMarketRow(market) {
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-store text-purple-600 text-xs"></i>
+                    <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-store text-red-600 text-xs"></i>
                     </div>
                     <div class="font-medium text-gray-900">${escapedMarketName}</div>
                 </div>
@@ -401,6 +401,16 @@ function generateActionButtons(market) {
                 Productos
             </button>
         `;
+        
+        // Asignar Productos Button
+        buttons += `
+            <button onclick="openAssignProductsModal(${market.idMercado}, '${safeMarketName}')"
+                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200"
+                    title="Asignar productos desde RESTO">
+                <i class="fas fa-plus-circle mr-1"></i>
+                Asignar
+            </button>
+        `;
     } else {
         buttons += `
             <button disabled 
@@ -422,20 +432,6 @@ function generateActionButtons(market) {
                 title="Editar mercado">
             <i class="fas fa-edit mr-1"></i>
             Editar
-        </button>
-    `;
-    
-    // Toggle Status Button
-    const isActive = market.estado === 'ACTIVO';
-    const toggleClass = isActive ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200';
-    const toggleIcon = isActive ? 'fa-pause' : 'fa-play';
-    const toggleText = isActive ? 'Desactivar' : 'Activar';
-    
-    buttons += `
-        <button onclick="toggleMarketStatus(${market.idMercado}, '${safeMarketName}', '${market.estado}')"
-                class="inline-flex items-center px-3 py-1 rounded-md text-sm ${toggleClass} transition-colors duration-200">
-            <i class="fas ${toggleIcon} mr-1"></i>
-            ${toggleText}
         </button>
     `;
     
@@ -530,7 +526,7 @@ function updatePagination(data, searchTerm) {
     for (let page = adjustedStart; page <= end; page++) {
         if (page == data.current_page) {
             paginationHTML += `
-                <span class="px-2 py-1 text-xs text-white bg-purple-600 rounded font-medium">${page}</span>
+                <span class="px-2 py-1 text-xs text-white bg-red-600 rounded font-medium">${page}</span>
             `;
         } else {
             paginationHTML += `
@@ -1034,7 +1030,7 @@ function generateRestoProductRow(product) {
         <!-- Selección 4% -->
         <td class="w-[4%] px-1 py-1 text-center">
             <input type="checkbox" 
-                   class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                   class="product-checkbox rounded border-gray-300 text-red-600 focus:ring-red-500"
                    data-product-code="${product.codigoPresentacion}"
                    data-product-fuente="${product.fuente || 'IQV'}"
                    onchange="toggleProductSelection('${product.codigoPresentacion}', '${product.fuente || 'IQV'}')"
@@ -1191,7 +1187,7 @@ function updateRestoPaginationInfo(data) {
             paginationHTML += `
                 <button onclick="loadMoreRestoProducts()" 
                         id="load-more-resto-btn"
-                        class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors duration-200 flex items-center">
+                        class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors duration-200 flex items-center">
                     <i class="fas fa-chevron-down mr-1"></i>
                     Cargar más productos
                 </button>

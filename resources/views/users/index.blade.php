@@ -14,7 +14,7 @@
                 </div>
                 <div class="flex space-x-3">
                     <button type="button" onclick="window.location.href='{{ route('users.create') }}'" 
-                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200">
+                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-blue-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-red-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
                         <i class="fas fa-plus mr-2"></i>
                         Nuevo Usuario
                     </button>
@@ -55,9 +55,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Administradores</p>
-                        <p class="text-2xl font-bold text-purple-600">{{ $adminUsers }}</p>
+                        <p class="text-2xl font-bold text-red-600">{{ $adminUsers }}</p>
                     </div>
-                    <div class="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg">
+                    <div class="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
                         <i class="fas fa-user-shield text-white text-xl"></i>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                                        name="search" 
                                        value="{{ request('search') }}"
                                        placeholder="Nombre o email..."
-                                       class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                                       class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="fas fa-search text-gray-400"></i>
                                 </div>
@@ -101,7 +101,7 @@
                             <label for="role_filter" class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
                             <select id="role_filter" 
                                     name="role" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200">
                                 <option value="">Todos los roles</option>
                                 @foreach(\App\Models\User::getRoles() as $role => $displayName)
                                     <option value="{{ $role }}" {{ request('role') == $role ? 'selected' : '' }}>
@@ -115,7 +115,7 @@
                             <label for="status_filter" class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                             <select id="status_filter" 
                                     name="status" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200">
                                 <option value="">Todos</option>
                                 <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Activos</option>
                                 <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactivos</option>
@@ -129,7 +129,7 @@
                             Limpiar
                         </a>
                         <button type="submit" 
-                                class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200">
+                                class="px-4 py-2 bg-gradient-to-r from-red-600 to-blue-600 text-white rounded-lg hover:from-red-700 hover:to-blue-700 transition-all duration-200">
                             <i class="fas fa-search mr-2"></i>
                             Buscar
                         </button>
@@ -163,7 +163,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="h-10 w-10 flex-shrink-0">
-                                            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                                            <div class="h-10 w-10 rounded-full bg-gradient-to-r from-red-500 to-blue-500 flex items-center justify-center">
                                                 <span class="text-sm font-medium text-white">
                                                     {{ strtoupper(substr($user->name, 0, 2)) }}
                                                 </span>
@@ -178,7 +178,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user->email }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        @if($user->role === 'administrador') bg-purple-100 text-purple-800
+                                        @if($user->role === 'administrador') bg-red-100 text-red-800
                                         @elseif($user->role === 'gerente_producto') bg-blue-100 text-blue-800
                                         @else bg-green-100 text-green-800
                                         @endif">
@@ -201,7 +201,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
                                         @if($user->role === 'administrador')
-                                            <span class="text-purple-600 font-medium">Todos los módulos</span>
+                                            <span class="text-red-600 font-medium">Todos los módulos</span>
                                         @elseif($user->permissions && count($user->permissions) > 0)
                                             @foreach($user->permissions as $permission)
                                                 <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">

@@ -29,3 +29,12 @@
 .animate-spin {
     animation: spin 1s linear infinite;
 }
+
+/* Map product action buttons to primary palette */
+.products-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, #cc0628 100%);
+    color: #fff;
+    border: none;
+}
+
+.text-primary { color: var(--primary) !important; }

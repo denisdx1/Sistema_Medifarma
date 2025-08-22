@@ -4,7 +4,7 @@
         <div class="flex items-center">
             <img src="<?php echo e(asset('images/logo-medifarma-Photoroom.png')); ?>" alt="Medifarma Logo" id="sidebar-logo" class="h-8 transition-opacity duration-300">
         </div>
-        <button id="toggle-sidebar" class="text-gray-500 hover:text-purple-600 focus:outline-none">
+        <button id="toggle-sidebar" class="text-gray-500 hover:text-red-600 focus:outline-none">
             <i class="fas fa-bars text-xl"></i>
         </button>
     </div>
@@ -14,12 +14,14 @@
         <p class="sidebar-text px-4 mb-2 text-xs text-gray-400 uppercase tracking-wider">Menu</p>
         <ul>
             <!-- Market Management -->
-            <li>
-                <a href="<?php echo e(route('market-management.index')); ?>" class="flex items-center px-4 py-2.5 <?php echo e(request()->routeIs('market-management.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'); ?> rounded-lg mx-2">
-                    <i class="fas fa-clipboard-list w-6 text-center <?php echo e(request()->routeIs('market-management.*') ? 'text-purple-600' : 'text-gray-400'); ?>"></i>
+             <li>
+                <a href="<?php echo e(route('market-management.index')); ?>" class="flex items-center px-4 py-2.5 <?php echo e(request()->routeIs('market-management.*') ? 'text-red-700 bg-red-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'); ?> rounded-lg mx-2">
+                    <i class="fas fa-clipboard-list w-6 text-center <?php echo e(request()->routeIs('market-management.*') ? 'text-red-600' : 'text-gray-400'); ?>"></i>
                     <span class="sidebar-text ml-3">Gestión Mercados</span>
                 </a>
             </li>
+
+
 
             
         </ul>
@@ -29,7 +31,7 @@
             <p class="text-xs text-gray-400 uppercase tracking-wider mb-2">Información</p>
             <div class="bg-gray-50 rounded-lg p-3">
                 <div class="flex items-center mb-2">
-                    <i class="fas fa-user-tag text-purple-500 text-xs"></i>
+                    <i class="fas fa-user-tag text-red-500 text-xs"></i>
                     <span class="ml-2 text-xs font-medium text-gray-700">Rol Actual</span>
                 </div>
                 <p class="text-xs text-gray-600"><?php echo e(Auth::user()->getRoleDisplayName()); ?></p>
@@ -47,7 +49,7 @@
     <!-- User Profile / Footer -->
     <div class="p-4 border-t border-gray-200">
         <div class="flex items-center">
-            <div class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+            <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold flex-shrink-0">
                 <?php echo e(substr(Auth::user()->name, 0, 1)); ?>
 
             </div>

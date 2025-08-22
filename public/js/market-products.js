@@ -567,7 +567,7 @@ $(document).ready(function() {
             case null:
             case undefined:
             case '': return 'bg-gray-100 text-gray-600';
-            default: return 'bg-purple-100 text-purple-800';
+            default: return 'bg-red-100 text-red-800';
         }
     }
 
@@ -965,8 +965,8 @@ $(document).ready(function() {
         item.innerHTML = `
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-store text-purple-600 text-xs"></i>
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-store text-red-600 text-xs"></i>
                     </div>
                 </div>
                 <div class="ml-3 flex-1">

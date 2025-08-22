@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
+    <!-- Global theme variables and overrides -->
+    <link rel="stylesheet" href="{{ asset('css/global-theme.css') }}">
+
     @stack('styles')
     <style>
         body {
@@ -114,7 +117,7 @@
         }
         
         .toast-info {
-            background-color: #3b82f6;
+            background-color: var(--info);
         }
     </style>
     
@@ -134,19 +137,6 @@
                         <h1 class="text-xl font-semibold text-gray-800">
                             @yield('page-title', 'Sistema Medifarma')
                         </h1>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <!-- User Info -->
-                        <div class="flex items-center space-x-3">
-                            <div class="text-right">
-                                <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-500">{{ Auth::user()->getRoleDisplayName() }}</p>
-                            </div>
-                            <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm">
-                                {{ substr(Auth::user()->name, 0, 1) }}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </header>

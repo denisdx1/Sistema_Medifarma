@@ -3,25 +3,25 @@
 @section('title', 'Gestión de Mercados')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6">
+<div class="min-h-screen bg-white-50 py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        <i class="fas fa-store text-purple-600 mr-2"></i>
+                        <i class="fas fa-store text-red-600 mr-2"></i>
                         Gestión de Mercados
                     </h1>
                     <p class="text-gray-600 mt-1">
                         Administra todos los mercados del sistema
                         @if($isGerenteProducto && $userFranquicia && $userFranquicia !== 'ADMIN')
-                            <span class="text-purple-600 font-medium"> - Franquicia: {{ $userFranquicia }}</span>
+                            <span class="text-red-600 font-medium"> - Franquicia: {{ $userFranquicia }}</span>
                         @endif
                     </p>
                 </div>
                 <button onclick="openCreateModal()" 
-                        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center">
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center">
                     <i class="fas fa-plus mr-2"></i>
                     Crear Mercado
                 </button>
@@ -61,7 +61,7 @@
                             <input type="text" 
                                    id="search-input"
                                    placeholder="Buscar por nombre, ID o estado..."
-                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 w-80">
+                                   class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 w-80">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <i class="fas fa-search text-gray-400"></i>
                             </div>
@@ -104,8 +104,8 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-store text-purple-600 text-xs"></i>
+                                    <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-store text-red-600 text-xs"></i>
                                     </div>
                                     <div class="font-medium text-gray-900">{{ $market->mercado }}</div>
                                 </div>
@@ -131,7 +131,7 @@
                                 
                                 <!-- Asignar Productos Button -->
                                 <button onclick="openAssignProductsModal({{ $market->idMercado }}, '{{ addslashes($market->mercado) }}')"
-                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors duration-200"
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-red-100 text-red-700 hover:bg-red-200 transition-colors duration-200"
                                         title="Asignar productos desde RESTO">
                                     <i class="fas fa-plus-circle mr-1"></i>
                                     Asignar
@@ -189,7 +189,7 @@
                         {{-- Page Numbers --}}
                         @for($page = $start; $page <= $end; $page++)
                             @if ($page == $markets->currentPage())
-                                <span class="px-2 py-1 text-xs text-white bg-purple-600 rounded font-medium">{{ $page }}</span>
+                                <span class="px-2 py-1 text-xs text-white bg-red-600 rounded font-medium">{{ $page }}</span>
                             @else
                                 <a href="{{ $markets->url($page) }}" class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">{{ $page }}</a>
                             @endif
@@ -222,7 +222,7 @@
                 <h3 class="text-lg font-medium text-gray-800 mb-2">No hay mercados registrados</h3>
                 <p class="text-gray-600 mb-4">Comienza creando tu primer mercado</p>
                 <button onclick="openCreateModal()" 
-                        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
                     <i class="fas fa-plus mr-2"></i>
                     Crear Primer Mercado
                 </button>
@@ -239,8 +239,8 @@
             <!-- Header -->
             <div class="flex items-center justify-between border-b pb-4 mb-4">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-plus text-purple-600 text-lg"></i>
+                    <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-plus text-red-600 text-lg"></i>
                     </div>
                     <div class="ml-3">
                         <h3 class="text-lg font-semibold text-gray-900">Crear Nuevo Mercado</h3>
@@ -262,7 +262,7 @@
                     <input type="text" 
                            id="market-name" 
                            name="market_name" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
                            placeholder="Ingresa el nombre del mercado"
                            required>
                     <p class="text-xs text-gray-500 mt-1">El nombre debe ser único en el sistema</p>
@@ -292,7 +292,7 @@
                     <button type="button"
                             onclick="openCreateConfirmationModal()"
                             id="create-submit-btn"
-                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors duration-200 font-medium">
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors duration-200 font-medium">
                         <span class="btn-text">
                             <i class="fas fa-plus mr-2"></i>
                             Crear Mercado
@@ -542,11 +542,11 @@
 <div id="assign-products-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
     <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-7xl max-h-[90vh] flex flex-col">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-gray-200 bg-purple-50 flex-shrink-0">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50 flex-shrink-0">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-plus-circle text-purple-600"></i>
+                        <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-plus-circle text-red-600"></i>
                         </div>
                         <div>
                             <h3 class="text-lg font-medium text-gray-900">Asignar Productos al Mercado</h3>
@@ -571,7 +571,7 @@
                                 </div>
                                 <input type="text" 
                                        id="resto-product-search" 
-                                       class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm"
+                                       class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm"
                                        placeholder="Buscar en productos RESTO...">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button type="button" 
@@ -595,7 +595,7 @@
                         <!-- Assign button -->
                         <button id="assign-selected-btn" 
                                 onclick="assignSelectedProducts()"
-                                class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled>
                             <span class="btn-text">
                                 <i class="fas fa-plus mr-2"></i>
@@ -614,8 +614,8 @@
                     <div class="flex items-center justify-between mb-3">
                         <button type="button" 
                                 id="toggle-resto-filters" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-                            <i class="fas fa-filter mr-2 text-purple-600"></i>
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                            <i class="fas fa-filter mr-2 text-red-600"></i>
                             <span>Mostrar Filtros</span>
                             <i class="fas fa-chevron-down ml-2"></i>
                         </button>
@@ -637,7 +637,7 @@
                                     Forma Farmacéutica (FF3)
                                 </label>
                                 <select id="resto-filter-descripcionFF3" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todas las formas</option>
                                 </select>
                                 <button type="button" 
@@ -655,7 +655,7 @@
                                     Clasificación (ATC4)
                                 </label>
                                 <select id="resto-filter-descripcionATC4" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todas las clasificaciones</option>
                                 </select>
                                 <button type="button" 
@@ -673,7 +673,7 @@
                                     Laboratorio
                                 </label>
                                 <select id="resto-filter-descripcionLaboratorio" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todos los laboratorios</option>
                                 </select>
                                 <button type="button" 
@@ -691,7 +691,7 @@
                                     Fuente
                                 </label>
                                 <select id="resto-filter-fuente" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todas las fuentes</option>
                                 </select>
                                 <button type="button" 
@@ -705,11 +705,11 @@
                             <!-- Molécula Filter -->
                             <div class="relative">
                                 <label for="resto-filter-molecula" class="block text-xs font-medium text-gray-700 mb-1">
-                                    <i class="fas fa-atom mr-1 text-purple-500"></i>
+                                    <i class="fas fa-atom mr-1 text-red-500"></i>
                                     Molécula
                                 </label>
                                 <select id="resto-filter-molecula" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todas las moléculas</option>
                                 </select>
                                 <button type="button" 
@@ -727,7 +727,7 @@
                                     Corporación
                                 </label>
                                 <select id="resto-filter-descripcionCorporacion" 
-                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                        class="block w-full text-xs border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500">
                                     <option value="">Todas las corporaciones</option>
                                 </select>
                                 <button type="button" 
@@ -752,7 +752,7 @@
                     <!-- Loading Overlay -->
                     <div id="resto-loading-overlay" class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-10 hidden">
                         <div class="text-center">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-3"></div>
                             <span class="text-gray-700 font-medium text-sm">Cargando productos RESTO...</span>
                         </div>
                     </div>
@@ -765,7 +765,7 @@
                                     <!-- Selección: 4% -->
                                     <th class="w-[4%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
                                         <input type="checkbox" id="select-all-products" onchange="toggleAllProducts()" 
-                                               class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                               class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                                     </th>
                                     <!-- Descripción: 18% -->
                                     <th class="w-[18%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">

@@ -3,7 +3,7 @@
 @section('page-title', 'Productos del Mercado')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-6">
+<div class="min-h-screen bg-white-50 py-6">
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6">
@@ -11,7 +11,7 @@
                 <div class="flex-1">
                     <div class="flex items-center mb-2">
                         <a href="{{ route('market-management.index') }}" 
-                           class="text-purple-600 hover:text-purple-700 mr-3 transition-colors">
+                           class="text-red-600 hover:text-red-700 mr-3 transition-colors">
                             <i class="fas fa-arrow-left"></i>
                         </a>
                         <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">
@@ -20,8 +20,8 @@
                         </h1>
                     </div>
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                            <i class="fas fa-store text-purple-600 text-xs"></i>
+                        <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-store text-red-600 text-xs"></i>
                         </div>
                         <div>
                             <p class="text-lg lg:text-xl font-medium text-gray-800">{{ $market->mercado ?? 'Mercado no encontrado' }}</p>

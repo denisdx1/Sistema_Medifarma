@@ -12,7 +12,7 @@
         </a>
         <div>
             <h1 class="text-3xl font-bold text-gray-900">
-                <i class="fas fa-user-edit text-purple-600 mr-3"></i>
+                <i class="fas fa-user-edit text-red-600 mr-3"></i>
                 Editar Usuario
             </h1>
             <p class="text-gray-600 mt-2">Modifica la información de {{ $user->name }}</p>
@@ -29,14 +29,14 @@
                 <!-- Name -->
                 <div class="mb-6">
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-user text-purple-500 mr-2"></i>
+                        <i class="fas fa-user text-red-500 mr-2"></i>
                         Nombre Completo *
                     </label>
                     <input type="text" 
                            id="name" 
                            name="name" 
                            value="{{ old('name', $user->name) }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 @error('name') border-red-500 @enderror" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 @error('name') border-red-500 @enderror" 
                            placeholder="Ingresa el nombre completo"
                            required>
                     @error('name')
@@ -47,14 +47,14 @@
                 <!-- Email -->
                 <div class="mb-6">
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-envelope text-purple-500 mr-2"></i>
+                        <i class="fas fa-envelope text-red-500 mr-2"></i>
                         Correo Electrónico *
                     </label>
                     <input type="email" 
                            id="email" 
                            name="email" 
                            value="{{ old('email', $user->email) }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 @error('email') border-red-500 @enderror" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 @error('email') border-red-500 @enderror" 
                            placeholder="usuario@example.com"
                            required>
                     @error('email')
@@ -65,13 +65,13 @@
                 <!-- Password -->
                 <div class="mb-6">
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock text-purple-500 mr-2"></i>
+                        <i class="fas fa-lock text-red-500 mr-2"></i>
                         Nueva Contraseña
                     </label>
                     <input type="password" 
                            id="password" 
                            name="password" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 @error('password') border-red-500 @enderror" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 @error('password') border-red-500 @enderror" 
                            placeholder="Dejar en blanco para mantener la actual">
                     <p class="text-sm text-gray-500 mt-1">Dejar en blanco si no deseas cambiar la contraseña</p>
                     @error('password')
@@ -82,25 +82,25 @@
                 <!-- Password Confirmation -->
                 <div class="mb-6">
                     <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock text-purple-500 mr-2"></i>
+                        <i class="fas fa-lock text-red-500 mr-2"></i>
                         Confirmar Nueva Contraseña
                     </label>
                     <input type="password" 
                            id="password_confirmation" 
                            name="password_confirmation" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" 
                            placeholder="Confirmar nueva contraseña">
                 </div>
 
                 <!-- Role -->
                 <div class="mb-6">
                     <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-user-tag text-purple-500 mr-2"></i>
+                        <i class="fas fa-user-tag text-red-500 mr-2"></i>
                         Rol *
                     </label>
                     <select id="role" 
                             name="role" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 @error('role') border-red-500 @enderror"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 @error('role') border-red-500 @enderror"
                             required>
                         @foreach($roles as $roleKey => $roleName)
                             <option value="{{ $roleKey }}" {{ old('role', $user->role) == $roleKey ? 'selected' : '' }}>
@@ -128,14 +128,14 @@
                 <!-- Department -->
                 <div class="mb-6">
                     <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-building text-purple-500 mr-2"></i>
+                        <i class="fas fa-building text-red-500 mr-2"></i>
                         Departamento
                     </label>
                     <input type="text" 
                            id="department" 
                            name="department" 
                            value="{{ old('department', $user->department) }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 @error('department') border-red-500 @enderror" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 @error('department') border-red-500 @enderror" 
                            placeholder="Ej: TI, Ventas, Marketing">
                     @error('department')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -145,7 +145,7 @@
                 <!-- Permisos de Módulos -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">
-                        <i class="fas fa-key text-purple-500 mr-2"></i>
+                        <i class="fas fa-key text-red-500 mr-2"></i>
                         Permisos de Módulos
                     </label>
                     <div class="bg-gray-50 p-4 rounded-lg">
@@ -159,7 +159,7 @@
                                            name="permissions[]" 
                                            value="{{ $module }}"
                                            {{ in_array($module, $user->permissions ?? []) ? 'checked' : '' }}
-                                           class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
                                     <label for="permission_{{ $module }}" class="ml-2 text-sm text-gray-700">
                                         {{ $displayName }}
                                     </label>
@@ -169,7 +169,7 @@
                         
                         <div class="mt-3">
                             <button type="button" onclick="toggleAllPermissions()" 
-                                    class="text-sm text-purple-600 hover:text-purple-800">
+                                    class="text-sm text-red-600 hover:text-red-800">
                                 Seleccionar/Deseleccionar Todos
                             </button>
                         </div>
@@ -184,7 +184,7 @@
                                name="is_active" 
                                value="1"
                                {{ old('is_active', $user->is_active) ? 'checked' : '' }}
-                               class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                               class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
                         <label for="is_active" class="ml-2 block text-sm text-gray-700">
                             <i class="fas fa-user-check text-green-500 mr-1"></i>
                             Usuario activo (puede iniciar sesión)
@@ -216,7 +216,7 @@
                     </a>
                     
                     <button type="submit" 
-                            class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">
+                            class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200">
                         <i class="fas fa-save mr-2"></i>
                         Guardar Cambios
                     </button>
