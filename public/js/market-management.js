@@ -78,7 +78,7 @@ function confirmCreateMarket() {
     submitBtn.prop('disabled', true);
     
     // Submit form
-    $.post(window.MarketManagementRoutes.store, {
+    $.post(window.MarketManagementRoutes.create, {
         market_name: marketName,
         _token: window.csrfToken
     })

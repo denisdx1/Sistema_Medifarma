@@ -123,7 +123,18 @@ class MarketManagementController extends Controller
             DB::beginTransaction();
             
             $marketName = trim($request->market_name);
-            $userId = Auth::id();
+            
+            // Obtener el usuario autenticado y su ID correcto
+            $user = Auth::user();
+            $userId = $user->idUsuario; // Usar la columna correcta para el ID
+            
+            // Debug: verificar que el ID sea numérico
+            if (!is_numeric($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ID de usuario no válido'
+                ], 500);
+            }
             
             // Verificar si ya existe un mercado con el mismo nombre
             $existingMarket = DB::connection('sqlsrv')
@@ -138,14 +149,9 @@ class MarketManagementController extends Controller
                 ], 422);
             }
             
-            // Establecer contexto de usuario para auditoría automática
-            if ($userId) {
-                DB::connection('sqlsrv')->statement('EXEC ODS.SP_SET_USER_CONTEXT ?', [$userId]);
-            }
-            
-            // Llamar al stored procedure para insertar el mercado
-            DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?', [$marketName]);
-            
+            // Llamar al stored procedure para insertar el mercado con los parámetros requeridos
+            DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?', [$marketName, (int)$userId]);
+
             DB::commit();
             
             // Calcular la página donde aparecerá el nuevo mercado
@@ -427,6 +433,9 @@ class MarketManagementController extends Controller
                 ], 400);
             }
 
+            // Obtener usuario autenticado para filtro de franquicia
+            $user = Auth::user();
+
             // OPTIMIZACIÓN 1: Cache del mercado para evitar consulta repetida
             static $marketCache = [];
             if (!isset($marketCache[$marketId])) {
@@ -470,6 +479,13 @@ class MarketManagementController extends Controller
                 $countQuery = DB::connection('sqlsrv')
                     ->table('dbo.VMAE_PROD_IQVIA as v')
                     ->where('v.MERCADO', $market->mercado);
+
+                // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto, filtrar productos por franquicia
+                if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                    $countQuery->where('v.Franquicia', $user->franquicia)
+                              ->whereNotNull('v.Franquicia')
+                              ->whereNotNull('v.gerente_producto');
+                }
                     
                 $this->applySearchAndFiltersNoJoin($countQuery, $search, $filters);
                 $totalProducts = $countQuery->count();
@@ -565,6 +581,13 @@ class MarketManagementController extends Controller
             }
 
             $baseQuery->select($selectFields)->where('v.MERCADO', $market->mercado);
+
+            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto, filtrar productos por franquicia
+            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
+                $baseQuery->where('v.Franquicia', $user->franquicia)
+                          ->whereNotNull('v.Franquicia')
+                          ->whereNotNull('v.gerente_producto');
+            }
 
             // Aplicar filtros optimizados
             if ($needsFuenteJoin) {
