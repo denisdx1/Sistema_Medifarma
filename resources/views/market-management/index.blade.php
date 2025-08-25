@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="min-h-screen bg-white-50 py-6">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex justify-between items-center">
@@ -60,7 +60,7 @@
                         <div class="relative">
                             <input type="text" 
                                    id="search-input"
-                                   placeholder="Buscar por nombre, ID o estado..."
+                                   placeholder="Buscar por nombre o estado..."
                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 w-80">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
                                 <i class="fas fa-search text-gray-400"></i>
@@ -80,9 +80,6 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Nombre del Mercado
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -99,9 +96,6 @@
                     <tbody class="bg-white divide-y divide-gray-200" id="markets-table-body">
                         @foreach($markets as $market)
                         <tr class="hover:bg-gray-50 market-row" data-market-id="{{ $market->idMercado }}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $market->idMercado }}
-                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
@@ -268,18 +262,7 @@
                     <p class="text-xs text-gray-500 mt-1">El nombre debe ser único en el sistema</p>
                 </div>
                 
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-600 mt-1"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-blue-800 text-sm">
-                                <strong>Información:</strong> El mercado será creado en estado "ESPERA" y deberá ser aprobado por un administrador antes de estar disponible.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                
                 
                 <!-- Actions -->
                 <div class="flex justify-end space-x-3">

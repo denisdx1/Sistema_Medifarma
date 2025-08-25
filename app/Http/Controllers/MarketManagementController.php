@@ -10,6 +10,112 @@ use App\Models\VmaeProductoIqvia;
 class MarketManagementController extends Controller
 {
     /**
+     * Obtener información de franquicia de un usuario para display/logging
+     */
+    private function getFranquiciaInfo($user)
+    {
+        if (!$user || !$user->idFranquicia) {
+            return null;
+        }
+
+        return \DB::connection('sqlsrv')
+            ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+            ->where('idFranquicia', $user->idFranquicia)
+            ->value('franquicia');
+    }
+
+    /**
+     * Aplicar filtro de gerente de producto a una query de productos
+     */
+    private function aplicarFiltroGerenteProducto($query, $user)
+    {
+        if (!$user || $user->idRol != 2 || !$user->idFranquicia) {
+            return $query;
+        }
+
+        // Obtener el nombre de la franquicia del usuario
+        $nombreFranquicia = \DB::connection('sqlsrv')
+            ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+            ->where('idFranquicia', $user->idFranquicia)
+            ->value('franquicia');
+
+        if (!$nombreFranquicia || $nombreFranquicia === 'ADMIN') {
+            return $query;
+        }
+
+        // Construir posibles variaciones del nombre del gerente
+        $nombreCompleto = strtoupper($user->usuario);
+        $partesNombre = explode(' ', $nombreCompleto);
+        
+        $posiblesNombres = [];
+        if (count($partesNombre) >= 2) {
+            // Formato original: "ZINGARA ROJAS"
+            $posiblesNombres[] = $nombreCompleto;
+            // Formato invertido: "ROJAS ZINGARA" 
+            $posiblesNombres[] = $partesNombre[1] . ' ' . $partesNombre[0];
+            // Solo apellido si es necesario
+            $posiblesNombres[] = $partesNombre[1];
+            // Solo nombre si es necesario
+            $posiblesNombres[] = $partesNombre[0];
+        } else {
+            $posiblesNombres[] = $nombreCompleto;
+        }
+
+        return $query->where('v.Franquicia', $nombreFranquicia)
+                     ->whereIn('v.Gerente_Producto', $posiblesNombres)
+                     ->whereNotNull('v.Franquicia')
+                     ->whereNotNull('v.Gerente_Producto');
+    }
+
+    /**
+     * Obtener los mercados asignados específicamente a un gerente de producto
+     */
+    private function getMercadosDelGerente($user)
+    {
+        if (!$user || $user->idRol != 2 || !$user->idFranquicia) {
+            return null;
+        }
+
+        // Obtener el nombre de la franquicia del usuario
+        $nombreFranquicia = \DB::connection('sqlsrv')
+            ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+            ->where('idFranquicia', $user->idFranquicia)
+            ->value('franquicia');
+
+        if (!$nombreFranquicia || $nombreFranquicia === 'ADMIN') {
+            return null;
+        }
+
+        // Construir posibles variaciones del nombre del gerente
+        $nombreCompleto = strtoupper($user->usuario);
+        $partesNombre = explode(' ', $nombreCompleto);
+        
+        $posiblesNombres = [];
+        if (count($partesNombre) >= 2) {
+            // Formato original: "ZINGARA ROJAS"
+            $posiblesNombres[] = $nombreCompleto;
+            // Formato invertido: "ROJAS ZINGARA" 
+            $posiblesNombres[] = $partesNombre[1] . ' ' . $partesNombre[0];
+            // Solo apellido si es necesario
+            $posiblesNombres[] = $partesNombre[1];
+            // Solo nombre si es necesario
+            $posiblesNombres[] = $partesNombre[0];
+        } else {
+            $posiblesNombres[] = $nombreCompleto;
+        }
+
+        // Obtener mercados que pertenecen a la franquicia del usuario Y están asignados a este gerente
+        return VmaeProductoIqvia::select('MERCADO')
+            ->distinct()
+            ->where('Franquicia', $nombreFranquicia)
+            ->whereIn('Gerente_Producto', $posiblesNombres)
+            ->whereNotNull('MERCADO')
+            ->whereNotNull('Gerente_Producto')
+            ->pluck('MERCADO')
+            ->toArray();
+    }
+
+    /**
      * Display all markets with management capabilities
      */
     public function index(Request $request)
@@ -30,20 +136,14 @@ class MarketManagementController extends Controller
                 )
                 ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos
 
-            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                // Obtener mercados que pertenecen a la franquicia del usuario
-                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
-                    ->distinct()
-                    ->where('Franquicia', $user->franquicia)
-                    ->whereNotNull('MERCADO')
-                    ->pluck('MERCADO')
-                    ->toArray();
-
-                if (!empty($mercadosDeFranquicia)) {
-                    $marketsQuery->whereIn('m.mercado', $mercadosDeFranquicia);
+            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto (rol 2), filtrar por mercados asignados
+            if ($user && $user->idRol == 2 && $user->idFranquicia) {
+                $mercadosDelGerente = $this->getMercadosDelGerente($user);
+                
+                if ($mercadosDelGerente && !empty($mercadosDelGerente)) {
+                    $marketsQuery->whereIn('m.mercado', $mercadosDelGerente);
                 } else {
-                    // Si no hay mercados para esta franquicia, no mostrar ninguno
+                    // Si no hay mercados asignados a este gerente, no mostrar ninguno
                     $marketsQuery->whereRaw('1 = 0');
                 }
             }
@@ -72,17 +172,12 @@ class MarketManagementController extends Controller
                 ->select('e.estado')
                 ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos de las estadísticas
 
-            // Aplicar el mismo filtro de franquicia a las estadísticas
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
-                    ->distinct()
-                    ->where('Franquicia', $user->franquicia)
-                    ->whereNotNull('MERCADO')
-                    ->pluck('MERCADO')
-                    ->toArray();
-
-                if (!empty($mercadosDeFranquicia)) {
-                    $statsQuery->whereIn('m.mercado', $mercadosDeFranquicia);
+            // Aplicar el mismo filtro de franquicia y gerente a las estadísticas
+            if ($user && $user->idRol == 2 && $user->idFranquicia) {
+                $mercadosDelGerente = $this->getMercadosDelGerente($user);
+                
+                if ($mercadosDelGerente && !empty($mercadosDelGerente)) {
+                    $statsQuery->whereIn('m.mercado', $mercadosDelGerente);
                 } else {
                     $statsQuery->whereRaw('1 = 0');
                 }
@@ -100,7 +195,7 @@ class MarketManagementController extends Controller
             return view('market-management.index', [
                 'markets' => $markets,
                 'search' => $search,
-                'userFranquicia' => $user ? $user->franquicia : null,
+                'userFranquicia' => $this->getFranquiciaInfo($user),
                 'isGerenteProducto' => $user ? $user->idRol == 2 : false
             ]);
 
@@ -329,20 +424,14 @@ class MarketManagementController extends Controller
                 )
                 ->where('e.estado', '!=', 'INACTIVO'); // Excluir mercados inactivos
 
-            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                // Obtener mercados que pertenecen a la franquicia del usuario
-                $mercadosDeFranquicia = VmaeProductoIqvia::select('MERCADO')
-                    ->distinct()
-                    ->where('Franquicia', $user->franquicia)
-                    ->whereNotNull('MERCADO')
-                    ->pluck('MERCADO')
-                    ->toArray();
-
-                if (!empty($mercadosDeFranquicia)) {
-                    $query->whereIn('m.mercado', $mercadosDeFranquicia);
+            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto (rol 2), filtrar por mercados asignados
+            if ($user && $user->idRol == 2 && $user->idFranquicia) {
+                $mercadosDelGerente = $this->getMercadosDelGerente($user);
+                
+                if ($mercadosDelGerente && !empty($mercadosDelGerente)) {
+                    $query->whereIn('m.mercado', $mercadosDelGerente);
                 } else {
-                    // Si no hay mercados para esta franquicia, no mostrar ninguno
+                    // Si no hay mercados asignados a este gerente, no mostrar ninguno
                     $query->whereRaw('1 = 0');
                 }
             }
@@ -480,12 +569,8 @@ class MarketManagementController extends Controller
                     ->table('dbo.VMAE_PROD_IQVIA as v')
                     ->where('v.MERCADO', $market->mercado);
 
-                // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto, filtrar productos por franquicia
-                if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                    $countQuery->where('v.Franquicia', $user->franquicia)
-                              ->whereNotNull('v.Franquicia')
-                              ->whereNotNull('v.gerente_producto');
-                }
+                // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
+                $this->aplicarFiltroGerenteProducto($countQuery, $user);
                     
                 $this->applySearchAndFiltersNoJoin($countQuery, $search, $filters);
                 $totalProducts = $countQuery->count();
@@ -582,12 +667,8 @@ class MarketManagementController extends Controller
 
             $baseQuery->select($selectFields)->where('v.MERCADO', $market->mercado);
 
-            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto, filtrar productos por franquicia
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                $baseQuery->where('v.Franquicia', $user->franquicia)
-                          ->whereNotNull('v.Franquicia')
-                          ->whereNotNull('v.gerente_producto');
-            }
+            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
+            $this->aplicarFiltroGerenteProducto($baseQuery, $user);
 
             // Aplicar filtros optimizados
             if ($needsFuenteJoin) {
@@ -899,22 +980,29 @@ class MarketManagementController extends Controller
                 ])
                 ->where('v.MERCADO', 'RESTO');
 
-            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                $baseQuery->where('v.Franquicia', $user->franquicia);
-                
+            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
+            $this->aplicarFiltroGerenteProducto($baseQuery, $user);
+            
+            if ($user && $user->idRol == 2 && $user->idFranquicia) {
+                // Obtener el nombre de la franquicia para logging
+                $nombreFranquicia = \DB::connection('sqlsrv')
+                    ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+                    ->where('idFranquicia', $user->idFranquicia)
+                    ->value('franquicia');
+                    
                 // Log para debugging
-                \Log::info('Filtro RESTO por franquicia aplicado', [
+                \Log::info('Filtro RESTO por franquicia y gerente aplicado', [
                     'user_id' => $user->idUsuario,
                     'user_role' => $user->idRol,
-                    'franquicia' => $user->franquicia
+                    'franquicia' => $nombreFranquicia,
+                    'usuario' => $user->usuario
                 ]);
             } else {
                 // Log para debugging cuando no se aplica filtro
                 \Log::info('Filtro RESTO por franquicia NO aplicado', [
                     'user_id' => $user ? $user->idUsuario : 'no-user',
                     'user_role' => $user ? $user->idRol : 'no-role',
-                    'franquicia' => $user ? $user->franquicia : 'no-franquicia'
+                    'idFranquicia' => $user ? $user->idFranquicia : 'no-franquicia'
                 ]);
             }
 
@@ -968,7 +1056,7 @@ class MarketManagementController extends Controller
             \Log::info('RESTO products query results', [
                 'count' => $productos->count(),
                 'first_product_franquicia' => $productos->isNotEmpty() ? $productos->first()->Franquicia : null,
-                'user_franquicia' => $user ? $user->franquicia : null
+                'user_franquicia' => $this->getFranquiciaInfo($user)
             ]);
             
             // Verificar si hay más páginas
@@ -994,9 +1082,9 @@ class MarketManagementController extends Controller
                     'next_cursor' => $nextCursor,
                     'has_more_pages' => $hasMorePages,
                     'debug_info' => [
-                        'user_franquicia' => $user ? $user->franquicia : null,
+                        'user_franquicia' => $this->getFranquiciaInfo($user),
                         'user_role' => $user ? $user->idRol : null,
-                        'filter_applied' => $user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN',
+                        'filter_applied' => $user && $user->idRol == 2 && $user->idFranquicia,
                         'total_count' => $totalProducts,
                         'returned_count' => $productos->count(),
                         'first_product_franquicia' => $productos->isNotEmpty() ? $productos->first()->Franquicia : null
@@ -1025,15 +1113,22 @@ class MarketManagementController extends Controller
                 ->table('dbo.VMAE_PROD_IQVIA')
                 ->where('MERCADO', 'RESTO');
 
-            // FILTRO POR FRANQUICIA: Si el usuario es gerente de producto (rol 2), filtrar por su franquicia
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                $baseQuery->where('Franquicia', $user->franquicia);
-                
+            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
+            $this->aplicarFiltroGerenteProducto($baseQuery, $user);
+            
+            if ($user && $user->idRol == 2 && $user->idFranquicia) {
+                // Obtener el nombre de la franquicia para logging
+                $nombreFranquicia = \DB::connection('sqlsrv')
+                    ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+                    ->where('idFranquicia', $user->idFranquicia)
+                    ->value('franquicia');
+                    
                 // Log para debugging
-                \Log::info('Filtro opciones RESTO por franquicia aplicado', [
+                \Log::info('Filtro opciones RESTO por franquicia y gerente aplicado', [
                     'user_id' => $user->idUsuario,
                     'user_role' => $user->idRol,
-                    'franquicia' => $user->franquicia
+                    'franquicia' => $nombreFranquicia,
+                    'usuario' => $user->usuario
                 ]);
             }
 
@@ -1073,10 +1168,8 @@ class MarketManagementController extends Controller
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
                 ->where('v.MERCADO', 'RESTO');
             
-            // Aplicar filtro de franquicia también aquí
-            if ($user && $user->idRol == 2 && $user->franquicia && $user->franquicia !== 'ADMIN') {
-                $fuenteQuery->where('v.Franquicia', $user->franquicia);
-            }
+            // Aplicar filtro de franquicia y gerente también aquí
+            $this->aplicarFiltroGerenteProducto($fuenteQuery, $user);
             
             $fuenteOptions = $fuenteQuery
                 ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"))

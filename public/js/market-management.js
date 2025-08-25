@@ -335,9 +335,6 @@ function generateMarketRow(market) {
     
     return `
         <tr class="hover:bg-gray-50 market-row" data-market-id="${market.idMercado}">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${market.idMercado}
-            </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">

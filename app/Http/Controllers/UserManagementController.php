@@ -19,28 +19,48 @@ class UserManagementController extends Controller
         // Aplicar filtros
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                $q->where('usuario', 'like', '%' . $request->search . '%')
+                  ->orWhere('login', 'like', '%' . $request->search . '%')
+                  ->orWhere('franquicia', 'like', '%' . $request->search . '%');
             });
         }
 
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
+            $query->where('idRol', $request->role);
         }
 
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status == '1');
+            $query->where('idEstado', $request->status);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+        if ($request->filled('franquicia')) {
+            $query->where('franquicia', $request->franquicia);
+        }
+
+        $users = $query->orderBy('fechaRegistro', 'desc')->paginate(15);
 
         // Estadísticas
         $totalUsers = User::count();
-        $activeUsers = User::where('is_active', true)->count();
-        $inactiveUsers = User::where('is_active', false)->count();
-        $adminUsers = User::where('role', 'administrador')->count();
+        $activeUsers = User::where('idEstado', 1)->count(); // 1 = ACTIVO
+        $inactiveUsers = User::where('idEstado', 2)->count(); // 2 = INACTIVO
+        $adminUsers = User::where('idRol', 1)->count(); // 1 = ADMINISTRADOR
 
-        return view('users.index', compact('users', 'totalUsers', 'activeUsers', 'inactiveUsers', 'adminUsers'));
+        $estadisticas = [
+            'total' => $totalUsers,
+            'activos' => $activeUsers,
+            'inactivos' => $inactiveUsers,
+            'administradores' => $adminUsers
+        ];
+
+        // Obtener roles y franquicias para filtros
+        $roles = User::getRoles();
+        $franquicias = User::select('franquicia')
+            ->distinct()
+            ->whereNotNull('franquicia')
+            ->orderBy('franquicia')
+            ->pluck('franquicia');
+
+        return view('usuarios.index', compact('users', 'estadisticas', 'roles', 'franquicias'));
     }
 
     /**
@@ -59,26 +79,35 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'usuario' => 'required|string|max:255',
+            'login' => 'required|string|max:50|unique:ODS.TAB_USUARIO,login',
+            'email' => 'nullable|string|email|max:255', // Campo opcional por ahora
             'password' => 'required|string|min:6|confirmed',
-            'role' => ['required', Rule::in(array_keys(User::getRoles()))],
-            'department' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
+            'idRol' => ['required', Rule::in(array_keys(User::getRoles()))],
+            'franquicia' => 'required|string|max:50',
+            'nueva_franquicia' => 'nullable|string|max:50',
         ]);
+
+        // Si se especificó una nueva franquicia, usarla
+        $franquicia = $request->franquicia === 'NUEVA' && $request->nueva_franquicia 
+            ? $request->nueva_franquicia 
+            : $request->franquicia;
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'usuario' => $request->usuario,
+            'login' => $request->login,
+            'email' => $request->email, // Campo para futura implementación
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'department' => $request->department,
-            'is_active' => $request->boolean('is_active', true),
-            'email_verified_at' => now()
+            'idRol' => $request->idRol,
+            'franquicia' => $franquicia,
+            'fechaRegistro' => now(),
+            'idEstado' => 1, // Estado activo por defecto
         ]);
 
-        return redirect()->route('users.index')
-            ->with('success', 'Usuario creado exitosamente.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario creado exitosamente.'
+        ]);
     }
 
     /**
@@ -97,20 +126,28 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'usuario' => 'required|string|max:255',
+            'login' => ['required', 'string', 'max:50', Rule::unique('ODS.TAB_USUARIO', 'login')->ignore($user->idUsuario, 'idUsuario')],
+            'email' => 'nullable|string|email|max:255', // Campo opcional por ahora
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => ['required', Rule::in(array_keys(User::getRoles()))],
-            'department' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
+            'idRol' => ['required', Rule::in(array_keys(User::getRoles()))],
+            'franquicia' => 'required|string|max:50',
+            'nueva_franquicia' => 'nullable|string|max:50',
+            'idEstado' => 'boolean',
         ]);
 
+        // Si se especificó una nueva franquicia, usarla
+        $franquicia = $request->franquicia === 'NUEVA' && $request->nueva_franquicia 
+            ? $request->nueva_franquicia 
+            : $request->franquicia;
+
         $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'department' => $request->department,
-            'is_active' => $request->boolean('is_active', true),
+            'usuario' => $request->usuario,
+            'login' => $request->login,
+            'email' => $request->email, // Campo para futura implementación
+            'idRol' => $request->idRol,
+            'franquicia' => $franquicia,
+            'idEstado' => $request->boolean('idEstado', true) ? 1 : 2, // 1=ACTIVO, 2=INACTIVO
         ];
 
         if ($request->filled('password')) {
@@ -119,8 +156,10 @@ class UserManagementController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('users.index')
-                         ->with('success', 'Usuario actualizado exitosamente.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario actualizado exitosamente.'
+        ]);
     }
 
     /**
@@ -128,12 +167,16 @@ class UserManagementController extends Controller
      */
     public function toggleStatus(User $user)
     {
-        $user->update(['is_active' => !$user->is_active]);
+        $newStatus = $user->idEstado == 1 ? 2 : 1; // 1=ACTIVO, 2=INACTIVO
+        $user->update(['idEstado' => $newStatus]);
         
-        $status = $user->is_active ? 'activado' : 'desactivado';
+        $status = $newStatus == 1 ? 'activado' : 'desactivado';
         
-        return redirect()->route('users.index')
-                         ->with('success', "Usuario {$status} exitosamente.");
+        return response()->json([
+            'success' => true,
+            'message' => "Usuario {$status} exitosamente.",
+            'new_status' => $newStatus
+        ]);
     }
 
     /**
@@ -143,13 +186,23 @@ class UserManagementController extends Controller
     {
         $stats = [
             'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'inactive' => User::where('is_active', false)->count(),
-            'admins' => User::where('role', User::ROLE_ADMIN)->count(),
-            'product_managers' => User::where('role', User::ROLE_PRODUCT_MANAGER)->count(),
-            'business_intelligence' => User::where('role', User::ROLE_BUSINESS_INTELLIGENCE)->count(),
+            'active' => User::where('idEstado', 1)->count(),
+            'inactive' => User::where('idEstado', 2)->count(),
+            'admins' => User::where('idRol', User::ROLE_ADMIN)->count(),
+            'product_managers' => User::where('idRol', User::ROLE_GERENTE_PRODUCTO)->count(),
         ];
 
         return response()->json(['success' => true, 'stats' => $stats]);
+    }
+
+    /**
+     * Get a specific user for editing
+     */
+    public function show(User $user)
+    {
+        return response()->json([
+            'success' => true,
+            'usuario' => $user
+        ]);
     }
 }

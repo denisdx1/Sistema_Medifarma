@@ -33,6 +33,26 @@ class AuthService
     }
 
     /**
+     * Verificar si el usuario requiere cambio de contraseña
+     */
+    public function requiereCambioPassword($user): bool
+    {
+        // Verificar si la contraseña es temporal (misma que el login + algún patrón)
+        // O si hay un campo específico en BD que indique primer login
+        
+        // Por ahora, verificamos si la contraseña es simple (como 123456)
+        $passwordsTemporales = ['123456', 'password', 'temporal', $user->login];
+        
+        foreach ($passwordsTemporales as $passwordTemporal) {
+            if ($this->verificarPasswordSHA256($passwordTemporal, $user->password)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Verificar contraseña con SHA2_256
      */
     private function verificarPasswordSHA256(string $passwordTextoPlano, $passwordHasheadaBD): bool

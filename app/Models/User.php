@@ -30,10 +30,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'idRol',
+        'idFranquicia', // Cambiado de franquicia a idFranquicia
         'usuario',
         'login',
         'password',
-        'franquicia',
+        'email',
         'fechaRegistro',
         'idEstado'
     ];
@@ -58,16 +59,15 @@ class User extends Authenticatable
         return [
             'idUsuario' => 'integer',
             'idRol' => 'integer',
+            'idFranquicia' => 'integer', // Cambiado de franquicia string a idFranquicia integer
             'usuario' => 'string',
             'login' => 'string',
-            'franquicia' => 'string',
+            'email' => 'string',
             'fechaRegistro' => 'date',
             'idEstado' => 'integer',
             // No usar hashed para password ya que viene como varbinary(32)
         ];
-    }
-
-    /**
+    }    /**
      * Role constants - basado en datos reales de la BD
      * Según la exploración: tenemos usuarios con idRol = 1 y idRol = 2
      */
@@ -91,6 +91,62 @@ class User extends Authenticatable
             1 => 'Administrador',
             2 => 'Gerente de Producto (GP)',
         ];
+    }
+
+    /**
+     * Get all available franquicias from DTM_VENTAS.ODS.TAB_FRANQUICIA
+     */
+    public static function getFranquicias(): array
+    {
+        try {
+            $franquicias = \DB::connection('sqlsrv')
+                ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+                ->select('idFranquicia', 'franquicia')
+                ->orderBy('franquicia')
+                ->get()
+                ->pluck('franquicia', 'idFranquicia')
+                ->toArray();
+            
+            return $franquicias;
+        } catch (\Exception $e) {
+            // En caso de error, retornar array vacío
+            \Log::error('Error al obtener franquicias: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Validate if a franquicia exists in DTM_VENTAS.ODS.TAB_FRANQUICIA
+     */
+    public static function franquiciaExists(int $idFranquicia): bool
+    {
+        try {
+            return \DB::connection('sqlsrv')
+                ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+                ->where('idFranquicia', $idFranquicia)
+                ->exists();
+        } catch (\Exception $e) {
+            \Log::error('Error al validar franquicia: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get franquicia name by ID
+     */
+    public function getFranquiciaNombre(): string
+    {
+        try {
+            $franquicia = \DB::connection('sqlsrv')
+                ->table('DTM_VENTAS.ODS.TAB_FRANQUICIA')
+                ->where('idFranquicia', $this->idFranquicia)
+                ->value('franquicia');
+            
+            return $franquicia ?? 'Sin franquicia';
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener nombre de franquicia: ' . $e->getMessage());
+            return 'Error al cargar franquicia';
+        }
     }
 
     /**
@@ -221,6 +277,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Accessor para 'franquicia' (compatibilidad)
+     */
+    public function getFranquiciaAttribute()
+    {
+        return $this->getFranquiciaNombre();
+    }
+
+    /**
      * Accessor para 'is_active' (compatibilidad)
      */
     public function getIsActiveAttribute()
@@ -312,14 +376,6 @@ class User extends Authenticatable
         $usuario->save();
         
         return $usuario;
-    }
-
-    /**
-     * Accessor para 'franquicia'
-     */
-    public function getFranquiciaAttribute($value)
-    {
-        return $value;
     }
 
     /**

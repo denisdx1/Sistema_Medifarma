@@ -27,7 +27,16 @@ class AuthController extends Controller
         $credentials = $request->only('login', 'password');
 
         if ($this->authService->attempt($credentials)) {
-            return redirect()->route('market-management.index')->with('success', 'Has iniciado sesión correctamente');
+            $user = auth()->user();
+            
+            // Verificar si requiere cambio de contraseña
+            if ($this->authService->requiereCambioPassword($user)) {
+                return redirect()->route('usuarios.cambio-password')
+                    ->with('info', 'Debes cambiar tu contraseña antes de continuar.');
+            }
+            
+            return redirect()->route('market-management.index')
+                ->with('success', 'Has iniciado sesión correctamente');
         }
 
         return back()->withErrors(['login' => 'Credenciales incorrectas'])->withInput();
