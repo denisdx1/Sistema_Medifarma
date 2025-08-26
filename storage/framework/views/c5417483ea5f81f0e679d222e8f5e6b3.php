@@ -1,12 +1,10 @@
 
 
-<?php $__env->startSection('title', 'Gestión de Usuarios'); ?>
-
 <?php $__env->startSection('content'); ?>
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
     <!-- Header Section -->
     <div class="bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 py-6">
+        <div class="w-full px-4 py-6">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
@@ -29,7 +27,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="w-full px-4 py-8">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <!-- Total Users -->
@@ -181,7 +179,7 @@
         </div>
 
         <!-- Users Table -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-100">
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 relative z-10">
             <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900">
@@ -195,7 +193,7 @@
             </div>
             
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 relative z-1">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -211,7 +209,7 @@
                                 Rol
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Franquicia
+                                Franquicias
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Estado
@@ -276,7 +274,10 @@
 
                                 <!-- Franchise -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900"><?php echo e($usuario->getFranquiciaNombre()); ?></div>
+                                    <div class="text-sm text-gray-900"><?php echo e($usuario->franquicias_nombres); ?></div>
+                                    <?php if($usuario->franquicias_cantidad > 0): ?>
+                                        <div class="text-xs text-gray-500"><?php echo e($usuario->franquicias_cantidad); ?> franquicia<?php echo e($usuario->franquicias_cantidad != 1 ? 's' : ''); ?></div>
+                                    <?php endif; ?>
                                 </td>
 
                                 <!-- Status -->
@@ -362,8 +363,8 @@
         </div>
 
         <!-- Modal Crear Usuario -->
-        <div id="modalCrearUsuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
+        <div id="modalCrearUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;">
+            <div class="relative mx-auto border w-full max-w-2xl shadow-2xl rounded-lg bg-white" style="z-index: 9999999 !important;">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">
@@ -486,22 +487,28 @@
                             <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_idRol"></div>
                         </div>
 
-                        <!-- Franquicia -->
-                        <div>
-                            <label for="crear_idFranquicia" class="block text-sm font-medium text-gray-700 mb-2">
+                        <!-- Franquicias -->
+                        <div class="md:col-span-2">
+                            <label for="crear_idFranquicias" class="block text-sm font-medium text-gray-700 mb-2">
                                 <i class="fas fa-building text-red-500 mr-1"></i>
-                                Franquicia *
+                                Franquicias * <span class="text-xs text-gray-500">(Puede seleccionar múltiples)</span>
                             </label>
-                            <select id="crear_idFranquicia" 
-                                    name="idFranquicia" 
-                                    required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200">
-                                <option value="">Seleccione una franquicia</option>
+                            <div class="border border-gray-300 rounded-lg max-h-40 overflow-y-auto bg-white">
                                 <?php $__currentLoopData = $franquicias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idFranquicia => $nombreFranquicia): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($idFranquicia); ?>"><?php echo e($nombreFranquicia); ?></option>
+                                    <label class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                        <input type="checkbox" 
+                                               name="idFranquicias[]" 
+                                               value="<?php echo e($idFranquicia); ?>"
+                                               class="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                        <span class="text-sm text-gray-700"><?php echo e($nombreFranquicia); ?></span>
+                                    </label>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-                            <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_idFranquicia"></div>
+                            </div>
+                            <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_idFranquicias"></div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Seleccione al menos una franquicia para el usuario
+                            </div>
                         </div>
                     </div>
 
@@ -535,8 +542,8 @@
         </div>
 
         <!-- Modal Editar Usuario -->
-        <div id="modalEditarUsuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
+        <div id="modalEditarUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;">
+            <div class="relative mx-auto border w-full max-w-2xl shadow-2xl rounded-lg bg-white" style="z-index: 9999999 !important;">
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">
@@ -737,11 +744,382 @@
         <span class="text-gray-700">Procesando...</span>
     </div>
 </div>
-        
+
+<!-- MODALES FUERA DEL CONTENEDOR PRINCIPAL PARA Z-INDEX CORRECTO -->
+
+<!-- Modal Crear Usuario -->
+<div id="modalCrearUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;">
+    <div class="relative mx-auto border w-full max-w-2xl shadow-2xl rounded-lg bg-white" style="z-index: 9999999 !important;">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-user-plus text-red-600 mr-2"></i>
+                Crear Nuevo Usuario
+            </h3>
+            <button type="button" onclick="cerrarModalCrear()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="formCrearUsuario" class="p-6">
+            <?php echo csrf_field(); ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre Completo -->
+                <div>
+                    <label for="crear_usuario" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user text-red-500 mr-1"></i>
+                        Nombre Completo *
+                    </label>
+                    <input type="text" 
+                           id="crear_usuario" 
+                           name="usuario" 
+                           required
+                           maxlength="255"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                           placeholder="Ej: Denis Ruiz">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_usuario"></div>
+                </div>
+
+                <!-- Nombre de Usuario/Login -->
+                <div>
+                    <label for="crear_login" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-circle text-red-500 mr-1"></i>
+                        Nombre de Usuario *
+                    </label>
+                    <input type="text" 
+                           id="crear_login" 
+                           name="login" 
+                           required
+                           maxlength="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                           placeholder="druizp">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_login"></div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="crear_email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope text-red-500 mr-1"></i>
+                        Email (Opcional)
+                    </label>
+                    <input type="email" 
+                           id="crear_email" 
+                           name="email" 
+                           maxlength="255"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                           placeholder="ejemplo@medifarma.com">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_email"></div>
+                </div>
+
+                <!-- Contraseña Temporal -->
+                <div>
+                    <label for="crear_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-key text-red-500 mr-1"></i>
+                        Contraseña Temporal *
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="crear_password" 
+                               name="password" 
+                               required
+                               minlength="6"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200 pr-10"
+                               placeholder="Mínimo 6 caracteres">
+                        <button type="button" onclick="togglePassword('crear_password')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_password"></div>
+                </div>
+
+                <!-- Confirmar Contraseña -->
+                <div>
+                    <label for="crear_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-key text-red-500 mr-1"></i>
+                        Confirmar Contraseña *
+                    </label>
+                    <div class="relative">
+                        <input type="password" 
+                               id="crear_password_confirmation" 
+                               name="password_confirmation" 
+                               required
+                               minlength="6"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200 pr-10"
+                               placeholder="Confirmar contraseña">
+                        <button type="button" onclick="togglePassword('crear_password_confirmation')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_password_confirmation"></div>
+                </div>
+
+                <!-- Rol -->
+                <div>
+                    <label for="crear_idRol" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-tag text-red-500 mr-1"></i>
+                        Rol *
+                    </label>
+                    <select id="crear_idRol" 
+                            name="idRol" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200">
+                        <option value="">Seleccione un rol</option>
+                        <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idRol => $nombreRol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($idRol); ?>"><?php echo e($nombreRol); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_idRol"></div>
+                </div>
+
+                <!-- Franquicias -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-building text-red-500 mr-1"></i>
+                        Franquicias *
+                    </label>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-4">
+                        <?php $__currentLoopData = $franquicias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idFranquicia => $nombreFranquicia): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" 
+                                       name="idFranquicias[]" 
+                                       value="<?php echo e($idFranquicia); ?>"
+                                       class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                <span class="text-gray-700"><?php echo e($nombreFranquicia); ?></span>
+                            </label>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_idFranquicias"></div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Seleccione al menos una franquicia para el usuario
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Message -->
+            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                    <div class="text-sm text-blue-700">
+                        <strong>Nota importante:</strong> El usuario recibirá una contraseña temporal y será obligado a cambiarla en su primer inicio de sesión.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
+                <button type="button" 
+                        onclick="cerrarModalCrear()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-1"></i>
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        id="btnCrearUsuario"
+                        class="px-4 py-2 bg-gradient-to-r from-red-600 to-blue-600 text-white rounded-lg hover:from-red-700 hover:to-blue-700 transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Crear Usuario
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- TODO: Aquí continuaremos con los modales en partes posteriores -->
+<!-- Modal Editar Usuario -->
+<div id="modalEditarUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;">
+    <div class="relative mx-auto border w-full max-w-2xl shadow-2xl rounded-lg bg-white" style="z-index: 9999999 !important;">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-user-edit text-blue-600 mr-2"></i>
+                Editar Usuario
+            </h3>
+            <button type="button" onclick="cerrarModalEditar()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <form id="formEditarUsuario" class="p-6">
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('PUT'); ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre Completo -->
+                <div>
+                    <label for="editar_usuario" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user text-blue-500 mr-1"></i>
+                        Nombre Completo *
+                    </label>
+                    <input type="text" 
+                           id="editar_usuario" 
+                           name="usuario" 
+                           required
+                           maxlength="255"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                           placeholder="Ej: Denis Ruiz">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_usuario"></div>
+                </div>
+
+                <!-- Nombre de Usuario/Login -->
+                <div>
+                    <label for="editar_login" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-circle text-blue-500 mr-1"></i>
+                        Nombre de Usuario *
+                    </label>
+                    <input type="text" 
+                           id="editar_login" 
+                           name="login" 
+                           required
+                           maxlength="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                           placeholder="druizp">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_login"></div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="editar_email" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope text-blue-500 mr-1"></i>
+                        Email (Opcional)
+                    </label>
+                    <input type="email" 
+                           id="editar_email" 
+                           name="email" 
+                           maxlength="255"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                           placeholder="ejemplo@medifarma.com">
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_email"></div>
+                </div>
+
+                <!-- Rol -->
+                <div>
+                    <label for="editar_idRol" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-tag text-blue-500 mr-1"></i>
+                        Rol *
+                    </label>
+                    <select id="editar_idRol" 
+                            name="idRol" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <option value="">Seleccione un rol</option>
+                        <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idRol => $nombreRol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($idRol); ?>"><?php echo e($nombreRol); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idRol"></div>
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label for="editar_idEstado" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-toggle-on text-blue-500 mr-1"></i>
+                        Estado *
+                    </label>
+                    <select id="editar_idEstado" 
+                            name="idEstado" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <option value="1">Activo</option>
+                        <option value="0">Inactivo</option>
+                    </select>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idEstado"></div>
+                </div>
+
+                <!-- Franquicia -->
+                <div class="md:col-span-2">
+                    <label for="editar_idFranquicia" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-building text-blue-500 mr-1"></i>
+                        Franquicia *
+                    </label>
+                    <select id="editar_idFranquicia" 
+                            name="idFranquicia" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                        <option value="">Seleccione una franquicia</option>
+                        <?php $__currentLoopData = $franquicias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idFranquicia => $nombreFranquicia): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($idFranquicia); ?>"><?php echo e($nombreFranquicia); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idFranquicia"></div>
+                </div>
+            </div>
+
+            <!-- Password Section (Optional) -->
+            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-key text-yellow-600 mr-2"></i>
+                    <h4 class="text-sm font-medium text-yellow-800">Cambiar Contraseña (Opcional)</h4>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Nueva Contraseña -->
+                    <div>
+                        <label for="editar_password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nueva Contraseña
+                        </label>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="editar_password" 
+                                   name="password" 
+                                   minlength="6"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200 pr-10"
+                                   placeholder="Dejar vacío para mantener actual">
+                            <button type="button" onclick="togglePassword('editar_password')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_password"></div>
+                    </div>
+
+                    <!-- Confirmar Nueva Contraseña -->
+                    <div>
+                        <label for="editar_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
+                            Confirmar Nueva Contraseña
+                        </label>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="editar_password_confirmation" 
+                                   name="password_confirmation" 
+                                   minlength="6"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200 pr-10"
+                                   placeholder="Confirmar nueva contraseña">
+                            <button type="button" onclick="togglePassword('editar_password_confirmation')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                            </button>
+                        </div>
+                        <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_password_confirmation"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-2 text-sm text-yellow-700">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Si cambia la contraseña, el usuario deberá cambiarla nuevamente en su próximo inicio de sesión.
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200">
+                <button type="button" 
+                        onclick="cerrarModalEditar()"
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-1"></i>
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        id="btnEditarUsuario"
+                        class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Actualizar Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+        
+    </div>
+</div>
 
 <?php $__env->stopSection(); ?>
 
@@ -755,6 +1133,84 @@
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Estilos para modales - Z-index máximo para estar por encima de todo */
+    #modalCrearUsuario,
+    #modalEditarUsuario {
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: fixed !important;
+    }
+
+    #modalCrearUsuario.hidden,
+    #modalEditarUsuario.hidden {
+        display: none !important;
+    }
+
+    #modalCrearUsuario .relative,
+    #modalEditarUsuario .relative {
+        z-index: 9999999 !important;
+        position: relative !important;
+        margin: auto !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid #e5e7eb !important;
+    }
+
+    /* Asegurar que TODO el contenido del módulo tenga z-index muy bajo */
+    .min-h-screen > div {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    .bg-white.rounded-xl.shadow-md {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    /* Tabla y contenido con z-index muy bajo */
+    table, thead, tbody, tr, td, th {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    /* Header y filtros con z-index bajo */
+    .bg-white.rounded-xl.shadow-lg {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    /* Botones y acciones con z-index bajo */
+    button:not(#modalCrearUsuario button):not(#modalEditarUsuario button) {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    /* Contenedor principal */
+    .min-h-screen {
+        overflow: visible !important;
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    /* Animaciones suaves para las modales */
+    #modalCrearUsuario.show,
+    #modalEditarUsuario.show {
+        animation: modalFadeIn 0.3s ease-out;
+        z-index: 999999 !important;
+    }
+
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
 </style>
 <?php $__env->stopPush(); ?>
@@ -782,15 +1238,6 @@ function inicializarEventos() {
             cerrarModalEditar();
         }
     });
-
-    // Cerrar modales al hacer clic fuera
-    document.getElementById('modalCrearUsuario').addEventListener('click', function(e) {
-        if (e.target === this) cerrarModalCrear();
-    });
-
-    document.getElementById('modalEditarUsuario').addEventListener('click', function(e) {
-        if (e.target === this) cerrarModalEditar();
-    });
 }
 
 // ===== FUNCIONES DE MODALES =====
@@ -798,13 +1245,20 @@ function inicializarEventos() {
 // Abrir modal crear
 function abrirModalCrear() {
     limpiarFormularioCrear();
-    document.getElementById('modalCrearUsuario').classList.remove('hidden');
+    const modal = document.getElementById('modalCrearUsuario');
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    // Asegurar z-index máximo por encima de todo
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
     document.getElementById('crear_usuario').focus();
 }
 
 // Cerrar modal crear
 function cerrarModalCrear() {
-    document.getElementById('modalCrearUsuario').classList.add('hidden');
+    const modal = document.getElementById('modalCrearUsuario');
+    modal.classList.add('hidden');
+    modal.classList.remove('show');
     limpiarFormularioCrear();
 }
 
@@ -826,7 +1280,12 @@ async function abrirModalEditar(idUsuario) {
         if (data.success) {
             usuarioEditandoId = idUsuario;
             cargarDatosEnFormularioEditar(data.usuario);
-            document.getElementById('modalEditarUsuario').classList.remove('hidden');
+            const modal = document.getElementById('modalEditarUsuario');
+            modal.classList.remove('hidden');
+            modal.classList.add('show');
+            // Asegurar z-index máximo por encima de todo
+            modal.style.zIndex = '999999';
+            modal.style.position = 'fixed';
             document.getElementById('editar_usuario').focus();
         } else {
             mostrarToast('Error al cargar los datos del usuario', 'error');
@@ -841,7 +1300,9 @@ async function abrirModalEditar(idUsuario) {
 
 // Cerrar modal editar
 function cerrarModalEditar() {
-    document.getElementById('modalEditarUsuario').classList.add('hidden');
+    const modal = document.getElementById('modalEditarUsuario');
+    modal.classList.add('hidden');
+    modal.classList.remove('show');
     limpiarFormularioEditar();
     usuarioEditandoId = null;
 }
@@ -851,6 +1312,13 @@ function cerrarModalEditar() {
 // Manejar creación de usuario
 async function manejarCreacionUsuario(e) {
     e.preventDefault();
+    
+    // Validar que al menos una franquicia esté seleccionada
+    const checkboxes = document.querySelectorAll('input[name="idFranquicias[]"]:checked');
+    if (checkboxes.length === 0) {
+        mostrarToast('Debe seleccionar al menos una franquicia', 'error');
+        return;
+    }
     
     const btn = document.getElementById('btnCrearUsuario');
     const originalText = btn.innerHTML;
@@ -880,10 +1348,9 @@ async function manejarCreacionUsuario(e) {
             setTimeout(() => location.reload(), 1500);
         } else {
             if (response.status === 422) {
-                // Errores de validación
-                const errores = await response.json();
-                if (errores.errors) {
-                    mostrarErroresValidacion(errores.errors, 'crear');
+                // Errores de validación - data ya contiene la respuesta JSON
+                if (data.errors) {
+                    mostrarErroresValidacion(data.errors, 'crear');
                 }
             } else {
                 mostrarToast(data.message || 'Error al crear el usuario', 'error');
@@ -954,6 +1421,10 @@ async function manejarEdicionUsuario(e) {
 // Limpiar formulario crear
 function limpiarFormularioCrear() {
     document.getElementById('formCrearUsuario').reset();
+    // Desmarcar todos los checkboxes de franquicias
+    document.querySelectorAll('input[name="idFranquicias[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
     limpiarErrores('crear');
 }
 
@@ -976,7 +1447,7 @@ function cargarDatosEnFormularioEditar(usuario) {
 
 // Limpiar errores de validación
 function limpiarErrores(prefijo) {
-    const campos = ['usuario', 'login', 'email', 'password', 'password_confirmation', 'idRol', 'idFranquicia', 'idEstado'];
+    const campos = ['usuario', 'login', 'email', 'password', 'password_confirmation', 'idRol', 'idFranquicias', 'idEstado'];
     campos.forEach(campo => {
         const errorDiv = document.getElementById(`error_${prefijo}_${campo}`);
         if (errorDiv) {

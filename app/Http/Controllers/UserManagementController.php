@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -37,7 +38,7 @@ class UserManagementController extends Controller
             $query->where('franquicia', $request->franquicia);
         }
 
-        $users = $query->orderBy('fechaRegistro', 'desc')->paginate(15);
+        $usuarios = $query->orderBy('fechaRegistro', 'desc')->paginate(15);
 
         // Estadísticas
         $totalUsers = User::count();
@@ -60,7 +61,7 @@ class UserManagementController extends Controller
             ->orderBy('franquicia')
             ->pluck('franquicia');
 
-        return view('usuarios.index', compact('users', 'estadisticas', 'roles', 'franquicias'));
+        return view('usuarios.index', compact('usuarios', 'estadisticas', 'roles', 'franquicias'));
     }
 
     /**
@@ -77,37 +78,54 @@ class UserManagementController extends Controller
      * Store a newly created user
      */
     public function store(Request $request)
-    {
+    {        
         $request->validate([
             'usuario' => 'required|string|max:255',
             'login' => 'required|string|max:50|unique:ODS.TAB_USUARIO,login',
-            'email' => 'nullable|string|email|max:255', // Campo opcional por ahora
+            'email' => 'nullable|string|email|max:255',
             'password' => 'required|string|min:6|confirmed',
             'idRol' => ['required', Rule::in(array_keys(User::getRoles()))],
-            'franquicia' => 'required|string|max:50',
-            'nueva_franquicia' => 'nullable|string|max:50',
+            'idFranquicias' => 'required|array|min:1',
+            'idFranquicias.*' => 'required|integer',
         ]);
 
-        // Si se especificó una nueva franquicia, usarla
-        $franquicia = $request->franquicia === 'NUEVA' && $request->nueva_franquicia 
-            ? $request->nueva_franquicia 
-            : $request->franquicia;
+        try {
+            DB::beginTransaction();
 
-        User::create([
-            'usuario' => $request->usuario,
-            'login' => $request->login,
-            'email' => $request->email, // Campo para futura implementación
-            'password' => Hash::make($request->password),
-            'idRol' => $request->idRol,
-            'franquicia' => $franquicia,
-            'fechaRegistro' => now(),
-            'idEstado' => 1, // Estado activo por defecto
-        ]);
+            // Convertir array de franquicias a string separado por comas
+            $franquiciasIds = implode(',', $request->idFranquicias);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario creado exitosamente.'
-        ]);
+            // Llamar al stored procedure con múltiples franquicias
+            $result = DB::select('EXEC ODS.SP_INSERT_USUARIO 
+                @idRol = ?, 
+                @usuario = ?, 
+                @login = ?, 
+                @password = ?, 
+                @email = ?, 
+                @idFranquicia = ?', [
+                $request->idRol,
+                $request->usuario,
+                $request->login,
+                Hash::make($request->password),
+                $request->email,
+                $franquiciasIds
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario creado exitosamente con ' . count($request->idFranquicias) . ' franquicia(s) asignada(s).'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el usuario: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

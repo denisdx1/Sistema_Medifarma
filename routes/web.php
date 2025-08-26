@@ -44,11 +44,29 @@ Route::middleware('auth')->group(function () {
     Route::get('/market-management/market/{marketId}/products', [App\Http\Controllers\MarketManagementController::class, 'showProducts'])->name('market-management.products')->where('marketId', '[0-9]+');
     Route::get('/market-management/market/{marketId}/products/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketProducts'])->name('market-management.products.api')->where('marketId', '[0-9]+');
     Route::get('/market-management/markets/api', [App\Http\Controllers\MarketManagementController::class, 'getMarketsApi'])->name('market-management.markets.api');
+    Route::get('/market-management/all-markets/api', [App\Http\Controllers\MarketManagementController::class, 'getAllMarketsApi'])->name('market-management.all-markets.api');
     Route::post('/market-management/products/remove', [App\Http\Controllers\MarketManagementController::class, 'removeProduct'])->name('market-management.products.remove');
     Route::post('/market-management/products/change-market', [App\Http\Controllers\MarketManagementController::class, 'changeProductMarket'])->name('market-management.products.change-market');
     Route::get('/market-management/resto-products', [App\Http\Controllers\MarketManagementController::class, 'getRestoProducts'])->name('market-management.resto-products');
     Route::get('/market-management/resto-filter-options', [App\Http\Controllers\MarketManagementController::class, 'getRestoFilterOptions'])->name('market-management.resto-filter-options');
     Route::post('/market-management/assign-products', [App\Http\Controllers\MarketManagementController::class, 'assignProducts'])->name('market-management.assign-products');
+    
+    // Productos Module - Available for all authenticated users
+    Route::prefix('productos')->name('productos.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ProductosController::class, 'index'])->name('index');
+        Route::get('/api', [App\Http\Controllers\ProductosController::class, 'getProductsApi'])->name('api');
+        Route::get('/filter-options', [App\Http\Controllers\ProductosController::class, 'getFilterOptions'])->name('filter-options');
+        Route::post('/remove', [App\Http\Controllers\ProductosController::class, 'removeProduct'])->name('remove');
+        Route::post('/change-market', [App\Http\Controllers\ProductosController::class, 'changeProductMarket'])->name('change-market');
+        Route::get('/markets/api', [App\Http\Controllers\ProductosController::class, 'getMarketsApi'])->name('markets.api');
+        Route::post('/create-market', [App\Http\Controllers\ProductosController::class, 'createMarket'])->name('create-market');
+        Route::post('/assign-products', [App\Http\Controllers\ProductosController::class, 'assignProducts'])->name('assign-products');
+    });
+    
+    // API routes for productos
+    Route::prefix('api/productos')->name('api.productos.')->group(function () {
+        Route::get('/filter-options', [App\Http\Controllers\ProductosController::class, 'getFilterOptions'])->name('filter-options');
+    });
     
     // User Management Routes - Available for authenticated users
     Route::prefix('users')->name('users.')->group(function () {
@@ -86,3 +104,30 @@ Route::middleware('auth')->group(function () {
     });
 
 });
+
+// RUTA TEMPORAL PARA PRUEBAS DE EMAIL - ELIMINAR EN PRODUCCIÓN
+Route::get('/test-emails', function () {
+    $user = Auth::user();
+    if (!$user) {
+        // Para pruebas sin autenticación, usar el primer usuario administrador
+        $user = \App\Models\User::where('idRol', 1)->first();
+    }
+    
+    if (!$user) {
+        return response()->json(['error' => 'No se encontró un usuario para las pruebas'], 404);
+    }
+    
+    $notificationService = new \App\Services\NotificationService();
+    
+    // Debug de la colección de emails
+    $debugInfo = $notificationService->debugEmailCollection($user);
+    
+    // Intentar enviar una notificación de prueba
+    $testResult = $notificationService->testNotification($user, 'Prueba del sistema de emails desde la ruta temporal');
+    
+    return response()->json([
+        'debug_info' => $debugInfo,
+        'test_notification_sent' => $testResult,
+        'message' => 'Revisa los logs para más detalles'
+    ]);
+})->name('test.emails');

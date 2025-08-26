@@ -1,10 +1,8 @@
 @extends('layouts.app')
 
-@section('page-title', 'Productos del Mercado')
-
 @section('content')
-<div class="min-h-screen bg-white-50 py-6">
-    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-full px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
@@ -98,7 +96,23 @@
                     
                     <!-- Advanced Filters Panel -->
                     <div id="filters-panel" class="hidden border-t border-gray-200 pt-4 mt-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+                            <!-- Producto Filter -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-700">Producto</label>
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="filter-descripcionProducto" 
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="Buscar producto...">
+                                    <button type="button" 
+                                            id="clear-filter-descripcionProducto" 
+                                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <!-- FF3 Filter -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Forma Farmacéutica (FF3)</label>
@@ -233,17 +247,21 @@
                     <table class="min-w-full divide-y divide-gray-200 products-table text-xs">
                         <thead class="bg-gray-50 sticky top-0 z-20">
                                                     <tr class="divide-x divide-gray-200">
-                            <!-- Descripción: 20% -->
-                            <th class="w-[20%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                            <!-- Descripción: 16% -->
+                            <th class="w-[16%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">
                                 Descripción
                             </th>
-                            <!-- M/G: 8% -->
-                            <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-l-2 border-gray-300" title="Marca/Genérico">
+                            <!-- Producto: 12% -->
+                            <th class="w-[12%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight">
+                                Producto
+                            </th>
+                            <!-- M/G: 6% -->
+                            <th class="w-[6%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-l-2 border-gray-300" title="Marca/Genérico">
                                 <span class="hidden lg:inline">M/G</span>
                                 <span class="lg:hidden">M</span>
                             </th>
-                            <!-- É/P: 8% -->  
-                            <th class="w-[8%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-r-2 border-gray-300" title="Ético/Popular">
+                            <!-- É/P: 6% -->  
+                            <th class="w-[6%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight hidden sm:table-cell border-r-2 border-gray-300" title="Ético/Popular">
                                 <span class="hidden lg:inline">É/P</span>
                                 <span class="lg:hidden">É</span>
                             </th>
@@ -251,17 +269,17 @@
                             <th class="w-[6%] px-1 py-1 text-center text-xs font-semibold text-gray-500 uppercase tracking-tight">
                                 Fuente
                             </th>
-                            <!-- Molécula: 14% -->
-                            <th class="w-[14%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
+                            <!-- Molécula: 12% -->
+                            <th class="w-[12%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden lg:table-cell">
                                 Molécula
                             </th>
-                            <!-- FF3: 10% -->
-                            <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                            <!-- FF3: 8% -->
+                            <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
                                 <span class="hidden lg:inline">FF3</span>
                                 <span class="lg:hidden">FF</span>
                             </th>
-                            <!-- ATC4: 10% -->
-                            <th class="w-[10%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
+                            <!-- ATC4: 8% -->
+                            <th class="w-[8%] px-1 py-1 text-left text-xs font-semibold text-gray-500 uppercase tracking-tight hidden md:table-cell">
                                 <span class="hidden lg:inline">ATC4</span>
                                 <span class="lg:hidden">AT</span>
                             </th>

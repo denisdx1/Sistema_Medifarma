@@ -18,73 +18,189 @@ function escapeForJs(str) {
               .replace(/\t/g, '\\t');
 }
 
-// Open create modal
+// Obtener franquicia seleccionada para filtro (para búsqueda global)
+function getCurrentFranquiciaFilter() {
+    const selector = document.getElementById('target-franquicia-filter');
+    return selector ? selector.value : null;
+}
+
+// Cargar las franquicias del usuario para los selectores
+function loadUserFranquiciasForSelector() {
+    // Por ahora usar franquicias hardcodeadas del usuario BRICEÑO SANDRA
+    // En el futuro esto se puede obtener via AJAX del backend
+    const franquicias = [
+        'SALUD ANALGÉSICA - ANTIINFLAMATORIA',
+        'SALUD RESPIRATORIA'
+    ];
+    
+    const filterSelector = document.getElementById('target-franquicia-filter');
+    const assignSelector = document.getElementById('target-franquicia-assign');
+    
+    if (filterSelector) {
+        // Limpiar opciones existentes excepto la primera
+        filterSelector.innerHTML = '<option value="">Todas las franquicias del usuario</option>';
+        
+        franquicias.forEach(franquicia => {
+            const option = document.createElement('option');
+            option.value = franquicia;
+            option.textContent = franquicia;
+            filterSelector.appendChild(option);
+        });
+    }
+    
+    if (assignSelector) {
+        // Limpiar opciones existentes excepto la primera
+        assignSelector.innerHTML = '<option value="">Seleccionar franquicia de destino</option>';
+        
+        franquicias.forEach(franquicia => {
+            const option = document.createElement('option');
+            option.value = franquicia;
+            option.textContent = franquicia;
+            assignSelector.appendChild(option);
+        });
+    }
+}
+
+// Manejar cambio en el filtro de franquicia
+function onFranquiciaFilterChange() {
+    // Recargar productos con el nuevo filtro
+    loadRestoProducts();
+    loadRestoFilterOptions();
+}
+
+// Open create modal - VANILLA JS
 function openCreateModal() {
-    $('#market-name').val('');
-    $('#create-modal').removeClass('hidden');
-    $('#market-name').focus();
+    const marketNameInput = document.getElementById('market-name');
+    const marketNoteInput = document.getElementById('create-market-note');  // Limpiar nota también
+    const createModal = document.getElementById('create-modal');
+    
+    if (marketNameInput) marketNameInput.value = '';
+    if (marketNoteInput) marketNoteInput.value = '';  // Limpiar nota
+    if (createModal) createModal.classList.remove('hidden');
+    if (marketNameInput) marketNameInput.focus();
 }
 
-// Close create modal
+// Close create modal - VANILLA JS
 function closeCreateModal() {
-    $('#create-modal').addClass('hidden');
+    const createModal = document.getElementById('create-modal');
+    if (createModal) createModal.classList.add('hidden');
 }
 
-// Open edit modal
+// Open edit modal - VANILLA JS
 function openEditModal(marketId, marketName) {
-    $('#edit-market-id').val(marketId);
-    $('#edit-market-name').val(marketName).data('original', marketName);
-    $('#edit-modal').removeClass('hidden');
-    $('#edit-market-name').focus();
+    const editMarketId = document.getElementById('edit-market-id');
+    const editMarketName = document.getElementById('edit-market-name');
+    const editMarketNote = document.getElementById('edit-market-note');  // Limpiar nota también
+    const editModal = document.getElementById('edit-modal');
+    
+    if (editMarketId) editMarketId.value = marketId;
+    if (editMarketName) {
+        editMarketName.value = marketName;
+        editMarketName.setAttribute('data-original', marketName);
+    }
+    if (editMarketNote) editMarketNote.value = '';  // Limpiar nota
+    if (editModal) editModal.classList.remove('hidden');
+    if (editMarketName) editMarketName.focus();
 }
 
-// Close edit modal
+// Close edit modal - VANILLA JS
 function closeEditModal() {
-    $('#edit-modal').addClass('hidden');
+    const editModal = document.getElementById('edit-modal');
+    if (editModal) editModal.classList.add('hidden');
 }
 
-// Open create confirmation modal
+// Open create confirmation modal - VANILLA JS
 function openCreateConfirmationModal() {
-    const marketName = $('#market-name').val().trim();
+    const marketNameInput = document.getElementById('market-name');
+    const marketName = marketNameInput ? marketNameInput.value.trim() : '';
     
     if (!marketName) {
         showToast('Por favor ingresa un nombre para el mercado', 'error');
-        $('#market-name').focus();
+        if (marketNameInput) marketNameInput.focus();
         return;
     }
     
     // Update confirmation modal with market name
-    $('#confirm-create-market-name').text(marketName);
+    const confirmMarketName = document.getElementById('confirm-create-market-name');
+    if (confirmMarketName) confirmMarketName.textContent = marketName;
     
     // Show confirmation modal
-    $('#create-confirmation-modal').removeClass('hidden');
+    const confirmationModal = document.getElementById('create-confirmation-modal');
+    if (confirmationModal) confirmationModal.classList.remove('hidden');
 }
 
-// Close create confirmation modal
+// Close create confirmation modal - VANILLA JS
 function closeCreateConfirmationModal() {
-    $('#create-confirmation-modal').addClass('hidden');
+    const confirmationModal = document.getElementById('create-confirmation-modal');
+    if (confirmationModal) confirmationModal.classList.add('hidden');
 }
 
-// Confirm create market
+// Confirm create market - VANILLA JS VERSION (SIMPLIFIED)
 function confirmCreateMarket() {
-    const marketName = $('#market-name').val().trim();
-    const submitBtn = $('#confirm-create-btn');
-    const btnText = submitBtn.find('.btn-text');
-    const btnLoading = submitBtn.find('.btn-loading');
+    console.log('🚀 confirmCreateMarket function called (Vanilla JS - Simplified)');
     
-    // Show loading state
-    btnText.addClass('hidden');
-    btnLoading.removeClass('hidden');
-    submitBtn.prop('disabled', true);
+    const marketNameInput = document.getElementById('market-name');
+    const marketName = marketNameInput ? marketNameInput.value.trim() : '';
+    console.log('📝 Market name:', marketName);
     
-    // Submit form
-    $.post(window.MarketManagementRoutes.create, {
-        market_name: marketName,
-        _token: window.csrfToken
+    // Obtener la nota del usuario
+    const marketNoteInput = document.getElementById('create-market-note');
+    const marketNote = marketNoteInput ? marketNoteInput.value.trim() : '';
+    console.log('📝 Market note:', marketNote);
+    
+    const submitBtn = document.getElementById('confirm-create-btn');
+    console.log('🔘 Submit button found:', !!submitBtn);
+    
+    if (!submitBtn) {
+        console.error('❌ Submit button not found!');
+        alert('Error: Botón de confirmación no encontrado');
+        return;
+    }
+    
+    // Guardar contenido original del botón
+    const originalHTML = submitBtn.innerHTML;
+    console.log('💾 Original button HTML saved');
+    
+    // Mostrar estado de loading
+    console.log('🔄 Showing loading state...');
+    submitBtn.innerHTML = `
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        <span>Creando mercado...</span>
+    `;
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.7';
+    console.log('✅ Loading state applied');
+    
+    // Preparar datos para envío
+    const formData = new FormData();
+    formData.append('market_name', marketName);
+    formData.append('market_note', marketNote);  // Agregar la nota
+    formData.append('_token', window.csrfToken);
+    
+    // Submit form con fetch (Vanilla JS)
+    console.log('📤 Sending fetch request...');
+    fetch(window.MarketManagementRoutes.create, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
-    .done(function(response) {
-        if (response.success) {
-            showToast(response.message, 'success');
+    .then(response => {
+        console.log('📨 Response received:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Request successful:', data);
+        if (data.success) {
+            // Mostrar éxito antes de recargar
+            submitBtn.innerHTML = `
+                <i class="fas fa-check mr-2"></i>
+                <span>¡Creado exitosamente!</span>
+            `;
+            submitBtn.style.opacity = '1';
+            
+            showToast(data.message, 'success');
             // Close both modals
             closeCreateConfirmationModal();
             closeCreateModal();
@@ -93,27 +209,27 @@ function confirmCreateMarket() {
                 location.reload();
             }, 1500);
         } else {
-            showToast(response.message, 'error');
+            showToast(data.message, 'error');
+            resetButtonToOriginal(submitBtn, originalHTML);
         }
     })
-    .fail(function(xhr) {
-        if (xhr.status === 422) {
-            const errors = xhr.responseJSON.errors;
-            if (errors.market_name) {
-                showToast(errors.market_name[0], 'error');
-            } else {
-                showToast('Error de validación', 'error');
-            }
-        } else {
-            showToast('Error al crear mercado', 'error');
-        }
-    })
-    .always(function() {
-        // Reset loading state
-        btnText.removeClass('hidden');
-        btnLoading.addClass('hidden');
-        submitBtn.prop('disabled', false);
+    .catch(error => {
+        console.error('❌ Request failed:', error);
+        showToast('Error al crear mercado', 'error');
+        resetButtonToOriginal(submitBtn, originalHTML);
     });
+}
+
+// Función auxiliar para resetear el botón a su estado original
+function resetButtonToOriginal(submitBtn, originalHTML) {
+    console.log('🔄 Resetting button to original state...');
+    
+    if (submitBtn && originalHTML) {
+        submitBtn.innerHTML = originalHTML;
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        console.log('✅ Button reset to original state');
+    }
 }
 
 // Open edit confirmation modal
@@ -149,6 +265,8 @@ function closeEditConfirmationModal() {
 function confirmEditMarket() {
     const marketId = $('#edit-market-id').val();
     const marketName = $('#edit-market-name').val().trim();
+    // Obtener la nota del usuario
+    const marketNote = $('#edit-market-note').val().trim();
     const submitBtn = $('#confirm-edit-btn');
     const btnText = submitBtn.find('.btn-text');
     const btnLoading = submitBtn.find('.btn-loading');
@@ -165,6 +283,7 @@ function confirmEditMarket() {
         data: {
             market_id: marketId,
             market_name: marketName,
+            market_note: marketNote,  // Agregar la nota
             _token: window.csrfToken,
             _method: 'PUT'
         }
@@ -178,7 +297,7 @@ function confirmEditMarket() {
             // Reload page to show updated market
             setTimeout(() => {
                 location.reload();
-            }, 1500);
+            }, 1000);
         } else {
             showToast(response.message, 'error');
         }
@@ -227,8 +346,20 @@ function viewMarketProducts(marketId, marketName) {
     
     console.log('Redirecting to products for market:', marketId, marketName);
     
+    // Obtener parámetro de franquicia actual de la URL si existe
+    const urlParams = new URLSearchParams(window.location.search);
+    const franquiciaFilter = urlParams.get('franquicia');
+    
+    // Construir URL con o sin parámetro de franquicia
+    let productsUrl = `/market-management/market/${marketId}/products`;
+    if (franquiciaFilter) {
+        productsUrl += `?franquicia=${encodeURIComponent(franquiciaFilter)}`;
+    }
+    
+    console.log('Redirecting to products URL:', productsUrl);
+    
     // Redirect to products view for this market
-    window.location.href = `/market-management/market/${marketId}/products`;
+    window.location.href = productsUrl;
 }
 
 // Function to reset to original view
@@ -448,6 +579,12 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
+// Function to escape text for JavaScript (for onclick attributes)
+function escapeForJs(text) {
+    if (!text) return '';
+    return String(text).replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+}
+
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
@@ -595,6 +732,12 @@ function showToast(message, type = 'info') {
 
 // Document ready functions
 $(document).ready(function() {
+    // Cargar todos los mercados en el dropdown global
+    loadAllMarketsForDropdown();
+    
+    // Event listener para selección de mercado global
+    $('#global-market-search').on('change', handleGlobalMarketSelection);
+    
     // Search input functionality
     $('#search-input').on('input', function() {
         clearTimeout(searchTimeout);
@@ -642,15 +785,7 @@ $(document).ready(function() {
     });
 });
 
-// Variables globales para asignación de productos
-let currentAssignMarketId = null;
-let currentAssignMarketName = null;
-let selectedProducts = [];
-let restoProducts = [];
-let currentRestoCursor = null;
-let isLoadingResto = false;
-
-// Filter variables for resto products modal
+// Filter variables for resto products modal (continuación)
 let currentRestoFilters = {
     descripcionFF3: '',
     descripcionATC4: '',
@@ -669,11 +804,169 @@ let restoFilterOptions = {
 };
 let restoFilterTimeout = null;
 
+// Variables para el estado de carga y datos de productos RESTO
+let isLoadingResto = false;
+let restoProducts = [];
+let currentRestoCursor = null;
+let selectedProducts = [];
+let currentAssignMarketId = null;
+let currentAssignMarketName = null;
+
+// ========================================
+// FUNCIONES PARA BÚSQUEDA GLOBAL DE MERCADOS
+// ========================================
+
+// Cargar todos los mercados en el dropdown global
+function loadAllMarketsForDropdown() {
+    const select = document.getElementById('global-market-search');
+    const assignButton = document.getElementById('assign-to-selected-market');
+    
+    if (!select) return;
+    
+    // Limpiar opciones existentes excepto la primera
+    select.innerHTML = '<option value="">Selecciona un mercado...</option>';
+    
+    // Deshabilitar botón mientras carga
+    if (assignButton) {
+        assignButton.disabled = true;
+    }
+    
+    // Hacer petición AJAX
+    fetch(window.MarketManagementRoutes.allMarketsApi || '/market-management/all-markets/api', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar cada mercado como opción
+            data.data.forEach(market => {
+                const option = document.createElement('option');
+                option.value = market.idMercado;
+                option.textContent = market.mercado;
+                option.dataset.marketName = market.mercado;
+                select.appendChild(option);
+            });
+            
+            console.log(`Cargados ${data.data.length} mercados en el dropdown global`);
+        } else {
+            console.error('Error cargando mercados:', data.message);
+            showNotification('Error al cargar mercados: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error en la petición:', error);
+        showNotification('Error de conexión al cargar mercados', 'error');
+    });
+}
+
+// Manejar selección de mercado en el dropdown global
+function handleGlobalMarketSelection() {
+    const select = document.getElementById('global-market-search');
+    const assignButton = document.getElementById('assign-to-selected-market');
+    
+    if (!select || !assignButton) return;
+    
+    const selectedValue = select.value;
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedValue && selectedOption) {
+        selectedGlobalMarket = {
+            id: parseInt(selectedValue),
+            name: selectedOption.dataset.marketName || selectedOption.textContent
+        };
+        assignButton.disabled = false;
+        
+        console.log('Mercado seleccionado:', selectedGlobalMarket);
+    } else {
+        selectedGlobalMarket = null;
+        assignButton.disabled = true;
+    }
+}
+
+// Abrir modal de asignación para el mercado seleccionado globalmente
+function openAssignProductsForSelectedMarket() {
+    if (!selectedGlobalMarket) {
+        showNotification('Por favor selecciona un mercado primero', 'error');
+        return;
+    }
+    
+    console.log('Abriendo modal de asignación para:', selectedGlobalMarket);
+    
+    // Usar la función existente de asignación de productos con parámetro global
+    openAssignProductsModal(selectedGlobalMarket.id, selectedGlobalMarket.name, true);
+}
+
+// Buscar mercados en el dropdown con filtro
+function searchMarketsInDropdown(searchTerm) {
+    const select = document.getElementById('global-market-search');
+    if (!select) return;
+    
+    // Si no hay término de búsqueda, cargar todos
+    if (!searchTerm.trim()) {
+        loadAllMarketsForDropdown();
+        return;
+    }
+    
+    // Hacer petición con filtro de búsqueda
+    const baseUrl = window.MarketManagementRoutes.allMarketsApi || '/market-management/all-markets/api';
+    fetch(`${baseUrl}?search=${encodeURIComponent(searchTerm)}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Limpiar y repoblar el dropdown
+            select.innerHTML = '<option value="">Selecciona un mercado...</option>';
+            
+            data.data.forEach(market => {
+                const option = document.createElement('option');
+                option.value = market.idMercado;
+                option.textContent = market.mercado;
+                option.dataset.marketName = market.mercado;
+                select.appendChild(option);
+            });
+            
+            console.log(`Encontrados ${data.data.length} mercados para "${searchTerm}"`);
+        } else {
+            console.error('Error buscando mercados:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error en búsqueda:', error);
+    });
+}
+
+// ========================================
+// FUNCIONES DE ASIGNACIÓN DE PRODUCTOS (EXISTENTES)
+// ========================================
+
 // Función para abrir modal de asignación de productos
-function openAssignProductsModal(marketId, marketName) {
+function openAssignProductsModal(marketId, marketName, isGlobalSearch = false) {
     currentAssignMarketId = marketId;
     currentAssignMarketName = marketName;
     selectedProducts = [];
+    
+    // Guardar si es búsqueda global para usar en las peticiones AJAX
+    window.isGlobalAssignSearch = isGlobalSearch;
+    
+    // Mostrar/ocultar selector de franquicia según el tipo de búsqueda
+    const franquiciaSelector = document.getElementById('global-franquicia-selector');
+    if (franquiciaSelector) {
+        if (isGlobalSearch) {
+            franquiciaSelector.classList.remove('hidden');
+            loadUserFranquiciasForSelector();
+        } else {
+            franquiciaSelector.classList.add('hidden');
+        }
+    }
     
     // Actualizar título
     document.getElementById('assign-market-name').textContent = marketName;
@@ -873,9 +1166,23 @@ function updateRestoFilterStatus() {
 
 // Load filter options from API
 function loadRestoFilterOptions() {
+    const data = {};
+    
+    // Agregar parámetros de búsqueda global si aplica
+    if (window.isGlobalAssignSearch) {
+        data.global_search = true;
+        
+        // Si hay una franquicia específica seleccionada, agregarla
+        const franquiciaFilter = getCurrentFranquiciaFilter();
+        if (franquiciaFilter) {
+            data.franquicia_filter = franquiciaFilter;
+        }
+    }
+    
     $.ajax({
         url: '/market-management/resto-filter-options',
         method: 'GET',
+        data: data,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -921,6 +1228,17 @@ function loadRestoProducts(cursor = null, append = false, searchQuery = '') {
         cursor: cursor,
         search: searchQuery
     };
+    
+    // Agregar parámetros de búsqueda global si aplica
+    if (window.isGlobalAssignSearch) {
+        data.global_search = true;
+        
+        // Si hay una franquicia específica seleccionada, agregarla
+        const franquiciaFilter = getCurrentFranquiciaFilter();
+        if (franquiciaFilter) {
+            data.franquicia_filter = franquiciaFilter;
+        }
+    }
     
     // Add filter parameters
     Object.keys(currentRestoFilters).forEach(filterKey => {

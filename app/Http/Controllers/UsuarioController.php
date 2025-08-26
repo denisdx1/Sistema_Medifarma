@@ -43,6 +43,29 @@ class UsuarioController extends Controller
 
         $usuarios = $query->paginate(15);
 
+        // Procesar franquicias para cada usuario
+        $usuarios->getCollection()->transform(function ($usuario) {
+            $franquicias = $usuario->getMisFranquicias();
+            $nombres = [];
+            
+            if (is_array($franquicias)) {
+                foreach($franquicias as $franquicia) {
+                    if (is_array($franquicia) && isset($franquicia['franquicia'])) {
+                        $nombre = (string) $franquicia['franquicia'];
+                        if (!empty($nombre) && $nombre !== 'N/A') {
+                            $nombres[] = $nombre;
+                        }
+                    }
+                }
+            }
+            
+            // Agregar propiedades procesadas al usuario
+            $usuario->franquicias_nombres = empty($nombres) ? 'Sin franquicias' : implode(', ', $nombres);
+            $usuario->franquicias_cantidad = count($nombres);
+            
+            return $usuario;
+        });
+
         // Estadísticas mejoradas
         $estadisticas = $this->obtenerEstadisticas();
 
@@ -91,19 +114,14 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         // Validaciones
-        $franquiciasDisponibles = array_keys(User::getFranquicias()); // Obtener solo los IDs
-        
         $request->validate([
             'usuario' => 'required|string|max:255', // Nombre completo
             'login' => 'required|string|max:50',
             'email' => 'nullable|email|max:255', // Email opcional por ahora
             'password' => 'required|string|min:6|confirmed',
             'idRol' => ['required', 'integer', Rule::in(array_keys(User::getRoles()))],
-            'idFranquicia' => [
-                'required',
-                'integer',
-                Rule::in($franquiciasDisponibles)
-            ],
+            'idFranquicias' => 'required|array|min:1',
+            'idFranquicias.*' => 'required|integer',
         ]);
 
         // Validación personalizada para login único
@@ -120,25 +138,29 @@ class UsuarioController extends Controller
         }
 
         try {
+            // Convertir array de franquicias a string separado por comas
+            $franquiciasIds = implode(',', $request->idFranquicias);
+            
             // Hashear la contraseña en PHP usando SHA2_256
             $passwordHashHex = hash('sha256', $request->password); // Formato hexadecimal
             
-            // Convertir hex a varbinary y ejecutar stored procedure
-            DB::connection('sqlsrv')->statement('
-                DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), ?, 2);
-                EXEC ODS.SP_INSERT_USUARIO ?, ?, ?, ?, @passwordBinary, ?;
-            ', [
-                $passwordHashHex,
-                $request->idRol,
-                $request->idFranquicia,
-                $request->usuario,
-                $request->login,
-                $request->email
-            ]);
+            // Ejecutar stored procedure con query más simple
+            $query = "
+                DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), '{$passwordHashHex}', 2);
+                EXEC ODS.SP_INSERT_USUARIO 
+                    @idRol = {$request->idRol},
+                    @usuario = '{$request->usuario}',
+                    @login = '{$request->login}',
+                    @email = '{$request->email}',
+                    @idFranquicia = '{$franquiciasIds}',
+                    @password = @passwordBinary;
+            ";
+            
+            DB::connection('sqlsrv')->statement($query);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Usuario creado exitosamente. El usuario deberá cambiar su contraseña en el primer inicio de sesión.'
+                'message' => 'Usuario creado exitosamente con ' . count($request->idFranquicias) . ' franquicia(s) asignada(s). El usuario deberá cambiar su contraseña en el primer inicio de sesión.'
             ]);
 
         } catch (\Exception $e) {
@@ -340,19 +362,24 @@ class UsuarioController extends Controller
             // Hashear la nueva contraseña
             $passwordHashHex = hash('sha256', $request->password); // Formato hexadecimal
             
-            // Actualizar la contraseña usando stored procedure
-            DB::connection('sqlsrv')->statement('
-                DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), ?, 2);
-                EXEC ODS.SP_UPDATE_USUARIO ?, ?, ?, ?, ?, @passwordBinary, ?;
-            ', [
-                $passwordHashHex,
-                $usuario->idUsuario,
-                $usuario->idRol,
-                $usuario->idFranquicia,
-                $usuario->usuario,
-                $usuario->login,
-                $usuario->email
-            ]);
+            // Obtener las franquicias del usuario como string separado por comas
+            $franquiciasIds = implode(',', $usuario->getFranquiciasIds());
+            
+            // Actualizar usando stored procedure con todos los parámetros requeridos
+            $query = "
+                DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), '{$passwordHashHex}', 2);
+                EXEC ODS.SP_UPDATE_USUARIO 
+                    @idUsuario = {$usuario->idUsuario},
+                    @idRol = {$usuario->idRol},
+                    @usuario = '{$usuario->usuario}',
+                    @login = '{$usuario->login}',
+                    @email = '{$usuario->email}',
+                    @idFranquicia = '{$franquiciasIds}',
+                    @password = @passwordBinary,
+                    @idEstado = {$usuario->idEstado};
+            ";
+            
+            DB::connection('sqlsrv')->statement($query);
 
             return redirect()->route('market-management.index')
                 ->with('success', 'Contraseña actualizada exitosamente. ¡Bienvenido al sistema!');

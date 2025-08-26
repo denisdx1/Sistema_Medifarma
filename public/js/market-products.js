@@ -1,23 +1,31 @@
 // Market Products JavaScript Functions
 $(document).ready(function() {
-    // Validación robusta del marketId
+    // Variables globales de contexto
+    const isGeneralProductsPage = window.location.pathname.startsWith('/productos');
     const marketId = window.marketId;
     
+    // Obtener parámetro de franquicia de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const franquiciaFilter = urlParams.get('franquicia');
+    
     // Log de debugging
+    console.log('Is general products page:', isGeneralProductsPage);
     console.log('Market object received:', window.marketData);
     console.log('Market ID extracted:', marketId);
+    console.log('Franquicia filter from URL:', franquiciaFilter);
     
-    // Verificar que tenemos un marketId válido
-    if (!marketId || isNaN(marketId)) {
-        console.error('Market ID inválido:', marketId);
-        showError('Error: ID de mercado inválido. Regresando a la lista de mercados...');
-        setTimeout(() => {
-            window.location.href = '/market-management';
-        }, 3000);
-        return;
+    // Solo verificar marketId si no estamos en página general
+    if (!isGeneralProductsPage) {
+        if (!marketId || isNaN(marketId)) {
+            console.error('Market ID inválido:', marketId);
+            showError('Error: ID de mercado inválido. Regresando a la lista de mercados...');
+            setTimeout(() => {
+                window.location.href = '/market-management';
+            }, 3000);
+            return;
+        }
+        console.log('Market ID cargado correctamente:', marketId);
     }
-    
-    console.log('Market ID cargado correctamente:', marketId);
     
     let currentCursor = null;
     let isLoading = false;
@@ -32,12 +40,16 @@ $(document).ready(function() {
 
     // Filter variables
     let currentFilters = {
+        descripcionProducto: '',
         descripcionFF3: '',
         descripcionATC4: '',
         descripcionLaboratorio: '',
         fuente: '',
         molecula: '',
-        descripcionCorporacion: ''
+        descripcionCorporacion: '',
+        marcaGenerico: '',
+        eticoPopular: '',
+        mercado: ''
     };
     let filterTimeout = null;
 
@@ -46,6 +58,30 @@ $(document).ready(function() {
 
     // Initialize filter functionality
     initializeFilters();
+    
+    // Initialize searchable filters
+    initializeSearchableFilters();
+    
+    // Load filter options for normal selects
+    loadNormalFilterOptions();
+    
+    // Debug function to show current filter state
+    window.showFilterState = function() {
+        console.log('=== CURRENT FILTER STATE ===');
+        console.log('currentFilters object:', currentFilters);
+        Object.keys(currentFilters).forEach(filterKey => {
+            const inputElement = $(`#filter-${filterKey}`);
+            const searchElement = $(`#filter-${filterKey}-search`);
+            console.log(`${filterKey}:`, {
+                currentFilters: currentFilters[filterKey],
+                inputValue: inputElement.val(),
+                searchValue: searchElement.val(),
+                inputExists: inputElement.length > 0,
+                searchExists: searchElement.length > 0
+            });
+        });
+        console.log('===========================');
+    };
 
     // Load initial products
     loadProducts();
@@ -86,14 +122,8 @@ $(document).ready(function() {
             searchResults.addClass('hidden');
             currentSearchQuery = '';
             
-            // Also clear all filters when clearing search
-            Object.keys(currentFilters).forEach(filterKey => {
-                currentFilters[filterKey] = '';
-                $(`#filter-${filterKey}`).val('');
-                $(`#clear-filter-${filterKey}`).addClass('hidden');
-            });
-            
-            loadProducts(); // Reload all products
+            // Only reload products, keep filters intact
+            loadProducts();
         });
 
         // Handle Enter key
@@ -110,13 +140,15 @@ $(document).ready(function() {
 
     // Initialize filter functionality
     function initializeFilters() {
-        // Initialize each filter input
-        Object.keys(currentFilters).forEach(filterKey => {
+        // Filtros normales (selects) - solo para los que no son buscables
+        const normalFilters = ['marcaGenerico', 'eticoPopular', 'fuente', 'mercado'];
+        
+        normalFilters.forEach(filterKey => {
             const filterInput = $(`#filter-${filterKey}`);
             const clearButton = $(`#clear-filter-${filterKey}`);
 
             // Real-time filter with debouncing
-            filterInput.on('input', function() {
+            filterInput.on('change', function() {
                 const value = $(this).val().trim();
                 currentFilters[filterKey] = value;
                 
@@ -127,15 +159,7 @@ $(document).ready(function() {
                     clearButton.addClass('hidden');
                 }
 
-                // Clear previous timeout
-                if (filterTimeout) {
-                    clearTimeout(filterTimeout);
-                }
-
-                // Set new timeout for filter (300ms debounce)
-                filterTimeout = setTimeout(() => {
-                    applyFilters();
-                }, 300);
+                applyFilters();
             });
 
             // Clear individual filter
@@ -145,26 +169,35 @@ $(document).ready(function() {
                 currentFilters[filterKey] = '';
                 applyFilters();
             });
-
-            // Handle Enter key
-            filterInput.on('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (filterTimeout) {
-                        clearTimeout(filterTimeout);
-                    }
-                    applyFilters();
-                }
-            });
         });
 
         // Clear all filters button
         $('#clear-all-filters').on('click', function() {
-            Object.keys(currentFilters).forEach(filterKey => {
+            // Clear normal filters
+            normalFilters.forEach(filterKey => {
                 currentFilters[filterKey] = '';
                 $(`#filter-${filterKey}`).val('');
                 $(`#clear-filter-${filterKey}`).addClass('hidden');
             });
+            
+            // Clear searchable filters
+            const searchableFilters = [
+                'descripcionProducto',
+                'descripcionLaboratorio', 
+                'descripcionCorporacion',
+                'molecula',
+                'descripcionFF3',
+                'descripcionATC4'
+            ];
+            
+            searchableFilters.forEach(filterKey => {
+                currentFilters[filterKey] = '';
+                $(`#filter-${filterKey}-search`).val('');
+                $(`#filter-${filterKey}`).val('');
+                $(`#clear-filter-${filterKey}`).addClass('hidden');
+                $(`#filter-${filterKey}-dropdown`).addClass('hidden');
+            });
+            
             applyFilters();
         });
 
@@ -187,6 +220,8 @@ $(document).ready(function() {
 
     // Apply filters function
     function applyFilters() {
+        console.log('Applying filters with current state:', currentFilters);
+        
         // Reset pagination when filtering
         currentCursor = null;
         
@@ -228,7 +263,14 @@ $(document).ready(function() {
             showLoadingState();
         }
 
-        const url = `/market-management/market/${marketId}/products/api`;
+        // Determinar la URL correcta según el contexto
+        let url;
+        if (isGeneralProductsPage) {
+            url = `/productos/api`;
+        } else {
+            url = `/market-management/market/${marketId}/products/api`;
+        }
+        
         const params = new URLSearchParams({
             per_page: 10  // Aumentado para cargar más productos por página
         });
@@ -242,12 +284,20 @@ $(document).ready(function() {
             params.append('search', search);
         }
 
+        // Add franquicia filter parameter if it exists (solo para páginas de mercado específico)
+        if (!isGeneralProductsPage && franquiciaFilter && franquiciaFilter.length > 0) {
+            params.append('franquicia', franquiciaFilter);
+        }
+
         // Add filter parameters
         Object.keys(currentFilters).forEach(filterKey => {
             if (currentFilters[filterKey] && currentFilters[filterKey].length > 0) {
                 params.append(`filter_${filterKey}`, currentFilters[filterKey]);
+                console.log(`Adding filter: filter_${filterKey} = ${currentFilters[filterKey]}`);
             }
         });
+
+        console.log('Final URL parameters:', params.toString());
 
         $.ajax({
             url: `${url}?${params}`,
@@ -463,6 +513,7 @@ $(document).ready(function() {
             return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         };
         const descripcionCompleta = product['descripcionPresentacion'] || '-';
+        const descripcionProducto = product['descripcionProducto'] || '-';
         const marcaGenerico = product['marcaGenerico'] || '-';
         const eticoPopular = product['eticoPopular'] || '-';
         const fuente = product['fuente'] || '-';
@@ -474,21 +525,27 @@ $(document).ready(function() {
         
         return `
             <tr class="hover:bg-gray-50 divide-x divide-gray-200">
-                <!-- Descripción 20% -->
-                <td class="w-[20%] px-1 py-1 text-xs text-gray-900 description-cell" title="${descripcionCompleta}">
+                <!-- Descripción 16% -->
+                <td class="w-[16%] px-1 py-1 text-xs text-gray-900 description-cell" title="${descripcionCompleta}">
                     <div class="leading-tight font-medium whitespace-normal break-words text-left">
                         ${descripcionCompleta}
                     </div>
                 </td>
-                <!-- M/G 8% -->
-                <td class="w-[8%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-l-2 border-gray-300">
+                <!-- Producto 12% -->
+                <td class="w-[12%] px-1 py-1 text-xs text-gray-500 product-cell" title="${descripcionProducto}">
+                    <div class="leading-tight whitespace-normal break-words text-left">
+                        ${descripcionProducto}
+                    </div>
+                </td>
+                <!-- M/G 6% -->
+                <td class="w-[6%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-l-2 border-gray-300">
                     <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getBrandClass(marcaGenerico)}" title="${marcaGenerico}">
                         <span class="hidden lg:inline">${marcaGenerico}</span>
                         <span class="lg:hidden">${marcaGenerico.substring(0, 1)}</span>
                     </span>
                 </td>
-                <!-- É/P 8% -->
-                <td class="w-[8%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-r-2 border-gray-300">
+                <!-- É/P 6% -->
+                <td class="w-[6%] px-1 py-1 text-center text-xs text-gray-500 hidden sm:table-cell border-r-2 border-gray-300">
                     <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-xs font-medium ${getEthicClass(eticoPopular)}" title="${eticoPopular}">
                         <span class="hidden lg:inline">${eticoPopular}</span>
                         <span class="lg:hidden">${eticoPopular.substring(0, 1)}</span>
@@ -501,18 +558,18 @@ $(document).ready(function() {
                         <span class="text-xs">${fuente.substring(0, 3)}</span>
                     </span>
                 </td>
-                <!-- Molécula 14% -->
-                <td class="w-[14%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell molecule-cell" title="${molecula}">
+                <!-- Molécula 12% -->
+                <td class="w-[12%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell molecule-cell" title="${molecula}">
                     <div class="text-xs leading-tight">
                         ${molecula}
                     </div>
                 </td>
-                <!-- FF3 10% -->
-                <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionFF3}">
+                <!-- FF3 8% -->
+                <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionFF3}">
                     <span class="truncate">${descripcionFF3}</span>
                 </td>
-                <!-- ATC4 10% -->
-                <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionATC4}">
+                <!-- ATC4 8% -->
+                <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${descripcionATC4}">
                     <span class="truncate">${descripcionATC4}</span>
                 </td>
                 <!-- Laboratorio 8% -->
@@ -1023,9 +1080,22 @@ $(document).ready(function() {
         marketsList.classList.add('hidden');
         noResults.classList.add('hidden');
         
+        // Construir URL con parámetro de franquicia si existe
+        let url = '/market-management/markets/api';
+        const params = new URLSearchParams();
+        
+        // Agregar filtro de franquicia si existe
+        if (franquiciaFilter && franquiciaFilter.length > 0) {
+            params.append('franquicia', franquiciaFilter);
+        }
+        
+        if (params.toString()) {
+            url += '?' + params.toString();
+        }
+        
         // Hacer petición AJAX para obtener mercados
         $.ajax({
-            url: '/market-management/markets/api',
+            url: url,
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1036,7 +1106,7 @@ $(document).ready(function() {
                     window.availableMarkets = response.data;
                     loadingState.classList.add('hidden');
                     filterMarkets(''); // Mostrar todos los mercados inicialmente
-                    console.log(`Cargados ${window.availableMarkets.length} mercados disponibles`);
+                    console.log(`Cargados ${window.availableMarkets.length} mercados disponibles para franquicia: ${franquiciaFilter || 'todas'}`);
                 } else {
                     showError('Error al cargar los mercados disponibles');
                     showDropdownError('Error al cargar mercados');
@@ -1199,8 +1269,15 @@ window.proceedWithRemoval = function() {
                 closeFinalConfirmationModal();
                 closeRemoveProductModal();
                 
-                // Recargar la tabla de productos para reflejar los cambios
-                loadProducts();
+                // Si la respuesta indica refresh, recargar la página
+                if (response.refresh_page) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500); // Esperar 1.5 segundos para que se vea la notificación
+                } else {
+                    // Recargar la tabla de productos para reflejar los cambios
+                    loadProducts();
+                }
             } else {
                 showErrorNotification('Error: ' + response.message);
             }
@@ -1290,8 +1367,15 @@ window.proceedWithMarketChange = function() {
                 closeFinalChangeConfirmationModal();
                 closeChangeMarketModal();
                 
-                // Recargar la tabla de productos para reflejar los cambios
-                loadProducts();
+                // Si la respuesta indica refresh, recargar la página
+                if (response.refresh_page) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500); // Esperar 1.5 segundos para que se vea la notificación
+                } else {
+                    // Recargar la tabla de productos para reflejar los cambios
+                    loadProducts();
+                }
             } else {
                 showErrorNotification('Error: ' + response.message);
             }
@@ -1320,3 +1404,170 @@ window.proceedWithMarketChange = function() {
         }
     });
 };
+
+// Searchable Filter Functions
+function initializeSearchableFilters() {
+    const searchableFilters = [
+        'descripcionProducto',
+        'descripcionLaboratorio', 
+        'descripcionCorporacion',
+        'molecula',
+        'descripcionFF3',
+        'descripcionATC4'
+    ];
+
+    searchableFilters.forEach(filterType => {
+        const searchInput = $(`#filter-${filterType}-search`);
+        const dropdown = $(`#filter-${filterType}-dropdown`);
+        const optionsContainer = $(`#filter-${filterType}-options`);
+        const noResultsElement = $(`#filter-${filterType}-no-results`);
+        const loadingElement = $(`#filter-${filterType}-loading`);
+        const hiddenInput = $(`#filter-${filterType}`);
+        const clearButton = $(`#clear-filter-${filterType}`);
+        
+        let searchTimeout = null;
+
+        // Search functionality
+        searchInput.on('input', function() {
+            const query = $(this).val().trim();
+            
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    loadFilterOptions(filterType, query, optionsContainer, dropdown, noResultsElement, loadingElement);
+                }, 300);
+            } else {
+                dropdown.addClass('hidden');
+            }
+        });
+
+        // Handle option selection
+        $(document).on('click', `#filter-${filterType}-options .filter-option`, function() {
+            const value = $(this).data('value');
+            const text = $(this).text();
+            
+            searchInput.val(text);
+            hiddenInput.val(value);
+            dropdown.addClass('hidden');
+            clearButton.removeClass('hidden');
+            
+            // Trigger filter application
+            currentFilters[filterType] = value;
+            applyFilters();
+        });
+
+        // Clear filter
+        clearButton.on('click', function() {
+            searchInput.val('');
+            hiddenInput.val('');
+            clearButton.addClass('hidden');
+            dropdown.addClass('hidden');
+            currentFilters[filterType] = '';
+            applyFilters();
+        });
+
+        // Hide dropdown when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest(`.filter-searchable`).length) {
+                dropdown.addClass('hidden');
+            }
+        });
+
+        // Show dropdown on focus if there's content
+        searchInput.on('focus', function() {
+            if (optionsContainer.children().length > 0) {
+                dropdown.removeClass('hidden');
+            }
+        });
+    });
+}
+
+// Load filter options via AJAX
+function loadFilterOptions(filterType, query, optionsContainer, dropdown, noResultsElement, loadingElement) {
+    // Show loading
+    loadingElement.removeClass('hidden');
+    dropdown.removeClass('hidden');
+    optionsContainer.empty();
+    noResultsElement.addClass('hidden');
+
+    $.ajax({
+        url: `/productos/filter-options`, // Cambiado a la ruta de productos generales
+        method: 'GET',
+        data: {
+            filter_type: filterType,
+            search: query,
+            limit: 20
+        },
+        success: function(response) {
+            loadingElement.addClass('hidden');
+            
+            if (response.data && response.data.length > 0) {
+                response.data.forEach(function(option) {
+                    const optionElement = $(`
+                        <div class="filter-option px-3 py-2 text-xs hover:bg-gray-100 cursor-pointer" data-value="${option}">
+                            ${option}
+                        </div>
+                    `);
+                    optionsContainer.append(optionElement);
+                });
+                noResultsElement.addClass('hidden');
+            } else {
+                noResultsElement.removeClass('hidden');
+            }
+        },
+        error: function(xhr) {
+            loadingElement.addClass('hidden');
+            console.error('Error loading filter options:', xhr);
+            noResultsElement.text('Error al cargar opciones').removeClass('hidden');
+        }
+    });
+}
+
+// Load filter options for normal select filters
+function loadNormalFilterOptions() {
+    const normalFilters = ['marcaGenerico', 'eticoPopular', 'fuente', 'mercado'];
+    
+    console.log('Loading normal filter options for:', normalFilters);
+    
+    normalFilters.forEach(filterType => {
+        console.log(`Loading options for filter: ${filterType}`);
+        
+        $.ajax({
+            url: `/productos/filter-options`, // Cambiado a la ruta de productos generales
+            method: 'GET',
+            data: {
+                filter_type: filterType,
+                limit: 500 // Para los selects normales podemos cargar más opciones
+            },
+            success: function(response) {
+                console.log(`Success loading ${filterType} options:`, response);
+                const selectElement = $(`#filter-${filterType}`);
+                
+                if (selectElement.length === 0) {
+                    console.error(`Select element #filter-${filterType} not found!`);
+                    return;
+                }
+                
+                // Clear existing options except the first one (placeholder)
+                selectElement.find('option:not(:first)').remove();
+                
+                if (response.data && response.data.length > 0) {
+                    response.data.forEach(function(option) {
+                        selectElement.append(`<option value="${option}">${option}</option>`);
+                    });
+                    console.log(`Added ${response.data.length} options to ${filterType}`);
+                } else {
+                    console.warn(`No options found for ${filterType}`);
+                }
+            },
+            error: function(xhr) {
+                console.error(`Error loading ${filterType} options:`, xhr);
+                console.error('Response text:', xhr.responseText);
+                console.error('Status:', xhr.status);
+            }
+        });
+    });
+}

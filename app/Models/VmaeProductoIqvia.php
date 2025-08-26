@@ -52,7 +52,8 @@ class VmaeProductoIqvia extends Model
         'origenCapital',
         'Fuente',
         'Franquicia',
-        'Gerente_Producto'
+        'Gerente_Producto',
+        'descripcionProducto'
     ];
 
     protected $casts = [
@@ -60,7 +61,8 @@ class VmaeProductoIqvia extends Model
         'Stgh_Val' => 'float',
         'Volu_Val' => 'float',
         'Franquicia' => 'string',
-        'Gerente_Producto' => 'string'
+        'Gerente_Producto' => 'string',
+        'descripcionProducto' => 'string'
     ];
 
     /**
@@ -103,6 +105,7 @@ class VmaeProductoIqvia extends Model
         return $query->where('Franquicia', $franquicia);
     }
 
+    
     /**
      * Scope para filtrar por gerente de producto
      */
@@ -118,6 +121,7 @@ class VmaeProductoIqvia extends Model
     {
         return $query->where('Ético_Popular', 'ÉTICO');
     }
+
 
     /**
      * Scope para productos populares
@@ -156,7 +160,8 @@ class VmaeProductoIqvia extends Model
             'laboratorio',
             'fuente',
             'Franquicia',
-            'Gerente_Producto'
+            'Gerente_Producto',
+            'descripcionProducto'
         ]);
 
         // Aplicar filtros

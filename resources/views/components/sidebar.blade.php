@@ -20,6 +20,14 @@
                     <span class="sidebar-text ml-3">Gestión Mercados</span>
                 </a>
             </li>
+            
+            <!-- Productos Database -->
+            <li>
+                <a href="{{ route('productos.index') }}" class="flex items-center px-4 py-2.5 {{ request()->routeIs('productos.*') ? 'text-green-700 bg-green-50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} rounded-lg mx-2 transition-all duration-200">
+                    <i class="fas fa-database w-6 text-center {{ request()->routeIs('productos.*') ? 'text-green-600' : 'text-gray-400' }}"></i>
+                    <span class="sidebar-text ml-3">Base de Productos</span>
+                </a>
+            </li>
         </ul>
 
         <!-- Admin Section - Solo para administradores -->
