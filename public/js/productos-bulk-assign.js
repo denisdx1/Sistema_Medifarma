@@ -18,6 +18,9 @@ $(document).ready(function() {
         const selectedCount = window.selectedProducts.size;
         document.getElementById('bulk-selected-count').textContent = `${selectedCount} producto${selectedCount > 1 ? 's' : ''}`;
 
+        // Actualizar lista de productos seleccionados automáticamente
+        updateSelectedProductsList();
+
         // Resetear formulario
         switchToExistingMarket();
         clearBulkSelectedMarket();
@@ -36,7 +39,6 @@ $(document).ready(function() {
     // Cerrar modal
     window.closeBulkAssignModal = function() {
         document.getElementById('bulk-assign-modal').classList.add('hidden');
-        document.getElementById('selected-products-list').classList.add('hidden');
     };
 
     // ===== FUNCIONES DE TABS =====
@@ -83,14 +85,15 @@ $(document).ready(function() {
 
     // ===== FUNCIONES DE LISTA DE PRODUCTOS =====
 
-    // Mostrar/ocultar lista de productos seleccionados
-    window.showSelectedProductsList = function() {
-        const listDiv = document.getElementById('selected-products-list');
+    // Actualizar lista de productos seleccionados (siempre visible)
+    window.updateSelectedProductsList = function() {
         const contentDiv = document.getElementById('selected-products-content');
         
-        if (listDiv.classList.contains('hidden')) {
-            // Generar lista de productos
-            let html = '';
+        // Generar lista de productos
+        let html = '';
+        if (window.selectedProducts.size === 0) {
+            html = '<p class="text-xs text-gray-500 text-center py-1">No hay productos seleccionados</p>';
+        } else {
             let count = 0;
             window.selectedProducts.forEach(product => {
                 count++;
@@ -103,12 +106,16 @@ $(document).ready(function() {
                     </div>
                 `;
             });
-            
-            contentDiv.innerHTML = html;
-            listDiv.classList.remove('hidden');
-        } else {
-            listDiv.classList.add('hidden');
         }
+        
+        contentDiv.innerHTML = html;
+    };
+
+    // Mostrar/ocultar lista de productos seleccionados (función legacy para compatibilidad)
+    window.showSelectedProductsList = function() {
+        // Esta función ya no es necesaria ya que la lista está siempre visible
+        // Pero la mantenemos para compatibilidad
+        updateSelectedProductsList();
     };
 
     // ===== FUNCIONES DE MERCADOS =====
@@ -118,6 +125,8 @@ $(document).ready(function() {
         const searchInput = document.getElementById('bulk-market-search-input');
         const dropdown = document.getElementById('bulk-markets-dropdown');
         
+        if (!searchInput || !dropdown) return;
+        
         // Limpiar event listeners previos
         searchInput.removeEventListener('input', handleBulkMarketSearch);
         searchInput.removeEventListener('focus', handleBulkMarketFocus);
@@ -126,9 +135,10 @@ $(document).ready(function() {
         searchInput.addEventListener('input', handleBulkMarketSearch);
         searchInput.addEventListener('focus', handleBulkMarketFocus);
         
-        // Click fuera del dropdown
-        document.addEventListener('click', function(e) {
-            if (!dropdown.contains(e.target) && !searchInput.contains(e.target)) {
+        // Click fuera del dropdown (mejorado para evitar conflictos)
+        $(document).off('click.bulkMarketDropdown').on('click.bulkMarketDropdown', function(e) {
+            if (!$(e.target).closest('#bulk-markets-dropdown').length && 
+                !$(e.target).closest('#bulk-market-search-input').length) {
                 dropdown.classList.add('hidden');
             }
         });
@@ -136,6 +146,12 @@ $(document).ready(function() {
 
     function handleBulkMarketSearch(e) {
         const searchTerm = e.target.value.trim().toLowerCase();
+        const dropdown = document.getElementById('bulk-markets-dropdown');
+        
+        // Mostrar dropdown cuando se empiece a escribir
+        if (bulkAvailableMarkets.length > 0) {
+            dropdown.classList.remove('hidden');
+        }
         
         if (bulkMarketSearchTimeout) {
             clearTimeout(bulkMarketSearchTimeout);
@@ -147,10 +163,16 @@ $(document).ready(function() {
     }
 
     function handleBulkMarketFocus(e) {
-        if (bulkAvailableMarkets.length > 0) {
-            document.getElementById('bulk-markets-dropdown').classList.remove('hidden');
-            filterBulkMarkets(e.target.value.trim().toLowerCase());
-        }
+        // Usar setTimeout para evitar conflictos con otros event listeners
+        setTimeout(() => {
+            if (bulkAvailableMarkets.length > 0) {
+                document.getElementById('bulk-markets-dropdown').classList.remove('hidden');
+                filterBulkMarkets(e.target.value.trim().toLowerCase());
+            } else {
+                // Si no hay mercados, cargarlos
+                loadBulkAvailableMarkets();
+            }
+        }, 100);
     }
 
     // Cargar mercados disponibles
@@ -297,7 +319,7 @@ $(document).ready(function() {
         if (currentTab === 'create') {
             createNewMarketAndAssign();
         } else {
-            assignToExistingMarket();
+            showAssignConfirmationModal();
         }
     };
 
@@ -324,6 +346,13 @@ $(document).ready(function() {
         btnLoading.classList.remove('hidden');
         btn.disabled = true;
 
+        // Obtener la nota del textarea (si la modal de confirmación está abierta)
+        let note = '';
+        const assignNoteField = document.getElementById('assign-note');
+        if (assignNoteField && !assignNoteField.closest('.hidden')) {
+            note = assignNoteField.value.trim();
+        }
+
         // Preparar datos
         const products = Array.from(window.selectedProducts).map(product => ({
             code: product.code,
@@ -340,7 +369,8 @@ $(document).ready(function() {
             },
             data: {
                 idMercado: parseInt(selectedMarketId),
-                products: products
+                products: products,
+                note: note
             },
             success: function(response) {
                 if (response.success) {
@@ -382,17 +412,75 @@ $(document).ready(function() {
             return;
         }
 
+        // Validar que la nota sea obligatoria
+        if (!marketNote) {
+            showErrorNotification('La nota es obligatoria para crear un mercado');
+            // Resaltar el campo de nota
+            const noteField = document.getElementById('new-market-note');
+            if (noteField) {
+                noteField.focus();
+                noteField.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                setTimeout(() => {
+                    noteField.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                }, 3000);
+            }
+            return;
+        }
+
         if (window.selectedProducts.size === 0) {
             showErrorNotification('No hay productos seleccionados');
             return;
         }
 
-        // Abrir modal de confirmación con los datos
-        openCreateMarketConfirmationModal(marketName, marketNote);
+        // Verificar si ya existe un mercado con el mismo nombre antes de continuar
+        checkMarketExistence(marketName, marketNote);
     };
+
+    // Verificar si ya existe un mercado con el mismo nombre
+    function checkMarketExistence(marketName, marketNote) {
+        console.log('Verificando si existe el mercado:', marketName);
+        
+        $.ajax({
+            url: '/productos/markets/api',
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: {
+                search: marketName
+            },
+            success: function(response) {
+                if (response.success && response.data) {
+                    // Buscar coincidencia exacta (case-insensitive)
+                    const existingMarket = response.data.find(market => 
+                        market.mercado.trim().toLowerCase() === marketName.trim().toLowerCase()
+                    );
+                    
+                    if (existingMarket) {
+                        console.warn('Mercado ya existe:', existingMarket);
+                        showErrorNotification('❌ Ya existe un mercado activo con ese nombre');
+                        return;
+                    }
+                    
+                    // Si no existe, proceder con el modal de confirmación
+                    console.log('Mercado no existe, procediendo con confirmación');
+                    openCreateMarketConfirmationModal(marketName, marketNote);
+                } else {
+                    console.error('Error en respuesta de verificación:', response);
+                    showErrorNotification('Error al verificar mercados existentes');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al verificar mercados:', xhr, status, error);
+                showErrorNotification('Error al verificar mercados existentes');
+            }
+        });
+    }
 
     // Buscar el mercado recién creado y asignar productos
     function findNewMarketAndAssign(marketName) {
+        console.log('Buscando mercado creado:', marketName);
         $.ajax({
             url: '/productos/markets/api',
             method: 'GET',
@@ -401,21 +489,29 @@ $(document).ready(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
+                console.log('Respuesta de markets API:', response);
                 if (response.success && response.data) {
+                    console.log('Mercados disponibles:', response.data.map(m => `${m.mercado} (ID: ${m.idMercado})`));
                     const newMarket = response.data.find(market => market.mercado === marketName);
+                    console.log('Mercado encontrado:', newMarket);
                     if (newMarket) {
+                        console.log(`Asignando productos al mercado: ${marketName} (ID: ${newMarket.idMercado})`);
                         // Asignar productos al nuevo mercado
                         assignProductsToNewMarket(newMarket.idMercado, marketName);
                     } else {
-                        showErrorNotification('No se pudo encontrar el mercado recién creado');
+                        console.error('No se encontró el mercado:', marketName);
+                        console.log('Mercados disponibles para comparar:', response.data.map(m => m.mercado));
+                        showErrorNotification('No se pudo encontrar el mercado recién creado: ' + marketName);
                         resetCreateButton();
                     }
                 } else {
+                    console.error('Error en respuesta de markets API:', response);
                     showErrorNotification('Error al buscar el mercado creado');
                     resetCreateButton();
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('Error en AJAX markets API:', xhr, status, error);
                 showErrorNotification('Error al buscar el mercado creado');
                 resetCreateButton();
             }
@@ -424,6 +520,9 @@ $(document).ready(function() {
 
     // Asignar productos al nuevo mercado
     function assignProductsToNewMarket(marketId, marketName) {
+        console.log('Iniciando asignación de productos al mercado nuevo');
+        console.log('Market ID:', marketId, 'Market Name:', marketName);
+        
         const btn = document.getElementById('create-and-assign-btn');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Asignando productos...';
 
@@ -431,6 +530,12 @@ $(document).ready(function() {
             code: product.code,
             fuente: product.fuente
         }));
+
+        console.log('Productos a asignar:', products);
+        console.log('Datos a enviar:', {
+            idMercado: parseInt(marketId),
+            products: products
+        });
 
         $.ajax({
             url: '/productos/assign-products',
@@ -545,23 +650,6 @@ $(document).ready(function() {
         document.getElementById('create-market-confirmation-modal').classList.add('hidden');
     };
     
-    // Alternar vista de lista de productos en confirmación
-    window.toggleConfirmProductsList = function() {
-        const list = document.getElementById('confirm-products-list');
-        const btn = document.getElementById('toggle-confirm-products-btn');
-        const icon = btn.querySelector('i');
-        
-        if (list.classList.contains('hidden')) {
-            list.classList.remove('hidden');
-            icon.className = 'fas fa-chevron-up mr-1';
-            btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i>Ocultar lista';
-        } else {
-            list.classList.add('hidden');
-            icon.className = 'fas fa-chevron-down mr-1';
-            btn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i>Ver lista';
-        }
-    };
-    
     // Actualizar display de productos en modal de confirmación
     function updateConfirmProductsDisplay() {
         const count = window.selectedProducts.size;
@@ -573,36 +661,65 @@ $(document).ready(function() {
         if (count > 0) {
             Array.from(window.selectedProducts).forEach((product, index) => {
                 const productDiv = document.createElement('div');
-                productDiv.className = 'flex items-center justify-between py-1 px-2 ' + 
-                                     (index % 2 === 0 ? 'bg-gray-50' : 'bg-white');
+                productDiv.className = 'flex items-center justify-between py-1 ' + 
+                                     (index > 0 ? 'border-t border-gray-200' : '');
                 productDiv.innerHTML = `
                     <div class="flex-1">
                         <p class="text-xs font-medium text-gray-900">${product.name}</p>
-                        <p class="text-xs text-gray-500">Código: ${product.code} | Fuente: ${product.fuente}</p>
+                        <p class="text-xs text-gray-500">${product.code} • ${product.fuente}</p>
                     </div>
                 `;
                 content.appendChild(productDiv);
             });
         } else {
-            content.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No hay productos seleccionados</p>';
+            content.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">No hay productos seleccionados</p>';
         }
     }
     
     // Proceder con la creación del mercado y asignación (lógica original movida aquí)
     window.proceedWithMarketCreationAndAssignment = function() {
+        console.log('🚀 FUNCIÓN LLAMADA: proceedWithMarketCreationAndAssignment', new Date().toISOString());
+        
         const marketName = document.getElementById('confirm-market-name').textContent;
         const marketNote = document.getElementById('confirm-market-note').textContent;
+        
+        console.log('📝 Datos obtenidos:', { marketName, marketNote });
         
         // Mostrar loading en el botón de confirmación
         const btn = document.getElementById('final-create-assign-btn');
         const btnText = btn.querySelector('.btn-text');
         const btnLoading = btn.querySelector('.btn-loading');
         
+        console.log('🔍 Estado del botón ANTES:', { 
+            disabled: btn.disabled, 
+            classList: btn.className,
+            innerHTML: btn.innerHTML.substring(0, 100) + '...'
+        });
+        
+        // Prevenir doble submit
+        if (btn.disabled) {
+            console.warn('🚫 Botón ya está deshabilitado - previniendo doble submit');
+            return;
+        }
+        
+        console.log('🔒 DESHABILITANDO BOTÓN para prevenir doble submit');
         btnText.classList.add('hidden');
         btnLoading.classList.remove('hidden');
         btn.disabled = true;
+        
+        console.log('🔍 Estado del botón DESPUÉS:', { 
+            disabled: btn.disabled, 
+            classList: btn.className
+        });
 
         // Crear mercado primero
+        console.log('📤 Enviando request para crear mercado:', {
+            url: '/productos/create-market',
+            market_name: marketName,
+            market_note: marketNote,
+            timestamp: new Date().toISOString()
+        });
+        
         $.ajax({
             url: '/productos/create-market',
             method: 'POST',
@@ -628,7 +745,15 @@ $(document).ready(function() {
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
-                showErrorNotification(errorMessage);
+                
+                console.error('Error al crear mercado:', xhr.responseJSON);
+                
+                // Mostrar error específico para mercados duplicados
+                if (xhr.status === 422 && errorMessage.includes('existe')) {
+                    showErrorNotification(`❌ ${errorMessage}`);
+                } else {
+                    showErrorNotification(errorMessage);
+                }
                 resetConfirmationButton();
             }
         });
@@ -644,4 +769,92 @@ $(document).ready(function() {
         btnLoading.classList.add('hidden');
         btn.disabled = false;
     }
+
+    // ===== MODAL DE CONFIRMACIÓN PARA ASIGNACIÓN =====
+    
+    // Mostrar modal de confirmación para asignación a mercado existente
+    function showAssignConfirmationModal() {
+        const selectedMarketId = document.getElementById('bulk-selected-market-id').value;
+        const selectedMarketName = document.querySelector('#bulk-assign-dropdown .market-item.selected')?.textContent?.trim();
+        
+        if (!selectedMarketId) {
+            showErrorNotification('Debe seleccionar un mercado');
+            return;
+        }
+
+        if (window.selectedProducts.size === 0) {
+            showErrorNotification('No hay productos seleccionados');
+            return;
+        }
+
+        // Llenar información de la modal
+        document.getElementById('confirm-assign-count').textContent = window.selectedProducts.size;
+        document.getElementById('confirm-assign-market').textContent = selectedMarketName || 'Mercado seleccionado';
+        
+        // Mostrar productos seleccionados (máximo 3)
+        const productsContainer = document.getElementById('confirm-assign-products');
+        const products = Array.from(window.selectedProducts);
+        const maxToShow = 3;
+        
+        let productsHtml = '';
+        for (let i = 0; i < Math.min(products.length, maxToShow); i++) {
+            const product = products[i];
+            // Los productos ya vienen como objetos con propiedades code, name, fuente
+            const productName = product.name || `${product.code} (${product.fuente})`;
+            productsHtml += `<div class="mb-1">• ${productName}</div>`;
+        }
+        
+        if (products.length > maxToShow) {
+            productsHtml += `<div class="text-gray-500 italic">... y ${products.length - maxToShow} más</div>`;
+        }
+        
+        productsContainer.innerHTML = productsHtml;
+        
+        // Mostrar modal
+        document.getElementById('assign-confirmation-modal').classList.remove('hidden');
+    }
+
+    // Cerrar modal de confirmación
+    window.closeAssignConfirmationModal = function() {
+        // Limpiar el campo de nota
+        const assignNoteField = document.getElementById('assign-note');
+        if (assignNoteField) {
+            assignNoteField.value = '';
+        }
+        
+        document.getElementById('assign-confirmation-modal').classList.add('hidden');
+    };
+
+    // Proceder con la asignación después de confirmación
+    window.proceedWithAssignment = function() {
+        // Validar que la nota sea obligatoria
+        const noteField = document.getElementById('assign-note');
+        const note = noteField ? noteField.value.trim() : '';
+        
+        if (!note) {
+            showErrorNotification('La nota es obligatoria para asignar productos');
+            // Resaltar el campo de nota
+            if (noteField) {
+                noteField.focus();
+                noteField.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                setTimeout(() => {
+                    noteField.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                }, 3000);
+            }
+            return;
+        }
+
+        // Cerrar modal de confirmación
+        closeAssignConfirmationModal();
+        
+        // Ejecutar la asignación original
+        assignToExistingMarket();
+    };
+
+    // Event listener para cerrar modal haciendo clic fuera
+    document.getElementById('assign-confirmation-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAssignConfirmationModal();
+        }
+    });
 });

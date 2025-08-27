@@ -300,6 +300,23 @@ window.proceedWithRemoval = function() {
         return;
     }
 
+    // Validar que la nota sea obligatoria
+    const noteField = document.getElementById('remove-product-note');
+    const note = noteField ? noteField.value.trim() : '';
+    
+    if (!note) {
+        showErrorNotification('La nota es obligatoria para remover el producto');
+        // Resaltar el campo de nota
+        if (noteField) {
+            noteField.focus();
+            noteField.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+            setTimeout(() => {
+                noteField.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            }, 3000);
+        }
+        return;
+    }
+
     // Mostrar loading en el botón de confirmación final
     const btn = $('#final-confirm-btn');
     const btnText = btn.find('.btn-text');
@@ -317,7 +334,8 @@ window.proceedWithRemoval = function() {
             'X-Requested-With': 'XMLHttpRequest'
         },
         data: {
-            codigoPresentacion: window.currentProductCode
+            codigoPresentacion: window.currentProductCode,
+            note: $('#remove-product-note').val().trim()
         },
         success: function(response) {
             if (response.success) {
@@ -392,6 +410,23 @@ window.proceedWithMarketChange = function() {
         return;
     }
 
+    // Validar que la nota sea obligatoria
+    const noteField = document.getElementById('change-market-note');
+    const note = noteField ? noteField.value.trim() : '';
+    
+    if (!note) {
+        showErrorNotification('La nota es obligatoria para cambiar el mercado del producto');
+        // Resaltar el campo de nota
+        if (noteField) {
+            noteField.focus();
+            noteField.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+            setTimeout(() => {
+                noteField.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            }, 3000);
+        }
+        return;
+    }
+
     // Mostrar loading en el botón de confirmación final
     const btn = $('#final-change-confirm-btn');
     const btnText = btn.find('.btn-text');
@@ -410,7 +445,8 @@ window.proceedWithMarketChange = function() {
         },
         data: {
             codigoPresentacion: window.currentProductCode,
-            nuevoMercadoId: parseInt(selectedMarketId)
+            nuevoMercadoId: parseInt(selectedMarketId),
+            note: $('#change-market-note').val().trim()
         },
         success: function(response) {
             if (response.success) {

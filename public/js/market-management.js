@@ -68,23 +68,7 @@ function onFranquiciaFilterChange() {
     loadRestoFilterOptions();
 }
 
-// Open create modal - VANILLA JS
-function openCreateModal() {
-    const marketNameInput = document.getElementById('market-name');
-    const marketNoteInput = document.getElementById('create-market-note');  // Limpiar nota también
-    const createModal = document.getElementById('create-modal');
-    
-    if (marketNameInput) marketNameInput.value = '';
-    if (marketNoteInput) marketNoteInput.value = '';  // Limpiar nota
-    if (createModal) createModal.classList.remove('hidden');
-    if (marketNameInput) marketNameInput.focus();
-}
 
-// Close create modal - VANILLA JS
-function closeCreateModal() {
-    const createModal = document.getElementById('create-modal');
-    if (createModal) createModal.classList.add('hidden');
-}
 
 // Open edit modal - VANILLA JS
 function openEditModal(marketId, marketName) {
@@ -109,128 +93,9 @@ function closeEditModal() {
     if (editModal) editModal.classList.add('hidden');
 }
 
-// Open create confirmation modal - VANILLA JS
-function openCreateConfirmationModal() {
-    const marketNameInput = document.getElementById('market-name');
-    const marketName = marketNameInput ? marketNameInput.value.trim() : '';
-    
-    if (!marketName) {
-        showToast('Por favor ingresa un nombre para el mercado', 'error');
-        if (marketNameInput) marketNameInput.focus();
-        return;
-    }
-    
-    // Update confirmation modal with market name
-    const confirmMarketName = document.getElementById('confirm-create-market-name');
-    if (confirmMarketName) confirmMarketName.textContent = marketName;
-    
-    // Show confirmation modal
-    const confirmationModal = document.getElementById('create-confirmation-modal');
-    if (confirmationModal) confirmationModal.classList.remove('hidden');
-}
 
-// Close create confirmation modal - VANILLA JS
-function closeCreateConfirmationModal() {
-    const confirmationModal = document.getElementById('create-confirmation-modal');
-    if (confirmationModal) confirmationModal.classList.add('hidden');
-}
 
-// Confirm create market - VANILLA JS VERSION (SIMPLIFIED)
-function confirmCreateMarket() {
-    console.log('🚀 confirmCreateMarket function called (Vanilla JS - Simplified)');
-    
-    const marketNameInput = document.getElementById('market-name');
-    const marketName = marketNameInput ? marketNameInput.value.trim() : '';
-    console.log('📝 Market name:', marketName);
-    
-    // Obtener la nota del usuario
-    const marketNoteInput = document.getElementById('create-market-note');
-    const marketNote = marketNoteInput ? marketNoteInput.value.trim() : '';
-    console.log('📝 Market note:', marketNote);
-    
-    const submitBtn = document.getElementById('confirm-create-btn');
-    console.log('🔘 Submit button found:', !!submitBtn);
-    
-    if (!submitBtn) {
-        console.error('❌ Submit button not found!');
-        alert('Error: Botón de confirmación no encontrado');
-        return;
-    }
-    
-    // Guardar contenido original del botón
-    const originalHTML = submitBtn.innerHTML;
-    console.log('💾 Original button HTML saved');
-    
-    // Mostrar estado de loading
-    console.log('🔄 Showing loading state...');
-    submitBtn.innerHTML = `
-        <i class="fas fa-spinner fa-spin mr-2"></i>
-        <span>Creando mercado...</span>
-    `;
-    submitBtn.disabled = true;
-    submitBtn.style.opacity = '0.7';
-    console.log('✅ Loading state applied');
-    
-    // Preparar datos para envío
-    const formData = new FormData();
-    formData.append('market_name', marketName);
-    formData.append('market_note', marketNote);  // Agregar la nota
-    formData.append('_token', window.csrfToken);
-    
-    // Submit form con fetch (Vanilla JS)
-    console.log('📤 Sending fetch request...');
-    fetch(window.MarketManagementRoutes.create, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        console.log('📨 Response received:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ Request successful:', data);
-        if (data.success) {
-            // Mostrar éxito antes de recargar
-            submitBtn.innerHTML = `
-                <i class="fas fa-check mr-2"></i>
-                <span>¡Creado exitosamente!</span>
-            `;
-            submitBtn.style.opacity = '1';
-            
-            showToast(data.message, 'success');
-            // Close both modals
-            closeCreateConfirmationModal();
-            closeCreateModal();
-            // Reload page to show new market
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showToast(data.message, 'error');
-            resetButtonToOriginal(submitBtn, originalHTML);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Request failed:', error);
-        showToast('Error al crear mercado', 'error');
-        resetButtonToOriginal(submitBtn, originalHTML);
-    });
-}
 
-// Función auxiliar para resetear el botón a su estado original
-function resetButtonToOriginal(submitBtn, originalHTML) {
-    console.log('🔄 Resetting button to original state...');
-    
-    if (submitBtn && originalHTML) {
-        submitBtn.innerHTML = originalHTML;
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        console.log('✅ Button reset to original state');
-    }
-}
 
 // Open edit confirmation modal
 function openEditConfirmationModal() {
@@ -322,45 +187,7 @@ function confirmEditMarket() {
     });
 }
 
-// View market products
-function viewMarketProducts(marketId, marketName) {
-    console.log('viewMarketProducts called with:', {
-        marketId: marketId,
-        marketName: marketName,
-        typeof_marketId: typeof marketId,
-        typeof_marketName: typeof marketName
-    });
-    
-    // Validar que el marketId sea válido
-    if (!marketId || isNaN(marketId) || marketId <= 0) {
-        console.error('Invalid market ID:', marketId);
-        showToast('Error: ID de mercado inválido. No se puede cargar la vista de productos.', 'error');
-        return;
-    }
-    
-    // Validar que tengamos un nombre de mercado
-    if (marketName === undefined || marketName === null) {
-        console.warn('Market name is undefined/null, using default');
-        marketName = 'Mercado sin nombre';
-    }
-    
-    console.log('Redirecting to products for market:', marketId, marketName);
-    
-    // Obtener parámetro de franquicia actual de la URL si existe
-    const urlParams = new URLSearchParams(window.location.search);
-    const franquiciaFilter = urlParams.get('franquicia');
-    
-    // Construir URL con o sin parámetro de franquicia
-    let productsUrl = `/market-management/market/${marketId}/products`;
-    if (franquiciaFilter) {
-        productsUrl += `?franquicia=${encodeURIComponent(franquiciaFilter)}`;
-    }
-    
-    console.log('Redirecting to products URL:', productsUrl);
-    
-    // Redirect to products view for this market
-    window.location.href = productsUrl;
-}
+
 
 // Function to reset to original view
 function resetToOriginalView() {
@@ -517,18 +344,10 @@ function generateStateBadge(estado) {
 function generateActionButtons(market) {
     let buttons = '';
     
-    // Ver Productos Button - Always available (con validación)
+    // Asignar Productos Button - Always available (con validación)
     if (market.idMercado && !isNaN(market.idMercado)) {
         // Escapar el nombre del mercado de manera segura para JavaScript
         const safeMarketName = escapeForJs(market.mercado || '');
-        buttons += `
-            <button onclick="viewMarketProducts(${market.idMercado}, '${safeMarketName}')"
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
-                    title="Ver productos del mercado">
-                <i class="fas fa-box mr-1"></i>
-                Productos
-            </button>
-        `;
         
         // Asignar Productos Button
         buttons += `
@@ -755,14 +574,10 @@ $(document).ready(function() {
     });
 
     // Close modal when clicking outside
-    $(document).on('click', '#create-modal, #edit-modal, #create-confirmation-modal, #edit-confirmation-modal', function(e) {
+    $(document).on('click', '#edit-modal, #edit-confirmation-modal', function(e) {
         if (e.target === this) {
-            if (this.id === 'create-modal') {
-                closeCreateModal();
-            } else if (this.id === 'edit-modal') {
+            if (this.id === 'edit-modal') {
                 closeEditModal();
-            } else if (this.id === 'create-confirmation-modal') {
-                closeCreateConfirmationModal();
             } else if (this.id === 'edit-confirmation-modal') {
                 closeEditConfirmationModal();
             }
@@ -772,12 +587,8 @@ $(document).ready(function() {
     // Close modal with Escape key
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
-            if (!$('#create-confirmation-modal').hasClass('hidden')) {
-                closeCreateConfirmationModal();
-            } else if (!$('#edit-confirmation-modal').hasClass('hidden')) {
+            if (!$('#edit-confirmation-modal').hasClass('hidden')) {
                 closeEditConfirmationModal();
-            } else if (!$('#create-modal').hasClass('hidden')) {
-                closeCreateModal();
             } else if (!$('#edit-modal').hasClass('hidden')) {
                 closeEditModal();
             }

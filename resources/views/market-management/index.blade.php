@@ -104,10 +104,14 @@
                             <!-- Mercado Asignado -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
-                                        <i class="fas fa-store text-green-600 text-xs"></i>
+                                    <div class="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas fa-store text-red-600 text-xs"></i>
                                     </div>
-                                    <div class="font-medium text-gray-900">{{ $market->mercado }}</div>
+                                    <button onclick="redirectToProductsWithMarket('{{ $market->mercado }}')" 
+                                            class="font-medium text-red-600 hover:text-red-800 hover:underline transition-colors cursor-pointer"
+                                            title="Ver productos de este mercado">
+                                        {{ $market->mercado }}
+                                    </button>
                                 </div>
                             </td>
                             <!-- Estado -->
@@ -239,172 +243,134 @@
 
 
 <!-- Edit Market Modal -->
-<div id="edit-modal" class="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-20 flex items-center justify-center p-4 hidden z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all">
-        <div class="p-6">
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b pb-4 mb-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-edit text-amber-600 text-lg"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">Editar Mercado</h3>
-                        <p class="text-sm text-gray-500">Modifica el nombre del mercado</p>
-                    </div>
-                </div>
-                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times"></i>
+<div id="edit-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
+        <!-- Header -->
+        <div class="bg-red-500 p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Editar Mercado
+                </h3>
+                <button onclick="closeEditModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            
-            <!-- Form -->
-            <form id="edit-market-form">
-                @csrf
-                @method('PUT')
-                <input type="hidden" id="edit-market-id" name="market_id">
-                
-                <div class="mb-6">
-                    <label for="edit-market-name" class="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre del Mercado *
-                    </label>
-                    <input type="text" 
-                           id="edit-market-name" 
-                           name="market_name" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
-                           placeholder="Ingresa el nuevo nombre del mercado"
-                           required>
-                    <p class="text-xs text-gray-500 mt-1">El nombre debe ser único en el sistema</p>
-                </div>
-
-                <!-- Campo de Nota -->
-                <div class="mb-6">
-                    <label for="edit-market-note" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-sticky-note text-yellow-500 mr-1"></i>
-                        Nota (opcional)
-                    </label>
-                    <textarea id="edit-market-note" 
-                              name="market_note" 
-                              rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 resize-none"
-                              placeholder="Agrega una nota sobre los cambios realizados..."></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Esta nota será enviada por email a todos los usuarios</p>
-                </div>
-                
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-amber-600 mt-1"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-amber-800 text-sm">
-                                <strong>Atención:</strong> El cambio de nombre del mercado afectará todas las referencias existentes en el sistema.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Actions -->
-                <div class="flex justify-end space-x-3">
-                    <button type="button" 
-                            onclick="closeEditModal()"
-                            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 font-medium">
-                        <i class="fas fa-times mr-2"></i>
-                        Cancelar
-                    </button>
-                    <button type="button"
-                            onclick="openEditConfirmationModal()"
-                            id="edit-submit-btn"
-                            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors duration-200 font-medium">
-                        <span class="btn-text">
-                            <i class="fas fa-save mr-2"></i>
-                            Guardar Cambios
-                        </span>
-                    </button>
-                </div>
-            </form>
         </div>
+        
+        <!-- Form Content -->
+        <form id="edit-market-form" class="p-6">
+            @csrf
+            @method('PUT')
+            <input type="hidden" id="edit-market-id" name="market_id">
+            
+            <!-- Market Name Field -->
+            <div class="mb-4">
+                <label for="edit-market-name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre del Mercado *
+                </label>
+                <input type="text" 
+                       id="edit-market-name" 
+                       name="market_name" 
+                       class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                       placeholder="Nombre del mercado"
+                       required>
+            </div>
+
+            <!-- Note Field -->
+            <div class="mb-4">
+                <label for="edit-market-note" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nota
+                </label>
+                <textarea id="edit-market-note" 
+                          name="market_note" 
+                          rows="3"
+                          class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          placeholder="Nota sobre los cambios..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex space-x-3">
+                <button type="button" 
+                        onclick="closeEditModal()"
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                    Cancelar
+                </button>
+                <button type="button"
+                        onclick="openEditConfirmationModal()"
+                        id="edit-submit-btn"
+                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar
+                    </span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 
 
 <!-- Edit Market Confirmation Modal -->
-<div id="edit-confirmation-modal" class="fixed inset-0 backdrop-blur-sm bg-black bg-opacity-20 flex items-center justify-center p-4 hidden z-[60]">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform transition-all">
-        <div class="p-6">
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b pb-4 mb-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-edit text-amber-600 text-lg"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">Confirmar Edición</h3>
-                        <p class="text-sm text-gray-500">¿Estás seguro de guardar los cambios?</p>
-                    </div>
-                </div>
-                <button onclick="closeEditConfirmationModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times"></i>
+<div id="edit-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-[60]">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
+        <!-- Header -->
+        <div class="bg-red-500 p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Confirmar Cambios
+                </h3>
+                <button onclick="closeEditConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            
-            <!-- Content -->
-            <div class="mb-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="space-y-2">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-store text-blue-600 mt-1"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-blue-800 text-sm font-medium">Nombre actual:</p>
-                                <p class="text-blue-900 text-base" id="confirm-edit-current-name">-</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-arrow-right text-green-600 mt-1"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-green-800 text-sm font-medium">Nuevo nombre:</p>
-                                <p class="text-green-900 text-base font-semibold" id="confirm-edit-new-name">-</p>
-                            </div>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <!-- Comparison -->
+            <div class="mb-4">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-red-600 font-medium">Actual:</p>
+                    <p class="text-lg font-bold text-red-800" id="confirm-edit-current-name">-</p>
                 </div>
                 
-                <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-yellow-600 mt-1"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-yellow-800 text-sm">
-                                Este cambio afectará todos los productos asignados a este mercado.
-                            </p>
-                        </div>
-                    </div>
+                <div class="text-center my-2">
+                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
                 </div>
+                
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-sm text-red-600 font-medium">Nuevo:</p>
+                    <p class="text-lg font-bold text-red-800" id="confirm-edit-new-name">-</p>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p class="text-yellow-800 text-sm">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-1"></i>
+                    <strong>Atención:</strong> Este cambio afectará todos los productos del mercado.
+                </p>
             </div>
             
             <!-- Actions -->
-            <div class="flex justify-end space-x-3">
+            <div class="flex space-x-3">
                 <button type="button" 
                         onclick="closeEditConfirmationModal()"
-                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200 font-medium">
-                    <i class="fas fa-times mr-2"></i>
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
                     Cancelar
                 </button>
                 <button type="button"
                         onclick="confirmEditMarket()"
                         id="confirm-edit-btn"
-                        class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors duration-200 font-medium">
-                    <span class="btn-text">
-                        <i class="fas fa-save mr-2"></i>
-                        Sí, Guardar Cambios
+                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-2"></i>
+                        Confirmar
                     </span>
-                    <span class="btn-loading hidden">
+                    <span class="btn-loading hidden flex items-center justify-center">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         Guardando...
                     </span>
@@ -415,12 +381,10 @@
 </div>
 
 <!-- Toast Container -->
-<div id="toast-container" class="toast-container"></div>
+<div id="toast-container" class="fixed top-20 right-4 z-50"></div>
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/market-management.css') }}">
-@endpush
+
 
 @push('scripts')
 <script>
@@ -473,6 +437,16 @@ function performSearch() {
 function clearSearch() {
     // Redirigir sin parámetros de búsqueda
     window.location.href = window.MarketManagementRoutes.index;
+}
+
+// Función para redirigir al módulo de productos con filtro de mercado
+function redirectToProductsWithMarket(marketName) {
+    // Guardar el mercado seleccionado en sessionStorage
+    sessionStorage.setItem('autoSelectMarket', marketName);
+    
+    // Redirigir a la página de productos sin parámetros en la URL
+    const productosUrl = '{{ route("productos.index") }}';
+    window.location.href = productosUrl;
 }
 </script>
 <script src="{{ asset('js/market-management.js') }}"></script>

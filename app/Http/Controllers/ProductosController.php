@@ -47,10 +47,11 @@ class ProductosController extends Controller
                 'mercado' => trim($request->get('filter_mercado', ''))
             ]);
 
-            // Query base con JOIN para obtener la fuente
+            // Query base con JOIN para obtener la fuente y mercado real de configuración
             $baseQuery = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                 ->select([
                     'v.codigoPresentacion',
                     'v.descripcionPresentacion',
@@ -65,7 +66,8 @@ class ProductosController extends Controller
                     'v.descripcionATC4',
                     'v.descripcionLaboratorio',
                     'v.descripcionCorporacion',
-                    'v.MERCADO as mercado'
+                    // Usar el mercado de la configuración si existe, sino el de la vista VMAE
+                    DB::raw("COALESCE(m.mercado, v.MERCADO) as mercado")
                 ]);
 
             // Aplicar búsqueda global
@@ -389,9 +391,12 @@ class ProductosController extends Controller
                         $query->where('MERCADO', 'LIKE', "%{$search}%");
                     }
                     
+                    // Para mercado, usar un límite mucho mayor para asegurar que se carguen todos
+                    $mercadoLimit = $search ? $limit : 2000; // Sin búsqueda: 2000, con búsqueda: límite normal
+                    
                     $results = $query->distinct()
                         ->orderBy('MERCADO')
-                        ->limit($limit)
+                        ->limit($mercadoLimit)
                         ->pluck('MERCADO')
                         ->filter(function($mercado) {
                             return !empty(trim($mercado));
@@ -454,8 +459,9 @@ class ProductosController extends Controller
      */
     public function removeProduct(Request $request)
     {
-        $validated = $request->validate([
-            'codigoPresentacion' => 'required|string'
+        $validated =         $request->validate([
+            'codigoPresentacion' => 'required|string',
+            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -486,8 +492,10 @@ class ProductosController extends Controller
                 ->value('descripcionPresentacion');
 
             // Ejecutar el stored procedure SP_ASIGNAR_RESTO
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?', [
-                $validated['codigoPresentacion']
+            $userId = Auth::user()->idUsuario;
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?, ?', [
+                $validated['codigoPresentacion'],  // @codigo
+                $userId                           // @idUsuario
             ]);
 
             DB::commit();
@@ -499,7 +507,8 @@ class ProductosController extends Controller
                     $validated['codigoPresentacion'],
                     $nombreProducto ?? 'Producto no encontrado',
                     $configuracionProducto->mercado,
-                    Auth::user()
+                    Auth::user(),
+                    $validated['note'] ?? null
                 );
             } catch (\Exception $e) {
                 // Log del error pero no interrumpir el flujo
@@ -530,7 +539,8 @@ class ProductosController extends Controller
     {
         $validated = $request->validate([
             'codigoPresentacion' => 'required|string',
-            'nuevoMercadoId' => 'required|integer'
+            'nuevoMercadoId' => 'required|integer',
+            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -588,10 +598,12 @@ class ProductosController extends Controller
                 ->value('descripcionPresentacion');
 
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?', [
+            $userId = Auth::user()->idUsuario;
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
                 $configuracion->fuente,           // @fuente (obtenida de la configuración actual)
-                $validated['nuevoMercadoId']      // @idMercado
+                $validated['nuevoMercadoId'],     // @idMercado
+                $userId                           // @idUsuario
             ]);
 
             // Enviar notificación por email
@@ -610,7 +622,8 @@ class ProductosController extends Controller
                     $nombreProducto ?? 'Producto no encontrado',
                     $mercadoAnterior,
                     $mercadoDestino->mercado,
-                    Auth::user()
+                    Auth::user(),
+                    $validated['note'] ?? null
                 );
                 
                 \Log::info('DEBUG: Notificación de movimiento completada exitosamente');
@@ -691,9 +704,23 @@ class ProductosController extends Controller
      */
     public function createMarket(Request $request)
     {
+        // Agregar ID único para rastrear esta request específica
+        $requestId = uniqid('req_', true);
+        
+        \Log::info('🚀 ProductosController::createMarket - INICIO', [
+            'request_id' => $requestId,
+            'request_data' => $request->all(),
+            'user' => Auth::user()->usuario ?? 'Unknown',
+            'timestamp' => now()->toDateTimeString(),
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'ip' => $request->ip(),
+            'session_id' => session()->getId()
+        ]);
+
         $request->validate([
             'market_name' => 'required|string|max:255',
-            'market_note' => 'nullable|string|max:1000'  // Validar la nota
+            'market_note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -714,21 +741,53 @@ class ProductosController extends Controller
                 ], 500);
             }
             
-            // Verificar si ya existe un mercado con el mismo nombre
+            // Verificar si ya existe un mercado con el mismo nombre (solo mercados activos)
+            // Usar UPPER para comparación case-insensitive y LTRIM/RTRIM para eliminar espacios
             $existingMarket = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('mercado', $marketName)
+                ->table('ODS.TAB_MERCADO as m')
+                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                ->whereRaw('UPPER(LTRIM(RTRIM(m.mercado))) = UPPER(?)', [trim($marketName)])
+                ->where('e.estado', 'ACTIVO')
+                ->select('m.idMercado', 'm.mercado', 'e.estado')
                 ->first();
+
+            \Log::info('Verificación de mercado existente:', [
+                'market_name' => $marketName,
+                'existing_market' => $existingMarket
+            ]);
                 
             if ($existingMarket) {
+                \Log::warning('Intento de crear mercado duplicado:', [
+                    'market_name' => $marketName,
+                    'existing_market_id' => $existingMarket->idMercado
+                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ya existe un mercado con ese nombre'
+                    'message' => 'Ya existe un mercado activo con ese nombre'
                 ], 422);
             }
             
             // Llamar al stored procedure para insertar el mercado con los parámetros requeridos
+            \Log::info('🛠️ ProductosController - Ejecutando SP_INSERT_MERCADO', [
+                'request_id' => $requestId,
+                'market_name' => $marketName,
+                'user_id' => $userId,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
             DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?', [$marketName, (int)$userId]);
+            
+            // Verificar cuántos mercados con este nombre se crearon
+            $mercadosCreados = DB::connection('sqlsrv')
+                ->table('ODS.TAB_MERCADO')
+                ->where('mercado', $marketName)
+                ->get();
+                
+            \Log::info('✅ ProductosController - SP_INSERT_MERCADO ejecutado exitosamente', [
+                'market_name' => $marketName,
+                'mercados_encontrados_con_este_nombre' => $mercadosCreados->count(),
+                'detalles_mercados' => $mercadosCreados->toArray()
+            ]);
 
             // Enviar notificación por correo (con nota si existe)
             try {
@@ -779,12 +838,20 @@ class ProductosController extends Controller
      */
     public function assignProducts(Request $request)
     {
+        \Log::info('Iniciando assignProducts', [
+            'request_data' => $request->all(),
+            'user' => Auth::user()->usuario ?? 'Unknown'
+        ]);
+
         $validated = $request->validate([
             'idMercado' => 'required|integer',
             'products' => 'required|array|min:1',
             'products.*.code' => 'required|string',
-            'products.*.fuente' => 'required|string|min:1' // Asegurar que fuente no esté vacía
+            'products.*.fuente' => 'required|string|min:1', // Asegurar que fuente no esté vacía
+            'note' => 'required|string|max:1000' // Nota ahora es obligatoria
         ]);
+
+        \Log::info('Datos validados:', $validated);
 
         try {
             DB::beginTransaction();
@@ -797,8 +864,14 @@ class ProductosController extends Controller
                 ->where('m.idMercado', $validated['idMercado'])
                 ->where('e.estado', 'ACTIVO')
                 ->first();
+
+            \Log::info('Mercado obtenido de la BD:', [
+                'idMercado_solicitado' => $validated['idMercado'],
+                'mercado_encontrado' => $mercado
+            ]);
                 
             if (!$mercado) {
+                \Log::error('Mercado no encontrado o inactivo', ['idMercado' => $validated['idMercado']]);
                 return response()->json([
                     'success' => false,
                     'message' => 'El mercado no existe o no está activo'
@@ -844,10 +917,73 @@ class ProductosController extends Controller
                         ->delete();
 
                     // PASO 2: Ejecutar el stored procedure ODS.SP_INSERT_CONFIGURACION para el nuevo mercado
-                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?', [
+                    // Obtener el ID del usuario autenticado
+                    $userId = Auth::user()->idUsuario;
+                    
+                    \Log::info('Ejecutando SP_INSERT_CONFIGURACION', [
+                        'idMercado' => $validated['idMercado'],
+                        'codigo' => $product['code'],
+                        'fuente' => $product['fuente'],
+                        'idUsuario' => $userId,
+                        'mercado_nombre' => $mercado->mercado
+                    ]);
+                    
+                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
-                        $product['fuente']        // @fuente
+                        $product['fuente'],       // @fuente
+                        $userId                   // @idUsuario
+                    ]);
+
+                    // PASO 3: Intentar actualizar la vista VMAE (si existe un SP para eso)
+                    try {
+                        \Log::info('Intentando actualizar vista VMAE para producto', [
+                            'codigo' => $product['code'],
+                            'nuevo_mercado' => $mercado->mercado
+                        ]);
+                        
+                        // Verificar si existe SP para actualizar VMAE
+                        DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_VMAE_MERCADO ?, ?', [
+                            $product['code'],         // @codigo
+                            $mercado->mercado        // @mercado
+                        ]);
+                        
+                        \Log::info('Vista VMAE actualizada exitosamente');
+                    } catch (\Exception $vmaeException) {
+                        \Log::warning('No se pudo actualizar vista VMAE (SP posiblemente no existe)', [
+                            'error' => $vmaeException->getMessage(),
+                            'codigo' => $product['code']
+                        ]);
+                        
+                        // Intentar actualización directa de la vista si es una tabla materializada
+                        try {
+                            \Log::info('Intentando actualización directa de VMAE');
+                            DB::connection('sqlsrv')->statement("
+                                UPDATE dbo.VMAE_PROD_IQVIA 
+                                SET MERCADO = ? 
+                                WHERE codigoPresentacion = ?
+                            ", [$mercado->mercado, $product['code']]);
+                            
+                            \Log::info('Vista VMAE actualizada directamente');
+                        } catch (\Exception $directUpdateException) {
+                            \Log::error('No se pudo actualizar VMAE directamente (es una vista)', [
+                                'error' => $directUpdateException->getMessage()
+                            ]);
+                        }
+                    }
+
+                    // PASO 4: Verificar que la asignación fue exitosa
+                    $verificacion = DB::connection('sqlsrv')
+                        ->table('ODS.TAB_CONFIGURACION as c')
+                        ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                        ->where('c.codigo', $product['code'])
+                        ->select('c.codigo', 'm.mercado', 'c.idMercado')
+                        ->first();
+                    
+                    \Log::info('Verificación post-asignación', [
+                        'codigo' => $product['code'],
+                        'configuracion_actual' => $verificacion,
+                        'mercado_esperado' => $mercado->mercado
                     ]);
 
                     $assignedCount++;
@@ -870,7 +1006,8 @@ class ProductosController extends Controller
                     $notificationService->notifyMarketAction('assign_product', [
                         'assigned_products' => $assignedProducts,
                         'market_name' => $mercado->mercado,
-                        'assigned_count' => $assignedCount
+                        'assigned_count' => $assignedCount,
+                        'user_note' => $validated['note'] ?? null // Incluir la nota del usuario
                     ], Auth::user());
                 } catch (\Exception $e) {
                     // Log del error pero no interrumpir el flujo

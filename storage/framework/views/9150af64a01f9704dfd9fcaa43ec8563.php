@@ -281,36 +281,63 @@
 
 
 <!-- Modal para Quitar Producto -->
-<div id="remove-product-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <i class="fas fa-trash text-red-600"></i>
+<div id="remove-product-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-500 p-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center">
+                    <i class="fas fa-trash mr-2"></i>
+                    Quitar Producto
+                </h3>
+                <button onclick="closeRemoveProductModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4">Quitar Producto del Mercado</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
+        </div>
+        
+        <!-- Content -->
+        <div class="p-4">
+            <p class="text-gray-600 mb-3 text-sm">
                     ¿Estás seguro de que deseas quitar este producto del mercado? 
-                    El producto será movido al mercado "RESTO".
-                </p>
-                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <p class="text-xs font-medium text-gray-700">Producto:</p>
-                    <p class="text-sm text-gray-900 font-medium" id="remove-product-name"></p>
-                    <p class="text-xs text-gray-500" id="remove-product-code"></p>
+            </p>
+            
+            <!-- Product Info -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
+                <p class="text-xs text-red-600 font-medium">Producto:</p>
+                <p class="text-base font-bold text-red-800" id="remove-product-name">-</p>
+                <p class="text-xs text-red-600" id="remove-product-code">-</p>
                 </div>
+            
+            <!-- Note Field -->
+            <div class="mb-3">
+                <label for="remove-product-note" class="block text-xs font-medium text-gray-700 mb-1">
+                    Nota
+                </label>
+                <textarea id="remove-product-note" 
+                          name="remove_note" 
+                          rows="2"
+                          class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          placeholder="Nota sobre por qué se quita..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
             </div>
-            <div class="items-center px-4 py-3">
+            
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <button onclick="closeRemoveProductModal()" 
+                        class="flex-1 px-3 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
                 <button id="confirm-remove-btn" onclick="removeProductFromMarket()" 
-                        class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 mb-2">
-                    <span class="btn-text">Sí, quitar producto</span>
-                    <span class="btn-loading hidden">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all text-sm">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-trash mr-1"></i>
+                        Quitar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
                         Quitando...
                     </span>
-                </button>
-                <button onclick="closeRemoveProductModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                    Cancelar
                 </button>
             </div>
         </div>
@@ -318,34 +345,43 @@
 </div>
 
 <!-- Modal para Cambiar Mercado -->
-<div id="change-market-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mx-auto">
-                <i class="fas fa-exchange-alt text-blue-600"></i>
+<div id="change-market-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-500 p-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center">
+                    <i class="fas fa-exchange-alt mr-2"></i>
+                    Cambiar Mercado
+                </h3>
+                <button onclick="closeChangeMarketModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4 text-center">Cambiar Producto a Otro Mercado</h3>
-            
-            <!-- Información del Producto -->
-            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p class="text-xs font-medium text-gray-700">Producto a cambiar:</p>
-                <p class="text-sm text-gray-900 font-medium" id="change-product-name"></p>
-                <p class="text-xs text-gray-500" id="change-product-code"></p>
-                <p class="text-xs text-gray-600 mt-1">Mercado actual: <span class="font-medium" id="current-market-name"></span></p>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-4">
+            <!-- Product Info -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
+                <p class="text-sm text-red-600 font-medium">Producto a cambiar:</p>
+                <p class="text-lg font-bold text-red-800" id="change-product-name">-</p>
+                <p class="text-sm text-red-600" id="change-product-code">-</p>
+                <p class="text-sm text-gray-600 mt-1">Mercado actual: <span class="font-medium text-red-700" id="current-market-name">-</span></p>
             </div>
 
-            <!-- Selector de Mercado -->
-            <div class="mt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar mercado de destino:</label>
+            <!-- Market Selector -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mercado de destino:</label>
                 <div class="relative">
                     <input type="text" 
                            id="market-search-input" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
                            placeholder="Buscar mercado..."
                            autocomplete="off">
                     
                     <!-- Dropdown de mercados -->
-                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-red-300 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
                         <div id="dropdown-loading" class="p-3 text-center text-gray-500 hidden">
                             <i class="fas fa-spinner fa-spin mr-2"></i>
                             Cargando mercados...
@@ -357,14 +393,14 @@
                     </div>
                 </div>
                 
-                <!-- Mercado seleccionado -->
-                <div id="selected-market-display" class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-md hidden">
+                <!-- Selected Market Display -->
+                <div id="selected-market-display" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg hidden">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-blue-900">Mercado seleccionado:</p>
-                            <p class="text-sm text-blue-700" id="selected-market-name"></p>
+                            <p class="text-sm font-medium text-red-900">Mercado seleccionado:</p>
+                            <p class="text-lg font-bold text-red-700" id="selected-market-name">-</p>
                         </div>
-                        <button onclick="clearSelectedMarket()" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="clearSelectedMarket()" class="text-red-600 hover:text-red-800">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -373,20 +409,36 @@
                 <input type="hidden" id="selected-market-id" value="">
             </div>
 
-            <!-- Botones -->
-            <div class="mt-6 flex space-x-3">
+            <!-- Note Field -->
+            <div class="mb-4">
+                <label for="change-market-note" class="block text-sm font-medium text-gray-700 mb-2">
+                    Nota
+                </label>
+                <textarea id="change-market-note" 
+                          name="change_note" 
+                          rows="3"
+                          class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          placeholder="Nota sobre el cambio de mercado..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-3">
+                <button onclick="closeChangeMarketModal()" 
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                    Cancelar
+                </button>
                 <button onclick="changeProductMarket()" 
                         id="change-market-btn"
-                        class="flex-1 px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                    <span class="btn-text">Cambiar mercado</span>
-                    <span class="btn-loading hidden">
+                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-exchange-alt mr-2"></i>
+                        Cambiar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         Cambiando...
                     </span>
-                </button>
-                <button onclick="closeChangeMarketModal()" 
-                        class="flex-1 px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                    Cancelar
                 </button>
             </div>
         </div>
@@ -394,30 +446,46 @@
 </div>
 
 <!-- Modal de Confirmación Final para Quitar -->
-<div id="final-confirmation-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <i class="fas fa-exclamation-triangle text-red-600"></i>
+<div id="final-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-600 p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Confirmación Final
+                </h3>
+                <button onclick="closeFinalConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4">Confirmación Final</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
-                    Esta acción no se puede deshacer. El producto será movido al mercado "RESTO".
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <p class="text-red-800 font-medium">
+                    ⚠️ Esta acción no se puede deshacer. 
+                    El producto será quitado del mercado actual.
                 </p>
             </div>
-            <div class="items-center px-4 py-3">
+            
+            <!-- Actions -->
+            <div class="flex space-x-3">
+                <button onclick="closeFinalConfirmationModal()" 
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                    Cancelar
+                </button>
                 <button id="final-confirm-btn" onclick="proceedWithRemoval()" 
-                        class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 mb-2">
-                    <span class="btn-text">Confirmar eliminación</span>
-                    <span class="btn-loading hidden">
+                        class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-2"></i>
+                        Confirmar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         Procesando...
                     </span>
-                </button>
-                <button onclick="closeFinalConfirmationModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                    Cancelar
                 </button>
             </div>
         </div>
@@ -425,30 +493,55 @@
 </div>
 
 <!-- Modal de Confirmación Final para Cambiar -->
-<div id="final-change-confirmation-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
-                <i class="fas fa-exchange-alt text-blue-600"></i>
+<div id="final-change-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-500 p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-exchange-alt mr-2"></i>
+                    Confirmar Cambio
+                </h3>
+                <button onclick="closeFinalChangeConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4">Confirmación Final</h3>
-            <div class="mt-2 px-7 py-3">
-                <p class="text-sm text-gray-500">
-                    ¿Confirmas que deseas cambiar el producto <strong id="final-change-product-name"></strong> al mercado <strong id="final-change-market-name"></strong>?
-                </p>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <div class="mb-4">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-red-600 font-medium">Producto:</p>
+                    <p class="text-lg font-bold text-red-800" id="final-change-product-name">-</p>
+                </div>
+                
+                <div class="text-center my-2">
+                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                </div>
+                
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <p class="text-sm text-orange-600 font-medium">Nuevo mercado:</p>
+                    <p class="text-lg font-bold text-orange-800" id="final-change-market-name">-</p>
+                </div>
             </div>
-            <div class="items-center px-4 py-3">
+            
+            <!-- Actions -->
+            <div class="flex space-x-3">
+                <button onclick="closeFinalChangeConfirmationModal()" 
+                        class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
+                    Cancelar
+                </button>
                 <button id="final-change-confirm-btn" onclick="proceedWithMarketChange()" 
-                        class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 mb-2">
-                    <span class="btn-text">Confirmar cambio</span>
-                    <span class="btn-loading hidden">
+                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-2"></i>
+                        Confirmar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
                         Procesando...
                     </span>
-                </button>
-                <button onclick="closeFinalChangeConfirmationModal()" 
-                        class="px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                    Cancelar
                 </button>
             </div>
         </div>
@@ -456,130 +549,206 @@
 </div>
 
 <!-- Modal para Asignación Masiva de Productos -->
-<div id="bulk-assign-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-10 mx-auto p-5 border w-[700px] shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mx-auto">
-                <i class="fas fa-layer-group text-green-600"></i>
+<div id="bulk-assign-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-500 p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-layer-group mr-1"></i>
+                    Asignar Productos
+                </h3>
+                <button onclick="closeBulkAssignModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4 text-center">Asignar Productos al Mercado</h3>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
             
-            <!-- Información de productos seleccionados -->
-            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-blue-900">Productos seleccionados:</p>
-                        <p class="text-sm text-blue-700" id="bulk-selected-count">0 productos</p>
-                    </div>
-                    <button onclick="showSelectedProductsList()" class="text-blue-600 hover:text-blue-800 text-sm">
-                        <i class="fas fa-list mr-1"></i>
-                        Ver lista
-                    </button>
+            <!-- Selected Products Info -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
+                <p class="text-xs font-medium text-red-900 mb-1">Productos seleccionados:</p>
+                <p class="text-sm font-bold text-red-800 mb-1" id="bulk-selected-count">0 productos</p>
+                
+                <!-- Lista de productos seleccionados (siempre visible) -->
+                <div id="selected-products-list" class="bg-white rounded-lg border border-red-200 p-1 max-h-16 overflow-y-auto">
+                    <div id="selected-products-content"></div>
                 </div>
             </div>
 
-            <!-- Lista de productos seleccionados (colapsible) -->
-            <div id="selected-products-list" class="hidden mt-3 p-3 bg-gray-50 rounded-lg max-h-32 overflow-y-auto">
-                <div id="selected-products-content"></div>
-            </div>
-
             <!-- Selector de mercado -->
-            <div class="mt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar mercado de destino:</label>
+            <div class="mt-2">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Seleccionar mercado de destino:</label>
                 
                 <!-- Tabs para mercado existente vs crear nuevo -->
-                <div class="border-b border-gray-200 mb-4">
-                    <nav class="-mb-px flex space-x-8">
+                <div class="border-b border-gray-200 mb-2">
+                    <nav class="-mb-px flex space-x-4">
                         <button onclick="switchToExistingMarket()" id="existing-market-tab" 
-                                class="tab-button active py-2 px-1 border-b-2 border-green-500 font-medium text-sm text-green-600">
+                                class="tab-button active py-1 px-1 border-b-2 border-red-500 font-medium text-xs text-red-600">
                             Mercado Existente
                         </button>
                         <button onclick="switchToCreateMarket()" id="create-market-tab" 
-                                class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                class="tab-button py-1 px-1 border-b-2 border-transparent font-medium text-xs text-gray-500 hover:text-gray-700 hover:border-gray-300">
                             Crear Nuevo Mercado
                         </button>
                     </nav>
                 </div>
 
                 <!-- Panel para mercado existente -->
-                <div id="existing-market-panel" class="space-y-3">
+                <div id="existing-market-panel" class="space-y-2">
                     <div class="relative">
                         <input type="text" 
                                id="bulk-market-search-input" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                               placeholder="Buscar mercado existente..."
+                               class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                               placeholder="Buscar mercado..."
                                autocomplete="off">
                         
                         <!-- Dropdown de mercados -->
-                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
-                            <div id="bulk-dropdown-loading" class="p-3 text-center text-gray-500 hidden">
-                                <i class="fas fa-spinner fa-spin mr-2"></i>
-                                Cargando mercados...
+                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-red-300 rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
+                            <div id="bulk-dropdown-loading" class="p-2 text-center text-gray-500 hidden">
+                                <i class="fas fa-spinner fa-spin mr-1"></i>
+                                <span class="text-xs">Cargando...</span>
                             </div>
                             <div id="bulk-markets-list"></div>
-                            <div id="bulk-dropdown-no-results" class="p-3 text-center text-gray-500 hidden">
-                                No se encontraron mercados
+                            <div id="bulk-dropdown-no-results" class="p-2 text-center text-gray-500 hidden">
+                                <span class="text-xs">No se encontraron mercados</span>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Mercado seleccionado -->
-                    <div id="bulk-selected-market-display" class="hidden p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div id="bulk-selected-market-display" class="hidden p-2 bg-red-50 border border-red-200 rounded-lg">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm font-medium text-green-900">Mercado seleccionado:</p>
-                                <p class="text-sm text-green-700" id="bulk-selected-market-name"></p>
+                                <p class="text-xs font-medium text-red-900">Mercado seleccionado:</p>
+                                <p class="text-sm font-bold text-red-700" id="bulk-selected-market-name">-</p>
                             </div>
-                            <button onclick="clearBulkSelectedMarket()" class="text-green-600 hover:text-green-800">
-                                <i class="fas fa-times"></i>
+                            <button onclick="clearBulkSelectedMarket()" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-times text-xs"></i>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Panel para crear nuevo mercado -->
-                <div id="create-market-panel" class="hidden space-y-3">
+                <div id="create-market-panel" class="hidden space-y-2">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del nuevo mercado:</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del nuevo mercado:</label>
                         <input type="text" 
                                id="new-market-name" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                               placeholder="Ingrese el nombre del mercado..."
+                               class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                               placeholder="Nombre del nuevo mercado..."
                                maxlength="255">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nota (opcional):</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Nota :</label>
                         <textarea id="new-market-note" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                  placeholder="Nota o descripción del mercado..."
-                                  rows="2"
+                                  class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                                  placeholder="Nota sobre la creación..."
+                                  rows="1"
                                   maxlength="1000"></textarea>
                     </div>
                     <button onclick="createNewMarketAndAssign()" 
                             id="create-and-assign-btn"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-                        <i class="fas fa-plus mr-2"></i>
-                        Crear Mercado y Asignar Productos
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md font-medium text-sm transition-colors">
+                        <i class="fas fa-plus mr-1"></i>
+                        Crear Mercado y Asignar
                     </button>
                 </div>
                 
                 <input type="hidden" id="bulk-selected-market-id" value="">
             </div>
 
-            <!-- Botones -->
-            <div class="mt-6 flex space-x-3">
+            <!-- Actions -->
+            <div class="flex space-x-2 mt-2">
+                <button onclick="closeBulkAssignModal()" 
+                        class="flex-1 px-2 py-1 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
                 <button onclick="processBulkAssignment()" 
                         id="bulk-assign-confirm-btn"
-                        class="flex-1 px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span class="btn-text">Asignar Productos</span>
-                    <span class="btn-loading hidden">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-layer-group mr-1"></i>
+                        Asignar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
                         Asignando...
                     </span>
                 </button>
-                <button onclick="closeBulkAssignModal()" 
-                        class="flex-1 px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Asignación a Mercado Existente -->
+<div id="assign-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-500 to-red-600 p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Confirmar Asignación
+                </h3>
+                <button onclick="closeAssignConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <div class="text-center mb-3">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-2">
+                    <i class="fas fa-layer-group text-red-600 text-lg"></i>
+                </div>
+                <h3 class="text-sm font-bold text-gray-900">¿Confirmar asignación?</h3>
+                <p class="text-xs text-gray-600 mt-1">
+                    Está a punto de asignar <span id="confirm-assign-count" class="font-semibold text-red-600">0</span> producto(s) 
+                    al mercado <span id="confirm-assign-market" class="font-semibold text-red-600"></span>
+                </p>
+            </div>
+            
+            <!-- Productos seleccionados (muestra máximo 3) -->
+            <div class="bg-gray-50 rounded-md p-2 mb-3">
+                <p class="text-xs font-medium text-gray-700 mb-1">Productos a asignar:</p>
+                <div id="confirm-assign-products" class="text-xs text-gray-600 max-h-16 overflow-y-auto">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Campo de nota -->
+            <div class="mb-3">
+                <label for="assign-note" class="block text-xs font-medium text-gray-700 mb-1">
+                    Nota
+                </label>
+                <textarea id="assign-note" 
+                          placeholder="Escribe una nota para el email de notificación..."
+                          class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 resize-none"
+                          rows="2"></textarea>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex space-x-2">
+                <button onclick="closeAssignConfirmationModal()" 
+                        class="flex-1 px-2 py-1 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-lg font-medium text-sm transition-colors">
                     Cancelar
+                </button>
+                <button onclick="proceedWithAssignment()" 
+                        id="final-assign-btn"
+                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-1"></i>
+                        Confirmar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Asignando...
+                    </span>
                 </button>
             </div>
         </div>
@@ -587,84 +756,95 @@
 </div>
 
 <!-- Modal de Confirmación para Crear Mercado y Asignar -->
-<div id="create-market-confirmation-modal" class="fixed inset-0 overflow-y-auto h-full w-full hidden backdrop-blur-sm bg-black bg-opacity-20">
-    <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mx-auto">
-                <i class="fas fa-plus-circle text-green-600"></i>
+<div id="create-market-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-red-500 p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-plus-circle mr-1"></i>
+                    Confirmar Creación y Asignación
+                </h3>
+                <button onclick="closeCreateMarketConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mt-4 text-center">Confirmar Creación de Mercado y Asignación</h3>
-            
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <!-- Layout horizontal en dos columnas -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                <!-- Columna izquierda: Información del mercado -->
+                <div class="space-y-2">
             <!-- Información del mercado a crear -->
-            <div class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                <h4 class="text-sm font-medium text-green-900 mb-2">
-                    <i class="fas fa-store mr-2"></i>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-2">
+                        <h4 class="text-xs font-medium text-red-900 mb-1 flex items-center">
+                    <i class="fas fa-store mr-1"></i>
                     Mercado a crear:
                 </h4>
-                <div class="space-y-1">
-                    <p class="text-sm text-green-800">
-                        <span class="font-medium">Nombre:</span> 
-                        <span id="confirm-market-name" class="font-bold"></span>
-                    </p>
-                    <p class="text-sm text-green-700" id="confirm-market-note-container" style="display: none;">
-                        <span class="font-medium">Nota:</span> 
-                        <span id="confirm-market-note"></span>
-                    </p>
+                        <div class="space-y-1">
+                            <div class="bg-white border border-red-200 rounded-lg p-1">
+                                <p class="text-xs text-red-600 font-medium">Nombre:</p>
+                                <p class="text-sm font-bold text-red-800" id="confirm-market-name"></p>
+                            </div>
+                            <div class="bg-white border border-red-200 rounded-lg p-1" id="confirm-market-note-container" style="display: none;">
+                                <p class="text-xs text-red-600 font-medium">Nota:</p>
+                                <p class="text-xs text-red-700" id="confirm-market-note"></p>
+                            </div>
                 </div>
             </div>
 
-            <!-- Lista de productos a asignar -->
-            <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 class="text-sm font-medium text-blue-900 mb-2">
-                    <i class="fas fa-list mr-2"></i>
-                    Productos a asignar al nuevo mercado:
-                </h4>
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm text-blue-700">
-                        <span class="font-medium">Total:</span> 
-                        <span id="confirm-products-count" class="font-bold">0</span> producto(s)
-                    </span>
-                    <button onclick="toggleConfirmProductsList()" 
-                            id="toggle-confirm-products-btn"
-                            class="text-blue-600 hover:text-blue-800 text-sm">
-                        <i class="fas fa-chevron-down mr-1"></i>
-                        Ver lista
-                    </button>
+                    <!-- Warning -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-amber-600 mr-1 mt-0.5 flex-shrink-0 text-sm"></i>
+                            <div>
+                                <p class="text-xs font-medium text-amber-800">¡Atención!</p>
+                                <p class="text-xs text-amber-700 mt-0.5">Se creará un nuevo mercado y se asignarán todos los productos seleccionados. Esta acción no se puede deshacer.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="confirm-products-list" class="hidden mt-3 max-h-32 overflow-y-auto bg-white rounded border border-blue-200 p-2">
-                    <div id="confirm-products-content"></div>
+
+                <!-- Columna derecha: Lista de productos -->
+                <div class="bg-red-50 border border-red-200 rounded-lg p-2">
+                    <h4 class="text-xs font-medium text-red-900 mb-1 flex items-center">
+                        <i class="fas fa-list mr-1"></i>
+                        Productos a asignar:
+                    </h4>
+                    <div class="bg-white border border-red-200 rounded-lg p-1 mb-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-red-700 font-medium">Total de productos:</span>
+                            <span id="confirm-products-count" class="text-xs font-bold text-red-800 bg-red-100 px-1 py-0.5 rounded">0</span>
                 </div>
             </div>
-
-            <!-- Advertencia -->
-            <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div class="flex items-start">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5 mr-2"></i>
-                    <div class="text-sm text-yellow-800">
-                        <p class="font-medium">¿Confirma la acción?</p>
-                        <p class="mt-1">Se creará el nuevo mercado y se asignarán todos los productos seleccionados automáticamente.</p>
+                    <div class="bg-white border border-red-200 rounded-lg p-1 h-24 overflow-y-auto">
+                        <div id="confirm-products-content">
+                            <!-- Lista se llenará dinámicamente -->
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Botones -->
-            <div class="mt-6 flex space-x-3">
+            <!-- Botones en la parte inferior -->
+            <div class="flex space-x-2 mt-2 pt-2 border-t border-gray-200">
+                <button onclick="closeCreateMarketConfirmationModal()" 
+                        class="flex-1 px-2 py-1 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm transition-colors">
+                    <i class="fas fa-times mr-1"></i>
+                    Cancelar
+                </button>
                 <button onclick="proceedWithMarketCreationAndAssignment()" 
                         id="final-create-assign-btn"
-                        class="flex-1 px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
-                    <span class="btn-text">
-                        <i class="fas fa-check mr-2"></i>
-                        Sí, Crear y Asignar
+                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-1"></i>
+                        Crear y Asignar
                     </span>
-                    <span class="btn-loading hidden">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
                         Procesando...
                     </span>
-                </button>
-                <button onclick="closeCreateMarketConfirmationModal()" 
-                        class="flex-1 px-4 py-2 bg-gray-300 text-gray-900 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
-                    <i class="fas fa-times mr-2"></i>
-                    Cancelar
                 </button>
             </div>
         </div>

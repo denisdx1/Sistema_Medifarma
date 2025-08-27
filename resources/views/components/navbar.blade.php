@@ -36,6 +36,16 @@
                                 Admin
                             </span>
                         </a>
+                        
+                        <a href="{{ route('logs.index') }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('logs.*') ? 'text-purple-700 bg-purple-50 border-b-2 border-purple-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                            <i class="fas fa-clipboard-list mr-2 {{ request()->routeIs('logs.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+                            Logs de Sistema
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <i class="fas fa-eye mr-1"></i>
+                                Audit
+                            </span>
+                        </a>
                     @endif
                 </div>
             </div>
@@ -111,6 +121,15 @@
                         Gestión Usuarios
                         <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             Admin
+                        </span>
+                    </a>
+                    
+                    <a href="{{ route('logs.index') }}" 
+                       class="block px-3 py-2 text-base font-medium rounded-md {{ request()->routeIs('logs.*') ? 'text-purple-700 bg-purple-50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
+                        <i class="fas fa-clipboard-list mr-2 {{ request()->routeIs('logs.*') ? 'text-purple-600' : 'text-gray-400' }}"></i>
+                        Logs de Sistema
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Audit
                         </span>
                     </a>
                 @endif

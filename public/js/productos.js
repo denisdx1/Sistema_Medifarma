@@ -6,7 +6,7 @@ $(document).ready(function() {
         return;
     }
     
-    console.log('Módulo de productos inicializado correctamente');
+
     
     let currentCursor = null;
     let isLoading = false;
@@ -41,6 +41,9 @@ $(document).ready(function() {
     
     // Sync filter state on page load
     syncFilterButtonsState();
+    
+    // Check for auto-select market from sessionStorage
+    checkAutoSelectMarket();
     
     // Load initial products
     loadProducts();
@@ -141,14 +144,10 @@ $(document).ready(function() {
 
             // Clear individual filter
             clearButton.on('click', function() {
-                console.log(`🧹 Limpiando filtro individual: ${filterKey}`);
                 input.val('');
                 clearButton.addClass('hidden');
                 resultsDiv.removeClass('show');
                 currentFilters[filterKey] = '';
-                
-                // Debug: Log state after clearing
-                console.log(`🧹 Filtro ${filterKey} limpiado. Estado actual:`, currentFilters);
                 
                 applyFilters();
             });
@@ -173,8 +172,6 @@ $(document).ready(function() {
                 const value = $(this).val();
                 currentFilters[filterKey] = value;
                 
-                console.log(`📋 Select ${filterKey} cambió a:`, value);
-                
                 // Show/hide clear button
                 if (value && value.length > 0) {
                     clearButton.removeClass('hidden');
@@ -187,20 +184,15 @@ $(document).ready(function() {
                     clearTimeout(filterTimeout);
                 }
                 filterTimeout = setTimeout(() => {
-                    console.log(`📋 Aplicando filtros después de cambio en ${filterKey}`);
                     applyFilters();
                 }, 300);
             });
 
             // Clear individual filter
             clearButton.on('click', function() {
-                console.log(`🧹 Limpiando filtro select: ${filterKey}`);
                 select.val('');
                 clearButton.addClass('hidden');
                 currentFilters[filterKey] = '';
-                
-                // Debug: Log state after clearing
-                console.log(`🧹 Filtro ${filterKey} limpiado. Estado actual:`, currentFilters);
                 
                 applyFilters();
             });
@@ -229,11 +221,7 @@ $(document).ready(function() {
                 if (response.success && response.data) {
                     const select = $(`#filter-${filterType}`);
                     
-                    // Debug para mercado
-                    if (filterType === 'mercado') {
-                        console.log('Mercado options received:', response.data);
-                        console.log('Mercado options count:', response.data.length);
-                    }
+
                     
                     // Clear existing options except first
                     select.find('option:not(:first)').remove();
@@ -248,10 +236,7 @@ $(document).ready(function() {
                         }
                     });
                     
-                    // Debug para mercado
-                    if (filterType === 'mercado') {
-                        console.log('Mercado options added to select:', select.find('option').length - 1);
-                    }
+
                 } else {
                     console.error(`Error en respuesta de ${filterType}:`, response);
                 }
@@ -333,8 +318,6 @@ $(document).ready(function() {
             const value = $(this).data('value');
             const filter = $(this).data('filter');
             
-            console.log(`✅ Seleccionando opción para ${filter}:`, value);
-            
             // Set the input value
             $(`#filter-${filter}`).val(value);
             currentFilters[filter] = value;
@@ -350,8 +333,6 @@ $(document).ready(function() {
             // Hide results
             resultsDiv.removeClass('show');
             
-            console.log(`✅ Filtro ${filter} actualizado. Estado actual:`, currentFilters);
-            
             // Apply filters
             applyFilters();
         });
@@ -364,23 +345,42 @@ $(document).ready(function() {
         currentCursor = null;
         totalProductsLoaded = 0;
         
-        // Hide any existing dropdown results immediately
-        $('.filter-dropdown').removeClass('show');
-        
-        // Debug: Log current filters state
-        console.log('🔍 Aplicando filtros:', currentFilters);
-        console.log('🔍 Filtros activos:', Object.keys(currentFilters).filter(key => currentFilters[key] && currentFilters[key].length > 0));
+        // Hide any existing dropdown results immediately (only product filters)
+        $('.products-filters .filter-dropdown').removeClass('show');
         
         // Actualizar contador de filtros activos
         updateActiveFiltersCounter();
         
-        // Ensure loading state is properly handled
+        // Limpiar tabla antes de cargar nuevos productos
+        const tableBody = $('#products-table-body');
+        tableBody.html('<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando productos...</td></tr>');
+        
+        // Si ya hay una petición en curso, cancelar esta aplicación de filtros
         if (isLoading) {
-            return; // Prevent multiple concurrent requests
+            return;
         }
         
         // Load products with current filters
         loadProducts();
+    }
+
+    // Función para aplicar filtros con retry automático cuando hay peticiones en curso
+    function applyFiltersWithRetry(retryCount = 0) {
+        // Máximo 5 reintentos
+        if (retryCount >= 5) {
+            return;
+        }
+        
+        // Si hay una petición en curso, esperar y reintentar
+        if (isLoading) {
+            setTimeout(() => {
+                applyFiltersWithRetry(retryCount + 1);
+            }, 1000);
+            return;
+        }
+        
+        // Si no hay petición en curso, aplicar filtros normalmente
+        applyFilters();
     }
 
     // Search functionality removed
@@ -390,8 +390,8 @@ $(document).ready(function() {
         
         isLoading = true;
         
-        // Ocultar todos los dropdowns al iniciar cualquier carga
-        $('.filter-dropdown').removeClass('show');
+        // Ocultar solo los dropdowns de filtros de productos al iniciar cualquier carga
+        $('.products-filters .filter-dropdown').removeClass('show');
         
         // Solo mostrar loading overlay para carga completa (no para "cargar más")
         if (!append) {
@@ -458,7 +458,6 @@ $(document).ready(function() {
                 }
                 
                 showError(errorMessage);
-                console.error('Error loading products:', xhr, status, error);
             },
             complete: function() {
                 isLoading = false;
@@ -755,8 +754,8 @@ $(document).ready(function() {
     // Search results functionality removed
 
     function showLoadingState() {
-        // Ocultar todos los dropdowns inmediatamente
-        $('.filter-dropdown').removeClass('show');
+        // Ocultar solo los dropdowns de filtros de productos
+        $('.products-filters .filter-dropdown').removeClass('show');
         
         $('#loading-overlay').removeClass('hidden');
         $('#loading-state').removeClass('hidden');
@@ -784,8 +783,6 @@ $(document).ready(function() {
     }
 
     function showError(message) {
-        console.error('Error:', message);
-        
         // Show error in the table
         $('#products-table-body').html(`
             <tr>
@@ -805,21 +802,24 @@ $(document).ready(function() {
 
     // Initialize dropdown repositioning
     function initializeDropdownRepositioning() {
-        // Hide dropdowns when clicking outside
+        // Hide dropdowns when clicking outside (only product filters, not modals)
         $(document).on('click', function(e) {
-            if (!$(e.target).closest('.filter-container').length) {
-                $('.filter-dropdown').addClass('hidden');
+            if (!$(e.target).closest('.filter-container').length && 
+                !$(e.target).closest('#bulk-assign-modal').length &&
+                !$(e.target).closest('#change-market-modal').length &&
+                !$(e.target).closest('#remove-product-modal').length) {
+                $('.products-filters .filter-dropdown').addClass('hidden');
             }
         });
         
-        // Hide dropdowns on scroll for better UX
+        // Hide dropdowns on scroll for better UX (only product filters)
         $(window).on('scroll', function() {
-            $('.filter-dropdown').addClass('hidden');
+            $('.products-filters .filter-dropdown').addClass('hidden');
         });
         
-        // Hide dropdowns when scrolling inside any container
+        // Hide dropdowns when scrolling inside any container (only product filters)
         $('*').on('scroll', function() {
-            $('.filter-dropdown').addClass('hidden');
+            $('.products-filters .filter-dropdown').addClass('hidden');
         });
     }
 
@@ -841,13 +841,9 @@ $(document).ready(function() {
 
     // Funciones para Modal de Quitar Producto
     window.openRemoveProductModal = function(productCode, productName) {
-        console.log('Intentando abrir modal para:', productCode, productName);
-        
         const modal = document.getElementById('remove-product-modal');
-        console.log('Modal encontrada:', modal);
         
         if (!modal) {
-            console.error('Modal remove-product-modal no encontrada!');
             return;
         }
         
@@ -860,8 +856,11 @@ $(document).ready(function() {
         if (nameElement) nameElement.textContent = productName;
         if (codeElement) codeElement.textContent = productCode;
         
+        // Limpiar el campo de nota
+        const noteElement = document.getElementById('remove-product-note');
+        if (noteElement) noteElement.value = '';
+        
         modal.classList.remove('hidden');
-        console.log('Modal debería estar visible ahora');
     };
 
     window.closeRemoveProductModal = function() {
@@ -881,13 +880,9 @@ $(document).ready(function() {
 
     // Funciones para Modal de Cambiar Mercado
     window.openChangeMarketModal = function(productCode, productName) {
-        console.log('Intentando abrir modal de cambio para:', productCode, productName);
-        
         const modal = document.getElementById('change-market-modal');
-        console.log('Modal de cambio encontrada:', modal);
         
         if (!modal) {
-            console.error('Modal change-market-modal no encontrada!');
             return;
         }
         
@@ -918,6 +913,10 @@ $(document).ready(function() {
         if (selectedDisplay) selectedDisplay.classList.add('hidden');
         if (selectedMarketId) selectedMarketId.value = '';
         
+        // Limpiar el campo de nota
+        const noteElement = document.getElementById('change-market-note');
+        if (noteElement) noteElement.value = '';
+        
         // Configurar búsqueda y cargar mercados
         if (typeof setupMarketSearch === 'function') {
             setupMarketSearch();
@@ -927,7 +926,6 @@ $(document).ready(function() {
         }
         
         modal.classList.remove('hidden');
-        console.log('Modal de cambio debería estar visible ahora');
     };
 
     window.closeChangeMarketModal = function() {
@@ -936,21 +934,10 @@ $(document).ready(function() {
         window.currentProductName = null;
     };
 
-    // Test de funciones al cargar
-    console.log('Funciones de modal disponibles:');
-    console.log('openRemoveProductModal:', typeof window.openRemoveProductModal);
-    console.log('openChangeMarketModal:', typeof window.openChangeMarketModal);
-    
-    // Test simple de apertura de modal
-    window.testModal = function() {
-        console.log('Probando modal...');
-        window.openRemoveProductModal('TEST123', 'Producto de prueba');
-    };
+
 
     // Función para sincronizar el estado de los botones de limpiar
     function syncFilterButtonsState() {
-        console.log('🔄 Sincronizando estado de botones de filtros...');
-        
         Object.keys(currentFilters).forEach(filterKey => {
             const input = $(`#filter-${filterKey}`);
             const clearButton = $(`#clear-filter-${filterKey}`);
@@ -964,14 +951,11 @@ $(document).ready(function() {
                 // Mostrar/ocultar botón de limpiar según el valor
                 if (value && value.length > 0) {
                     clearButton.removeClass('hidden');
-                    console.log(`🔄 Filtro ${filterKey} tiene valor: "${value}"`);
                 } else {
                     clearButton.addClass('hidden');
                 }
             }
         });
-        
-        console.log('🔄 Estado final de filtros:', currentFilters);
         
         // Actualizar contador de filtros activos
         updateActiveFiltersCounter();
@@ -998,10 +982,8 @@ $(document).ready(function() {
         if (count > 0) {
             indicator.removeClass('hidden');
             $('#filters-count').text(count);
-            console.log(`📊 Filtros activos: ${count} (${activeFilters.join(', ')})`);
         } else {
             indicator.addClass('hidden');
-            console.log('📊 No hay filtros activos');
         }
     }
 
@@ -1079,4 +1061,44 @@ $(document).ready(function() {
         document.getElementById('select-all-products').checked = false;
         document.getElementById('select-all-products').indeterminate = false;
     };
+
+    // Función para verificar si hay un mercado para seleccionar automáticamente
+function checkAutoSelectMarket() {
+    const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
+    
+    if (autoSelectMarket) {
+        // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+        sessionStorage.removeItem('autoSelectMarket');
+        
+        // Función para verificar y aplicar el filtro
+        function tryApplyMarketFilter(attempts = 0) {
+            const mercadoSelect = $('#filter-mercado');
+            const totalOptions = mercadoSelect.find('option').length;
+            
+            // Verificar si la opción existe en el select
+            const optionExists = mercadoSelect.find(`option[value="${autoSelectMarket}"]`).length > 0;
+            
+            if (optionExists) {
+                // Seleccionar el mercado en el filtro
+                mercadoSelect.val(autoSelectMarket);
+                
+                // Actualizar el filtro interno
+                currentFilters.mercado = autoSelectMarket;
+                
+                // Aplicar filtros con retry si hay petición en curso
+                applyFiltersWithRetry();
+                
+                return;
+            } 
+            
+            // Si no encontró la opción y no ha hecho muchos intentos, esperar y volver a intentar
+            if (attempts < 5 && totalOptions <= 1) { // Solo opciones básicas cargadas
+                setTimeout(() => tryApplyMarketFilter(attempts + 1), 1000);
+            }
+        }
+        
+        // Iniciar el proceso de verificación después de más tiempo para que termine la carga inicial
+        setTimeout(() => tryApplyMarketFilter(), 2000);
+    }
+}
 });

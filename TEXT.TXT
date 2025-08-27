@@ -1,0 +1,26 @@
+SISTEMA MEDIFARMA - GESTIÓN DE MERCADOS
+========================================
+
+NOTIFICACIÓN: PRODUCTO CAMBIADO DE MERCADO
+
+----------------------------------------
+
+ACCIÓN: Se ha movido un producto entre mercados
+
+DETALLES:
+- Producto: [Nombre del Producto]
+- Código: [Código]
+- Mercado anterior: [Mercado Original]
+- Mercado nuevo: [Mercado Destino]
+
+INFORMACIÓN DE LA OPERACIÓN:
+- Realizado por: [Usuario]
+- Fecha y hora: [dd/mm/yyyy HH:mm:ss]
+
+----------------------------------------
+NOTA DEL USUARIO:
+"[Nota opcional del usuario explicando el motivo]"
+
+----------------------------------------
+Esta es una notificación automática del sistema de gestión de mercados de Medifarma.
+Generado el [fecha actual]

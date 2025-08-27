@@ -139,92 +139,7 @@ class MarketManagementController extends Controller
         }
     }
 
-    /**
-     * Create a new market using stored procedure ODS.SP_INSERT_MERCADO with audit
-     */
-    public function createMarket(Request $request)
-    {
-        $request->validate([
-            'market_name' => 'required|string|max:255',
-            'market_note' => 'nullable|string|max:1000'  // Validar la nota
-        ]);
 
-        try {
-            DB::beginTransaction();
-            
-            $marketName = trim($request->market_name);
-            $marketNote = $request->market_note ? trim($request->market_note) : null;
-            
-            // Obtener el usuario autenticado y su ID correcto
-            $user = Auth::user();
-            $userId = $user->idUsuario; // Usar la columna correcta para el ID
-            
-            // Debug: verificar que el ID sea numérico
-            if (!is_numeric($userId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error: ID de usuario no válido'
-                ], 500);
-            }
-            
-            // Verificar si ya existe un mercado con el mismo nombre
-            $existingMarket = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('mercado', $marketName)
-                ->first();
-                
-            if ($existingMarket) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ya existe un mercado con ese nombre'
-                ], 422);
-            }
-            
-            // Llamar al stored procedure para insertar el mercado con los parámetros requeridos
-            DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?', [$marketName, (int)$userId]);
-
-            // Enviar notificación por correo (con nota si existe)
-            try {
-                $notificationService = new NotificationService();
-                $notificationService->notifyNewMarket($marketName, $user, $marketNote);
-            } catch (\Exception $emailException) {
-                // Log del error de email pero no fallar la creación del mercado
-                \Log::warning('Error enviando notificación de correo para nuevo mercado', [
-                    'mercado' => $marketName,
-                    'usuario' => $user->usuario,
-                    'nota' => $marketNote,
-                    'error' => $emailException->getMessage()
-                ]);
-            }
-
-            DB::commit();
-            
-            // Calcular la página donde aparecerá el nuevo mercado
-            $totalMarkets = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
-                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos del conteo
-                ->count() + 1; // +1 por el que acabamos de crear
-            
-            $itemsPerPage = 10;
-            $lastPage = ceil($totalMarkets / $itemsPerPage);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'El mercado "' . $marketName . '" ha sido creado exitosamente',
-                'market_name' => $marketName,
-                'status' => 'ACTIVO',
-                'timestamp' => now()->format('H:i:s'),
-                'redirect_to_page' => $lastPage
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear mercado: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
      * Update market name using stored procedure SP_UPDATE_MERCADO with audit
@@ -234,7 +149,7 @@ class MarketManagementController extends Controller
         $request->validate([
             'market_id' => 'required|integer',
             'market_name' => 'required|string|max:255',
-            'market_note' => 'nullable|string|max:1000'  // Validar la nota
+            'market_note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -272,9 +187,10 @@ class MarketManagementController extends Controller
             }
 
             // Llamar al stored procedure para actualizar el mercado
-            DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_MERCADO ?, ?', [
+            DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_MERCADO ?, ?, ?', [
                 $request->market_id,  // @idMercado
-                $marketName          // @mercado
+                $marketName,          // @mercado
+                $userId                // @idUsuario
             ]);
 
             // Enviar notificación por email (con nota si existe)
@@ -437,299 +353,9 @@ class MarketManagementController extends Controller
         }
     }
 
-    /**
-     * Show products associated with a specific market
-     */
-    public function showProducts($marketId)
-    {
-        try {
-            // Acceso a productos del mercado
-            
-            // Validar que marketId sea un número válido
-            if (!is_numeric($marketId) || $marketId <= 0) {
-                // ID de mercado inválido
-                return redirect()->route('market-management.index')
-                    ->with('error', 'ID de mercado inválido: ' . $marketId);
-            }
 
-            // Verificar que el mercado existe
-            $market = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('idMercado', $marketId)
-                ->first();
 
-            if (!$market) {
-                // Mercado no encontrado
-                return redirect()->route('market-management.index')
-                    ->with('error', 'El mercado con ID ' . $marketId . ' no existe');
-            }
 
-            // Mercado encontrado correctamente
-            return view('market-management.products', compact('market'));
-
-        } catch (\Exception $e) {
-            // Error al cargar productos del mercado
-            return redirect()->route('market-management.index')
-                ->with('error', 'Error al cargar productos del mercado: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Get products for a specific market with cursor pagination - ULTRA OPTIMIZED
-     */
-    public function getMarketProducts(Request $request, $marketId)
-    {
-        try {
-            // Validar que marketId sea un número
-            if (!is_numeric($marketId)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'ID de mercado inválido'
-                ], 400);
-            }
-
-            // Obtener usuario autenticado para filtro de franquicia
-            $user = Auth::user();
-            
-            // Obtener filtro de franquicia específica si se proporciona
-            $franquiciaFiltro = $request->get('franquicia');
-
-            // OPTIMIZACIÓN 1: Cache del mercado para evitar consulta repetida
-            static $marketCache = [];
-            if (!isset($marketCache[$marketId])) {
-                $marketCache[$marketId] = DB::connection('sqlsrv')
-                    ->table('ODS.TAB_MERCADO')
-                    ->where('idMercado', $marketId)
-                    ->first();
-            }
-            $market = $marketCache[$marketId];
-
-            if (!$market) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El mercado no existe'
-                ], 404);
-            }
-
-            // OPTIMIZACIÓN 2: Parámetros de búsqueda y paginación optimizados
-            $search = trim($request->get('search', ''));
-            $perPage = min(max((int) $request->get('per_page', 30), 20), 100);
-            $cursor = $request->get('cursor');
-
-            // Obtener filtros - solo los que tienen valor
-            $filters = array_filter([
-                'descripcionProducto' => trim($request->get('filter_descripcionProducto', '')),
-                'descripcionFF3' => trim($request->get('filter_descripcionFF3', '')),
-                'descripcionATC4' => trim($request->get('filter_descripcionATC4', '')),
-                'descripcionLaboratorio' => trim($request->get('filter_descripcionLaboratorio', '')),
-                'fuente' => trim($request->get('filter_fuente', '')),
-                'molecula' => trim($request->get('filter_molecula', '')),
-                'descripcionCorporacion' => trim($request->get('filter_descripcionCorporacion', '')),
-                'marcaGenerico' => trim($request->get('filter_marcaGenerico', '')),
-                'eticoPopular' => trim($request->get('filter_eticoPopular', '')),
-                'mercado' => trim($request->get('filter_mercado', ''))
-            ]);
-
-            // OPTIMIZACIÓN 3: Query base simplificado - SIN JOIN inicial para count
-            $hasFilters = !empty($filters) || !empty($search);
-            
-            // Determinar si necesitamos JOIN para fuente
-            $needsFuenteJoin = isset($filters['fuente']) || ($hasFilters && $perPage > 100);
-
-            // OPTIMIZACIÓN 4: Count rápido sin JOIN si no es necesario
-            if (!$needsFuenteJoin) {
-                $countQuery = DB::connection('sqlsrv')
-                    ->table('dbo.VMAE_PROD_IQVIA as v')
-                    ->where('v.MERCADO', $market->mercado);
-
-                // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
-                $this->aplicarFiltroGerenteProductoConFranquicia($countQuery, $user, $franquiciaFiltro);
-                    
-                $this->applySearchAndFiltersNoJoin($countQuery, $search, $filters);
-                $totalProducts = $countQuery->count();
-                
-                // Para mercados pequeños (<=100), cargar todo sin JOIN
-                if ($totalProducts <= 100) {
-                    $productos = $countQuery
-                        ->select([
-                            'v.codigoPresentacion',
-                            'v.descripcionPresentacion', 
-                            'v.marcaGenerico',
-                            'v.eticoPopular',
-                            'v.molecula',
-                            'v.descripcionFF3',
-                            'v.descripcionATC4',
-                            'v.descripcionLaboratorio',
-                            'v.descripcionCorporacion',
-                            'v.MERCADO',
-                            'v.descripcionProducto', // Nuevo campo agregado
-                            DB::raw("'IQV' as fuente") // Fuente por defecto
-                        ])
-                        ->orderBy('v.codigoPresentacion')
-                        ->get();
-
-                    return response()->json([
-                        'success' => true,
-                        'data' => $productos->toArray(),
-                        'market' => ['id' => $market->idMercado, 'name' => $market->mercado],
-                        'pagination' => [
-                            'per_page' => $totalProducts,
-                            'next_cursor' => null,
-                            'prev_cursor' => null,
-                            'has_more_pages' => false,
-                            'has_previous_pages' => false,
-                        ],
-                        'loaded_count' => $productos->count(),
-                        'search' => [
-                            'query' => $search,
-                            'has_search' => !empty($search),
-                            'results_count' => $productos->count()
-                        ],
-                        'filters' => [
-                            'active_filters' => $filters,
-                            'filter_count' => count($filters)
-                        ],
-                        'query_info' => [
-                            'optimization' => 'ultra_fast_no_join',
-                            'total_products' => $totalProducts,
-                            'market_filter' => $market->mercado,
-                            'includes_fuente' => false
-                        ]
-                    ]);
-                }
-            }
-
-            // OPTIMIZACIÓN 5: Para mercados grandes, usar paginación con JOIN mínimo
-            $baseQuery = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA as v');
-
-            // Solo hacer JOIN si realmente necesitamos la fuente
-            if ($needsFuenteJoin) {
-                $baseQuery->leftJoin('ODS.TAB_CONFIGURACION as c', function($join) use ($market) {
-                    $join->on('v.codigoPresentacion', '=', 'c.codigo')
-                         ->where('c.idMercado', '=', $market->idMercado);
-                });
-                
-                $selectFields = [
-                    'v.codigoPresentacion',
-                    'v.descripcionPresentacion', 
-                    'v.marcaGenerico',
-                    'v.eticoPopular',
-                    'v.molecula',
-                    'v.descripcionFF3',
-                    'v.descripcionATC4',
-                    'v.descripcionLaboratorio',
-                    'v.descripcionCorporacion',
-                    'v.MERCADO',
-                    'v.descripcionProducto', // Nuevo campo agregado
-                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente")
-                ];
-            } else {
-                $selectFields = [
-                    'v.codigoPresentacion',
-                    'v.descripcionPresentacion', 
-                    'v.marcaGenerico',
-                    'v.eticoPopular',
-                    'v.molecula',
-                    'v.descripcionFF3',
-                    'v.descripcionATC4',
-                    'v.descripcionLaboratorio',
-                    'v.descripcionCorporacion',
-                    'v.MERCADO',
-                    'v.descripcionProducto', // Nuevo campo agregado
-                    DB::raw("'IQV' as fuente")
-                ];
-            }
-
-            $baseQuery->select($selectFields)->where('v.MERCADO', $market->mercado);
-
-            // FILTRO POR FRANQUICIA Y GERENTE: Si el usuario es gerente de producto, filtrar productos asignados
-            $this->aplicarFiltroGerenteProductoConFranquicia($baseQuery, $user, $franquiciaFiltro);
-
-            // Aplicar filtros optimizados
-            if ($needsFuenteJoin) {
-                $this->applySearchAndFiltersWithJoin($baseQuery, $search, $filters);
-            } else {
-                $this->applySearchAndFiltersNoJoin($baseQuery, $search, $filters);
-            }
-
-            // OPTIMIZACIÓN 6: Cursor pagination optimizado
-            if ($cursor) {
-                try {
-                    $decodedCursor = base64_decode($cursor);
-                    $cursorData = json_decode($decodedCursor, true);
-                    
-                    if ($cursorData && isset($cursorData['codigoPresentacion'])) {
-                        $baseQuery->where('v.codigoPresentacion', '>', $cursorData['codigoPresentacion']);
-                    }
-                } catch (\Exception $e) {
-                    // Cursor inválido, ignorar
-                }
-            }
-
-            $baseQuery->orderBy('v.codigoPresentacion');
-
-            // Obtener productos con límite +1 para verificar paginación
-            $productos = $baseQuery->limit($perPage + 1)->get();
-            
-            $hasMorePages = $productos->count() > $perPage;
-            if ($hasMorePages) {
-                $productos = $productos->take($perPage);
-            }
-
-            // Generar cursor siguiente
-            $nextCursor = null;
-            if ($hasMorePages && $productos->isNotEmpty()) {
-                $lastItem = $productos->last();
-                $nextCursor = base64_encode(json_encode([
-                    'codigoPresentacion' => $lastItem->codigoPresentacion
-                ]));
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $productos->toArray(),
-                'market' => ['id' => $market->idMercado, 'name' => $market->mercado],
-                'pagination' => [
-                    'per_page' => $perPage,
-                    'next_cursor' => $nextCursor,
-                    'prev_cursor' => null,
-                    'has_more_pages' => $hasMorePages,
-                    'has_previous_pages' => false,
-                ],
-                'loaded_count' => $productos->count(),
-                'search' => [
-                    'query' => $search,
-                    'has_search' => !empty($search),
-                    'results_count' => $productos->count()
-                ],
-                'filters' => [
-                    'active_filters' => $filters,
-                    'filter_count' => count($filters)
-                ],
-                'query_info' => [
-                    'optimization' => 'ultra_optimized_cursor',
-                    'market_filter' => $market->mercado,
-                    'franquicia_filter' => $franquiciaFiltro,
-                    'uses_join' => $needsFuenteJoin,
-                    'cursor_applied' => $cursor !== null,
-                    'user_role' => $user ? $user->idRol : null,
-                    'filter_applied' => $user && $user->idRol == 2 && !empty($user->getFranquiciasIds())
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener productos del mercado: ' . $e->getMessage(),
-                'debug' => config('app.debug') ? [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ] : null
-            ], 500);
-        }
-    }
 
     /**
      * API endpoint to get all available markets for dropdowns/selects
@@ -851,7 +477,8 @@ class MarketManagementController extends Controller
     {
         $validated = $request->validate([
             'codigoPresentacion' => 'required|string',
-            'nuevoMercadoId' => 'required|integer'
+            'nuevoMercadoId' => 'required|integer',
+            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -899,10 +526,12 @@ class MarketManagementController extends Controller
             }
             
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?', [
+            $userId = Auth::user()->idUsuario;
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
                 $configuracion->fuente,           // @fuente (obtenida de la configuración actual)
-                $validated['nuevoMercadoId']      // @idMercado
+                $validated['nuevoMercadoId'],     // @idMercado
+                $userId                           // @idUsuario
             ]);
 
             // Obtener el nombre del mercado anterior
@@ -933,7 +562,8 @@ class MarketManagementController extends Controller
                     $nombreProducto ?? 'Producto no encontrado',
                     $mercadoAnterior,
                     $mercadoDestino->mercado,
-                    Auth::user()
+                    Auth::user(),
+                    $validated['note'] ?? null
                 );
                 
                 \Log::info('DEBUG: Notificación de movimiento completada exitosamente');
@@ -970,7 +600,8 @@ class MarketManagementController extends Controller
     public function removeProduct(Request $request)
     {
         $validated = $request->validate([
-            'codigoPresentacion' => 'required|string'
+            'codigoPresentacion' => 'required|string',
+            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
         ]);
 
         try {
@@ -1001,8 +632,10 @@ class MarketManagementController extends Controller
                 ->value('descripcionPresentacion');
 
             // Ejecutar el stored procedure SP_ASIGNAR_RESTO
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?', [
-                $validated['codigoPresentacion']
+            $userId = Auth::user()->idUsuario;
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?, ?', [
+                $validated['codigoPresentacion'],  // @codigo
+                $userId                           // @idUsuario
             ]);
 
             DB::commit();
@@ -1014,7 +647,8 @@ class MarketManagementController extends Controller
                     $validated['codigoPresentacion'],
                     $nombreProducto ?? 'Producto no encontrado',
                     $configuracionProducto->mercado,
-                    Auth::user()
+                    Auth::user(),
+                    $validated['note'] ?? null
                 );
             } catch (\Exception $e) {
                 // Log del error pero no interrumpir el flujo
@@ -1389,10 +1023,14 @@ class MarketManagementController extends Controller
                         ->delete();
 
                     // PASO 2: Ejecutar el stored procedure ODS.SP_INSERT_CONFIGURACION para el nuevo mercado
-                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?', [
+                    // Obtener el ID del usuario autenticado
+                    $userId = Auth::user()->idUsuario;
+                    
+                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
-                        $product['fuente']        // @fuente
+                        $product['fuente'],       // @fuente
+                        $userId                   // @idUsuario
                     ]);
 
                     $assignedCount++;
