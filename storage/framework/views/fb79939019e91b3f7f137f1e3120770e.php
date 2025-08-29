@@ -95,14 +95,7 @@
                
 
                 
-                <!-- Logout Button -->
-                <form method="POST" action="<?php echo e(route('logout')); ?>" class="inline" id="logoutForm">
-                    <?php echo csrf_field(); ?>
-                    <button type="submit" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
-                        <i class="fas fa-sign-out-alt sm:mr-2"></i>
-                        <span class="hidden sm:inline">Salir</span>
-                    </button>
-                </form>
+                
                 
                 <!-- Fallback logout link for expired sessions -->
                 <a href="<?php echo e(route('logout.get')); ?>" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200 hidden" id="logoutFallback">
