@@ -242,7 +242,7 @@ class ProductosController extends Controller
                         ->where('descripcionProducto', '<>', '');
                     
                     if ($search) {
-                        $query->where('descripcionProducto', 'LIKE', "%{$search}%");
+                        $query->where('descripcionProducto', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -258,7 +258,7 @@ class ProductosController extends Controller
                         ->where('marcaGenerico', '<>', '');
                     
                     if ($search) {
-                        $query->where('marcaGenerico', 'LIKE', "%{$search}%");
+                        $query->where('marcaGenerico', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -274,7 +274,7 @@ class ProductosController extends Controller
                         ->where('eticoPopular', '<>', '');
                     
                     if ($search) {
-                        $query->where('eticoPopular', 'LIKE', "%{$search}%");
+                        $query->where('eticoPopular', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -293,8 +293,8 @@ class ProductosController extends Controller
                     
                     if ($search) {
                         $query->where(function($q) use ($search) {
-                            $q->where('descripcionFF3', 'LIKE', "%{$search}%")
-                              ->orWhere('codigoFF3', 'LIKE', "%{$search}%");
+                            $q->where('descripcionFF3', 'LIKE', "{$search}%")
+                              ->orWhere('codigoFF3', 'LIKE', "{$search}%");
                         });
                     }
                     
@@ -318,8 +318,8 @@ class ProductosController extends Controller
                     
                     if ($search) {
                         $query->where(function($q) use ($search) {
-                            $q->where('descripcionATC4', 'LIKE', "%{$search}%")
-                              ->orWhere('codigoATC4', 'LIKE', "%{$search}%");
+                            $q->where('descripcionATC4', 'LIKE', "{$search}%")
+                              ->orWhere('codigoATC4', 'LIKE', "{$search}%");
                         });
                     }
                     
@@ -340,7 +340,7 @@ class ProductosController extends Controller
                         ->where('descripcionLaboratorio', '<>', '');
                     
                     if ($search) {
-                        $query->where('descripcionLaboratorio', 'LIKE', "%{$search}%");
+                        $query->where('descripcionLaboratorio', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -356,7 +356,7 @@ class ProductosController extends Controller
                         ->where('descripcionCorporacion', '<>', '');
                     
                     if ($search) {
-                        $query->where('descripcionCorporacion', 'LIKE', "%{$search}%");
+                        $query->where('descripcionCorporacion', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -372,7 +372,7 @@ class ProductosController extends Controller
                         ->where('molecula', '<>', '');
                     
                     if ($search) {
-                        $query->where('molecula', 'LIKE', "%{$search}%");
+                        $query->where('molecula', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
@@ -388,7 +388,7 @@ class ProductosController extends Controller
                         ->where('MERCADO', '<>', '');
                     
                     if ($search) {
-                        $query->where('MERCADO', 'LIKE', "%{$search}%");
+                        $query->where('MERCADO', 'LIKE', "{$search}%");
                     }
                     
                     // Para mercado, usar un límite mucho mayor para asegurar que se carguen todos
@@ -414,7 +414,7 @@ class ProductosController extends Controller
                         ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"));
                     
                     if ($search) {
-                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQV') LIKE ?", ["%{$search}%"]);
+                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQV') LIKE ?", ["{$search}%"]);
                     }
                     
                     $results = $fuenteQuery->distinct()
@@ -493,9 +493,10 @@ class ProductosController extends Controller
 
             // Ejecutar el stored procedure SP_ASIGNAR_RESTO
             $userId = Auth::user()->idUsuario;
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?, ?', [
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_ASIGNAR_RESTO ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
-                $userId                           // @idUsuario
+                $userId,                          // @idUsuario
+                $validated['note']                // @nota
             ]);
 
             DB::commit();
@@ -599,11 +600,12 @@ class ProductosController extends Controller
 
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
             $userId = Auth::user()->idUsuario;
-            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?', [
+            $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
                 $configuracion->fuente,           // @fuente (obtenida de la configuración actual)
                 $validated['nuevoMercadoId'],     // @idMercado
-                $userId                           // @idUsuario
+                $userId,                          // @idUsuario
+                $validated['note'] ?? null        // @nota
             ]);
 
             // Enviar notificación por email
@@ -775,7 +777,7 @@ class ProductosController extends Controller
                 'timestamp' => now()->toDateTimeString()
             ]);
             
-            DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?', [$marketName, (int)$userId]);
+            DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?, ?', [$marketName, (int)$userId, $marketNote]);
             
             // Verificar cuántos mercados con este nombre se crearon
             $mercadosCreados = DB::connection('sqlsrv')
@@ -928,11 +930,12 @@ class ProductosController extends Controller
                         'mercado_nombre' => $mercado->mercado
                     ]);
                     
-                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?', [
+                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
                         $product['fuente'],       // @fuente
-                        $userId                   // @idUsuario
+                        $userId,                  // @idUsuario
+                        $validated['note']        // @nota
                     ]);
 
                     // PASO 3: Intentar actualizar la vista VMAE (si existe un SP para eso)

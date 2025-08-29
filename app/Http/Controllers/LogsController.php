@@ -9,6 +9,30 @@ use Illuminate\Support\Facades\Auth;
 class LogsController extends Controller
 {
     /**
+     * Limpiar texto del detalle de logs
+     */
+    private function cleanLogDetail($detail)
+    {
+        if (empty($detail)) {
+            return '';
+        }
+        
+        // Eliminar espacios extra al inicio y final
+        $detail = trim($detail);
+        
+        // Reemplazar múltiples espacios con uno solo
+        $detail = preg_replace('/\s+/', ' ', $detail);
+        
+        // Reemplazar saltos de línea múltiples con uno solo
+        $detail = preg_replace('/\n\s*\n/', "\n", $detail);
+        
+        // Limpiar espacios alrededor de caracteres especiales
+        $detail = preg_replace('/\s*([|?])\s*/', '$1 ', $detail);
+        
+        return $detail;
+    }
+
+    /**
      * Display market logs table (only for administrators)
      */
     public function index(Request $request)
@@ -18,7 +42,7 @@ class LogsController extends Controller
             abort(403, 'Acceso denegado. Solo administradores pueden ver los logs.');
         }
 
-        $perPage = 50; // Registros por página
+        $perPage = 10; // Registros por página
         $page = $request->get('page', 1);
         $offset = ($page - 1) * $perPage;
 
@@ -39,7 +63,8 @@ class LogsController extends Controller
                     'accion',
                     'fecha',
                     'detalle',
-                    'tabla'
+                    'tabla',
+                    'nota'  // Agregar campo nota
                 ])
                 ->orderBy('fecha', 'desc')
                 ->orderBy('id', 'desc');
@@ -65,7 +90,8 @@ class LogsController extends Controller
                 $query->where(function($q) use ($search) {
                     $q->where('detalle', 'like', '%' . $search . '%')
                       ->orWhere('usuario', 'like', '%' . $search . '%')
-                      ->orWhere('tabla', 'like', '%' . $search . '%');
+                      ->orWhere('tabla', 'like', '%' . $search . '%')
+                      ->orWhere('nota', 'like', '%' . $search . '%');  // Incluir nota en búsqueda
                 });
             }
 
@@ -75,6 +101,12 @@ class LogsController extends Controller
 
             // Obtener los registros con paginación
             $logs = $query->offset($offset)->limit($perPage)->get();
+            
+            // Limpiar el detalle de cada log
+            $logs->each(function($log) {
+                $log->detalle = $this->cleanLogDetail($log->detalle);
+                $log->nota = $this->cleanLogDetail($log->nota);  // Limpiar también la nota
+            });
 
             // Obtener opciones únicas para filtros
             $usuarios = DB::connection('sqlsrv')
@@ -146,7 +178,8 @@ class LogsController extends Controller
                     'accion',
                     'fecha',
                     'detalle',
-                    'tabla'
+                    'tabla',
+                    'nota'  // Agregar campo nota
                 ])
                 ->orderBy('fecha', 'desc');
 
@@ -171,7 +204,8 @@ class LogsController extends Controller
                 $query->where(function($q) use ($search) {
                     $q->where('detalle', 'like', '%' . $search . '%')
                       ->orWhere('usuario', 'like', '%' . $search . '%')
-                      ->orWhere('tabla', 'like', '%' . $search . '%');
+                      ->orWhere('tabla', 'like', '%' . $search . '%')
+                      ->orWhere('nota', 'like', '%' . $search . '%');  // Incluir nota en búsqueda
                 });
             }
 
@@ -191,7 +225,7 @@ class LogsController extends Controller
                 fwrite($file, "\xEF\xBB\xBF");
                 
                 // Headers
-                fputcsv($file, ['ID', 'Usuario', 'Acción', 'Fecha', 'Detalle', 'Tabla'], ';');
+                fputcsv($file, ['ID', 'Usuario', 'Acción', 'Fecha', 'Detalle', 'Tabla', 'Nota'], ';');
 
                 foreach ($logs as $log) {
                     fputcsv($file, [
@@ -200,7 +234,8 @@ class LogsController extends Controller
                         $log->accion,
                         $log->fecha,
                         $log->detalle,
-                        $log->tabla
+                        $log->tabla,
+                        $log->nota
                     ], ';');
                 }
 

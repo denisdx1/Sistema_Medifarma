@@ -312,24 +312,14 @@
                                         </button>
 
                                         <!-- Toggle Status Button -->
-                                        <form method="POST" action="<?php echo e(route('usuarios.toggle-estado', $usuario->idUsuario)); ?>" class="inline">
-                                            <?php echo csrf_field(); ?>
-                                            <button type="submit" 
-                                                    class="<?php echo e($usuario->idEstado == 1 ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'); ?> transition-colors duration-200"
-                                                    title="<?php echo e($usuario->idEstado == 1 ? 'Desactivar' : 'Activar'); ?> usuario"
-                                                    onclick="return confirm('¿Está seguro de <?php echo e($usuario->idEstado == 1 ? 'desactivar' : 'activar'); ?> este usuario?')">
-                                                <i class="fas fa-<?php echo e($usuario->idEstado == 1 ? 'ban' : 'check'); ?>"></i>
-                                            </button>
-                                        </form>
-
-                                        <!-- Delete Button -->
-                                        <?php if(auth()->user()->idUsuario != $usuario->idUsuario): ?>
-                                        <button onclick="eliminarUsuario(<?php echo e($usuario->idUsuario); ?>, '<?php echo e($usuario->usuario); ?>')"
-                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                title="Eliminar usuario">
-                                            <i class="fas fa-trash"></i>
+                                        <button type="button" 
+                                                onclick="abrirModalDesactivar(<?php echo e($usuario->idUsuario); ?>, '<?php echo e($usuario->usuario); ?>', <?php echo e($usuario->idEstado); ?>)"
+                                                class="<?php echo e($usuario->idEstado == 1 ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'); ?> transition-colors duration-200"
+                                                title="<?php echo e($usuario->idEstado == 1 ? 'Desactivar' : 'Activar'); ?> usuario">
+                                            <i class="fas fa-<?php echo e($usuario->idEstado == 1 ? 'ban' : 'check'); ?>"></i>
                                         </button>
-                                        <?php endif; ?>
+
+
                                     </div>
                                 </td>
                             </tr>
@@ -1117,6 +1107,58 @@
         </form>
     </div>
 </div>
+
+        <!-- Modal Desactivar Usuario -->
+        <div id="modalDesactivarUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;" onclick="if(event.target === this) cerrarModalDesactivar()">
+            <div class="relative mx-auto border w-full max-w-md shadow-2xl rounded-lg bg-white transform transition-all duration-300 ease-in-out" style="z-index: 9999999 !important;">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                        <span id="modalDesactivarTitulo">Confirmar Acción</span>
+                    </h3>
+                    <button type="button" onclick="cerrarModalDesactivar()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div id="modalDesactivarIcono" class="w-12 h-12 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h4 id="modalDesactivarMensaje" class="text-base font-medium text-gray-900 mb-2">
+                                ¿Está seguro de realizar esta acción?
+                            </h4>
+                            <p id="modalDesactivarDescripcion" class="text-sm text-gray-600">
+                                Esta acción afectará el acceso del usuario al sistema.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                    <button type="button" 
+                            onclick="cerrarModalDesactivar()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" 
+                            id="btnConfirmarDesactivar"
+                            onclick="confirmarDesactivarUsuario()"
+                            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        <i class="fas fa-check mr-2"></i>
+                        <span id="btnConfirmarTexto">Confirmar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
         
     </div>
 </div>
@@ -1195,22 +1237,22 @@
         z-index: 1 !important;
     }
 
-    /* Animaciones suaves para las modales */
+    /* Animaciones básicas para las modales */
     #modalCrearUsuario.show,
-    #modalEditarUsuario.show {
-        animation: modalFadeIn 0.3s ease-out;
+    #modalEditarUsuario.show,
+    #modalDesactivarUsuario.show {
         z-index: 999999 !important;
     }
 
-    @keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.9);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+    /* Overlay básico para la modal */
+    #modalDesactivarUsuario::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
     }
 </style>
 <?php $__env->stopPush(); ?>
@@ -1219,6 +1261,8 @@
 <script>
 // Variables globales
 let usuarioEditandoId = null;
+let usuarioDesactivandoId = null;
+let usuarioDesactivandoEstado = null;
 
 // Document ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -1236,6 +1280,7 @@ function inicializarEventos() {
         if (e.key === 'Escape') {
             cerrarModalCrear();
             cerrarModalEditar();
+            cerrarModalDesactivar();
         }
     });
 }
@@ -1548,40 +1593,96 @@ function mostrarToast(mensaje, tipo = 'info') {
     }, 4000);
 }
 
-// Función para eliminar usuario
-async function eliminarUsuario(idUsuario, nombreUsuario) {
-    if (!confirm(`¿Está seguro de eliminar al usuario "${nombreUsuario}"?\n\nEsta acción no se puede deshacer.`)) {
-        return;
+
+
+// ===== FUNCIONES PARA MODAL DE DESACTIVACIÓN =====
+
+// Abrir modal de desactivación
+function abrirModalDesactivar(idUsuario, nombreUsuario, estadoActual) {
+    usuarioDesactivandoId = idUsuario;
+    usuarioDesactivandoEstado = estadoActual;
+    
+    const modal = document.getElementById('modalDesactivarUsuario');
+    const titulo = document.getElementById('modalDesactivarTitulo');
+    const mensaje = document.getElementById('modalDesactivarMensaje');
+    const descripcion = document.getElementById('modalDesactivarDescripcion');
+    const icono = document.getElementById('modalDesactivarIcono');
+    const btnTexto = document.getElementById('btnConfirmarTexto');
+    const btnConfirmar = document.getElementById('btnConfirmarDesactivar');
+    
+    if (estadoActual == 1) {
+        // Desactivar usuario
+        titulo.textContent = 'Desactivar Usuario';
+        mensaje.textContent = `¿Está seguro de desactivar al usuario "${nombreUsuario}"?`;
+        descripcion.textContent = 'El usuario no podrá acceder al sistema hasta que sea reactivado.';
+        icono.className = 'w-12 h-12 rounded-full flex items-center justify-center bg-red-100';
+        icono.innerHTML = '<i class="fas fa-user-times text-red-600 text-2xl"></i>';
+        btnTexto.textContent = 'Desactivar';
+        btnConfirmar.className = 'px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2';
+    } else {
+        // Activar usuario
+        titulo.textContent = 'Activar Usuario';
+        mensaje.textContent = `¿Está seguro de activar al usuario "${nombreUsuario}"?`;
+        descripcion.textContent = 'El usuario podrá acceder nuevamente al sistema.';
+        icono.className = 'w-12 h-12 rounded-full flex items-center justify-center bg-red-100';
+        icono.innerHTML = '<i class="fas fa-user-check text-red-600 text-2xl"></i>';
+        btnTexto.textContent = 'Activar';
+        btnConfirmar.className = 'px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2';
     }
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('show');
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+}
 
-    mostrarLoading(true);
+// Cerrar modal de desactivación
+function cerrarModalDesactivar() {
+    const modal = document.getElementById('modalDesactivarUsuario');
+    modal.classList.add('hidden');
+    modal.classList.remove('show');
+    usuarioDesactivandoId = null;
+    usuarioDesactivandoEstado = null;
+}
 
+// Confirmar desactivación/activación de usuario
+async function confirmarDesactivarUsuario() {
+    if (!usuarioDesactivandoId) return;
+    
+    const btn = document.getElementById('btnConfirmarDesactivar');
+    const originalText = btn.innerHTML;
+    
     try {
-        const response = await fetch(`/usuarios/${idUsuario}`, {
-            method: 'DELETE',
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
+        
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        
+        const response = await fetch(`/usuarios/${usuarioDesactivandoId}/toggle-estado`, {
+            method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: formData
         });
 
-        const data = await response.json();
-
-        if (data.success) {
-            mostrarToast(data.message, 'success');
-            // Recargar la página después de 1 segundo
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+        if (response.ok) {
+            const accion = usuarioDesactivandoEstado == 1 ? 'desactivado' : 'activado';
+            mostrarToast(`Usuario ${accion} exitosamente`, 'success');
+            cerrarModalDesactivar();
+            setTimeout(() => location.reload(), 1500);
         } else {
-            mostrarToast(data.message || 'Error al eliminar el usuario', 'error');
+            const data = await response.json();
+            mostrarToast(data.message || 'Error al cambiar el estado del usuario', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        mostrarToast('Error de conexión al eliminar el usuario', 'error');
+        mostrarToast('Error de conexión al cambiar el estado del usuario', 'error');
     } finally {
-        mostrarLoading(false);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 

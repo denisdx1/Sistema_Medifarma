@@ -18,7 +18,8 @@ Route::get('/', function () {
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\UsuarioController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\LogsController;
+use App\Http\Controllers\ProductosController;
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -26,11 +27,14 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 });
 
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+// Rutas de logout - Múltiples métodos para evitar problemas
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 Route::get('/logout-now', [AuthController::class, 'logout'])->name('logout.now');
 
+
 Route::middleware('auth')->group(function () {
-    Route::post('/products/{product}/generate-sku', [ProductController::class, 'generateAndAssignSku'])->name('products.generateSku');
+    
     Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto', 'password.change'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');
 
@@ -96,6 +100,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/datos', [UsuarioController::class, 'getDatos'])->name('get-datos')->where('id', '[0-9]+');
     });
 
+
+    
+
     // Ruta para cambio de contraseña obligatorio - Para usuarios autenticados
     Route::middleware('auth')->group(function () {
         Route::get('/cambio-password-obligatorio', [UsuarioController::class, 'mostrarCambioPassword'])->name('usuarios.cambio-password');
@@ -110,29 +117,3 @@ Route::middleware('auth')->group(function () {
 
 });
 
-// RUTA TEMPORAL PARA PRUEBAS DE EMAIL - ELIMINAR EN PRODUCCIÓN
-Route::get('/test-emails', function () {
-    $user = Auth::user();
-    if (!$user) {
-        // Para pruebas sin autenticación, usar el primer usuario administrador
-        $user = \App\Models\User::where('idRol', 1)->first();
-    }
-    
-    if (!$user) {
-        return response()->json(['error' => 'No se encontró un usuario para las pruebas'], 404);
-    }
-    
-    $notificationService = new \App\Services\NotificationService();
-    
-    // Debug de la colección de emails
-    $debugInfo = $notificationService->debugEmailCollection($user);
-    
-    // Intentar enviar una notificación de prueba
-    $testResult = $notificationService->testNotification($user, 'Prueba del sistema de emails desde la ruta temporal');
-    
-    return response()->json([
-        'debug_info' => $debugInfo,
-        'test_notification_sent' => $testResult,
-        'message' => 'Revisa los logs para más detalles'
-    ]);
-})->name('test.emails');

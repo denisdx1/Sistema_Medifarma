@@ -42,11 +42,27 @@ $(document).ready(function() {
     // Sync filter state on page load
     syncFilterButtonsState();
     
-    // Check for auto-select market from sessionStorage
-    checkAutoSelectMarket();
+    // Check for auto-select market from sessionStorage and load products
+    // Si hay un mercado o marca para autoseleccionar, no cargar productos inicialmente
+    const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
+    const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
     
-    // Load initial products
-    loadProducts();
+    if (autoSelectMarket || autoSelectBrand) {
+        // Mostrar loading inmediatamente con mensaje específico
+        if (autoSelectMarket) {
+            updateLoadingText(`Cargando productos del mercado "${autoSelectMarket}"...`);
+        } else if (autoSelectBrand) {
+            updateLoadingText(`Cargando productos de la marca "${autoSelectBrand}"...`);
+        }
+        $('#loading-subtext').text('Aplicando filtros y cargando datos...');
+        showLoadingState();
+        
+        // Aplicar el filtro automáticamente
+        checkAutoSelectMarketAndLoadProducts();
+    } else {
+        // Solo cargar productos si no hay autoselección
+        loadProducts();
+    }
 
     // Clear all filters functionality
     $('#clear-all-filters').on('click', function() {
@@ -206,44 +222,48 @@ $(document).ready(function() {
         // Use higher limit for mercado
         const limit = filterType === 'mercado' ? 500 : 100;
         
-        $.ajax({
-            url: '/productos/filter-options',
-            method: 'GET',
-            data: {
-                filter_type: filterType,
-                limit: limit
-            },
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success && response.data) {
-                    const select = $(`#filter-${filterType}`);
-                    
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '/productos/filter-options',
+                method: 'GET',
+                data: {
+                    filter_type: filterType,
+                    limit: limit
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success && response.data) {
+                        const select = $(`#filter-${filterType}`);
+                        
 
-                    
-                    // Clear existing options except first
-                    select.find('option:not(:first)').remove();
-                    
-                    // Ensure data is an array
-                    const options = Array.isArray(response.data) ? response.data : [];
-                    
-                    // Add new options
-                    options.forEach(option => {
-                        if (option && option.trim() !== '') {
-                            select.append(`<option value="${option}">${option}</option>`);
-                        }
-                    });
-                    
-
-                } else {
-                    console.error(`Error en respuesta de ${filterType}:`, response);
+                        
+                        // Clear existing options except first
+                        select.find('option:not(:first)').remove();
+                        
+                        // Ensure data is an array
+                        const options = Array.isArray(response.data) ? response.data : [];
+                        
+                        // Add new options
+                        options.forEach(option => {
+                            if (option && option.trim() !== '') {
+                                select.append(`<option value="${option}">${option}</option>`);
+                            }
+                        });
+                        
+                        resolve(response);
+                    } else {
+                        console.error(`Error en respuesta de ${filterType}:`, response);
+                        reject(new Error(`Error en respuesta de ${filterType}`));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(`Error loading ${filterType} options:`, error);
+                    reject(new Error(`Error loading ${filterType} options: ${error}`));
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error(`Error loading ${filterType} options:`, error);
-            }
+            });
         });
     }
 
@@ -364,6 +384,8 @@ $(document).ready(function() {
         loadProducts();
     }
 
+
+
     // Función para aplicar filtros con retry automático cuando hay peticiones en curso
     function applyFiltersWithRetry(retryCount = 0) {
         // Máximo 5 reintentos
@@ -393,8 +415,8 @@ $(document).ready(function() {
         // Ocultar solo los dropdowns de filtros de productos al iniciar cualquier carga
         $('.products-filters .filter-dropdown').removeClass('show');
         
-        // Solo mostrar loading overlay para carga completa (no para "cargar más")
-        if (!append) {
+        // Solo mostrar loading overlay para carga completa (no para "cargar más") y si no está ya visible
+        if (!append && $('#loading-overlay').hasClass('hidden')) {
             showLoadingState();
         }
 
@@ -477,15 +499,8 @@ $(document).ready(function() {
         tableBody.removeClass('hidden');
         
         if (products.length === 0) {
-            tableBody.html(`
-                <tr>
-                    <td colspan="13" class="px-6 py-8 text-center text-gray-500">
-                        <i class="fas fa-search text-4xl mb-4 block"></i>
-                        <p class="text-lg font-medium mb-2">No se encontraron productos</p>
-                        <p class="text-sm">Intenta con otros criterios de búsqueda o filtros</p>
-                    </td>
-                </tr>
-            `);
+            // Limpiar tabla y mostrar solo el estado vacío estático
+            tableBody.html('');
             $('#empty-state').removeClass('hidden');
             return;
         }
@@ -542,61 +557,55 @@ $(document).ready(function() {
                            onchange="updateSelectedProducts()">
                 </td>
                 <!-- Descripción 15% -->
-                <td class="w-[15%] px-2 py-1 text-[10px] text-gray-900 description-cell" title="${descripcionCompleta}">
+                <td class="w-[15%] px-2 py-1 text-[10px] text-gray-900 description-cell">
                     <div class="leading-tight font-medium whitespace-normal break-words text-left">
                         ${descripcionCompleta}
                     </div>
                 </td>
                 <!-- Producto 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 product-cell" title="${descripcionProducto}">
+                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 product-cell">
                     <div class="leading-tight whitespace-normal break-words text-left">
                         ${descripcionProducto}
                     </div>
                 </td>
                 <!-- Marca/Genérico 9% -->
                 <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-l-2 border-gray-300">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getBrandClass(marcaGenerico)}" title="${marcaGenerico}">
+                    <span class="text-[10px] font-medium ${getBrandClass(marcaGenerico)}">
                         ${marcaGenerico}
                     </span>
                 </td>
                 <!-- Ético/Popular 9% -->
                 <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getEthicClass(eticoPopular)}" title="${eticoPopular}">
+                    <span class="text-[10px] font-medium ${getEthicClass(eticoPopular)}">
                         ${eticoPopular}
                     </span>
                 </td>
-                <!-- Fuente 7% -->
-                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}" title="${fuente}">
-                        ${fuente}
-                    </span>
-                </td>
                 <!-- Molécula 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell" title="${molecula}">
+                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell">
                     <div class="text-[10px] leading-tight whitespace-normal break-words">
                         ${molecula}
                     </div>
                 </td>
                 <!-- FF3 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${titleFF3}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionFF3}
                     </div>
                 </td>
                 <!-- ATC4 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${titleATC4}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionATC4}
                     </div>
                 </td>
                 <!-- Laboratorio 11% -->
-                <td class="w-[11%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}" title="${laboratorio}">
+                <td class="w-[11%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}">
                     <div class="whitespace-normal break-words">
                         ${laboratorio}
                     </div>
                 </td>
                 <!-- Corporación 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${product['descripcionCorporacion'] || '-'}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${product['descripcionCorporacion'] || '-'}
                     </div>
@@ -604,24 +613,28 @@ $(document).ready(function() {
                 <!-- Mercado 10% -->
                 <td class="w-[10%] px-2 py-1 text-center text-[9px] text-gray-600 market-cell">
                     <div class="flex flex-col items-center justify-center">
-                        <span class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-medium ${getMarketClass(mercado)} w-full" title="${mercado}">
+                        <span class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-medium ${getMarketClass(mercado)} w-full">
                             <span class="text-center">
                         ${mercado}
                     </span>
                         </span>
                     </div>
                 </td>
+                <!-- Fuente 7% -->
+                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}">
+                        ${fuente}
+                    </span>
+                </td>
                 <!-- Acciones 4% -->
                 <td class="w-[4%] px-0 py-1 text-center actions-cell">
                     <div class="flex flex-col items-center justify-center space-y-0.5">
                         <button onclick="window.openRemoveProductModal('${product['codigoPresentacion']}', '${escapeForJs(product['descripcionPresentacion'])}')" 
-                                class="action-button text-red-600 hover:text-red-900 transition-colors rounded hover:bg-red-50" 
-                                title="Quitar producto del mercado">
+                                class="action-button text-red-600 hover:text-red-900 transition-colors rounded hover:bg-red-50">
                             <i class="fas fa-trash"></i>
                         </button>
                         <button onclick="window.openChangeMarketModal('${product['codigoPresentacion']}', '${escapeForJs(product['descripcionPresentacion'])}')" 
-                                class="action-button text-blue-600 hover:text-blue-900 transition-colors rounded hover:bg-blue-50" 
-                                title="Cambiar producto a otro mercado">
+                                class="action-button text-blue-600 hover:text-blue-900 transition-colors rounded hover:bg-blue-50">
                             <i class="fas fa-exchange-alt"></i>
                         </button>
                     </div>
@@ -643,25 +656,11 @@ $(document).ready(function() {
 
     // Helper functions for styling classes
     function getBrandClass(marcaGenerico) {
-        switch(marcaGenerico?.toUpperCase()) {
-            case 'MARCA':
-                return 'bg-blue-100 text-blue-800';
-            case 'GENERICO':
-                return 'bg-green-100 text-green-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
+        return 'text-gray-700';
     }
 
     function getEthicClass(eticoPopular) {
-        switch(eticoPopular?.toUpperCase()) {
-            case 'ETICO':
-                return 'bg-purple-100 text-purple-800';
-            case 'POPULAR':
-                return 'bg-orange-100 text-orange-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
+        return 'text-gray-700';
     }
 
     function getFuenteClass(fuente) {
@@ -758,7 +757,6 @@ $(document).ready(function() {
         $('.products-filters .filter-dropdown').removeClass('show');
         
         $('#loading-overlay').removeClass('hidden');
-        $('#loading-state').removeClass('hidden');
         
         // Start loading timer
         loadingStartTime = Date.now();
@@ -767,10 +765,14 @@ $(document).ready(function() {
             $('#loading-timer').text(`${elapsed}s`);
         }, 1000);
     }
+    
+    function updateLoadingText(text) {
+        $('#loading-text').text(text);
+        $('#loading-subtext').text('Por favor espere');
+    }
 
     function hideLoadingState() {
         $('#loading-overlay').addClass('hidden');
-        $('#loading-state').addClass('hidden');
         
         if (loadingTimer) {
             clearInterval(loadingTimer);
@@ -1062,15 +1064,16 @@ $(document).ready(function() {
         document.getElementById('select-all-products').indeterminate = false;
     };
 
-    // Función para verificar si hay un mercado para seleccionar automáticamente
-function checkAutoSelectMarket() {
+    // Función para verificar si hay un mercado o marca para seleccionar automáticamente y cargar productos
+function checkAutoSelectMarketAndLoadProducts() {
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
+    const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
     
     if (autoSelectMarket) {
         // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
         sessionStorage.removeItem('autoSelectMarket');
         
-        // Función para verificar y aplicar el filtro
+        // Función para verificar y aplicar el filtro de mercado
         function tryApplyMarketFilter(attempts = 0) {
             const mercadoSelect = $('#filter-mercado');
             const totalOptions = mercadoSelect.find('option').length;
@@ -1085,8 +1088,16 @@ function checkAutoSelectMarket() {
                 // Actualizar el filtro interno
                 currentFilters.mercado = autoSelectMarket;
                 
-                // Aplicar filtros con retry si hay petición en curso
-                applyFiltersWithRetry();
+                // Resaltar visualmente el campo de mercado para que el usuario vea que está filtrado
+                mercadoSelect.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                
+                // Quitar el resaltado después de 3 segundos
+                setTimeout(() => {
+                    mercadoSelect.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                }, 3000);
+                
+                // Cargar productos directamente con el filtro aplicado (evitando doble carga)
+                loadProducts();
                 
                 return;
             } 
@@ -1094,11 +1105,54 @@ function checkAutoSelectMarket() {
             // Si no encontró la opción y no ha hecho muchos intentos, esperar y volver a intentar
             if (attempts < 5 && totalOptions <= 1) { // Solo opciones básicas cargadas
                 setTimeout(() => tryApplyMarketFilter(attempts + 1), 1000);
+            } else if (attempts >= 5) {
+                // Si no encontró el mercado después de varios intentos, cargar productos sin filtro
+                loadProducts();
             }
         }
         
-        // Iniciar el proceso de verificación después de más tiempo para que termine la carga inicial
-        setTimeout(() => tryApplyMarketFilter(), 2000);
+        // Cargar opciones de mercado y luego aplicar el filtro
+        loadNormalFilterOptions('mercado').then(() => {
+            // Aplicar el filtro inmediatamente
+            tryApplyMarketFilter();
+        }).catch(() => {
+            // Si falla cargar las opciones, cargar productos sin filtro
+            loadProducts();
+        });
+    } else if (autoSelectBrand) {
+        // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+        sessionStorage.removeItem('autoSelectBrand');
+        
+        // Función para verificar y aplicar el filtro de marca
+        function tryApplyBrandFilter(attempts = 0) {
+            const brandInput = $('#filter-descripcionProducto');
+            
+            // Establecer el valor directamente en el input de marca
+            brandInput.val(autoSelectBrand);
+            
+            // Actualizar el filtro interno
+            currentFilters.descripcionProducto = autoSelectBrand;
+            
+            // Mostrar botón de limpiar
+            $('#clear-filter-descripcionProducto').removeClass('hidden');
+            
+            // Resaltar visualmente el campo de marca para que el usuario vea que está filtrado
+            brandInput.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            
+            // Quitar el resaltado después de 3 segundos
+            setTimeout(() => {
+                brandInput.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            }, 3000);
+            
+                            // Cargar productos directamente con el filtro aplicado (evitando doble carga)
+                loadProducts();
+        }
+        
+        // Aplicar el filtro de marca inmediatamente
+        tryApplyBrandFilter();
+    } else {
+        // Si no hay autoselección, cargar productos normalmente
+        loadProducts();
     }
 }
 });

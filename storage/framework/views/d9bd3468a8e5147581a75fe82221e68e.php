@@ -55,12 +55,7 @@
                             <?php endif; ?>
                         </div>
                         
-                        <?php if(request('search')): ?>
-                        <div class="text-sm text-gray-600">
-                            <i class="fas fa-filter mr-1"></i>
-                            Filtrando por: "<?php echo e(request('search')); ?>"
-                        </div>
-                        <?php endif; ?>
+
                     </div>
                 </div>
             </div>
@@ -94,7 +89,12 @@
                                         <i class="fas fa-tags text-blue-600 text-xs"></i>
                                     </div>
                                     <div>
-                                        <div class="font-medium text-gray-900"><?php echo e($market->marca); ?></div>
+                                        <button onclick="redirectToProductsWithBrand('<?php echo e($market->marca); ?>')" 
+                                                class="font-medium text-gray-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                                                title="Ver productos de esta marca">
+                                            <?php echo e($market->marca); ?>
+
+                                        </button>
                                         <div class="text-sm text-gray-500">Código: <?php echo e($market->codigoPresentacion); ?></div>
                                     </div>
                                 </div>
@@ -143,11 +143,6 @@
                 <div class="flex items-center justify-between">
                     <div class="text-xs text-gray-600" id="pagination-info">
                         <?php echo e($markets->firstItem()); ?> - <?php echo e($markets->lastItem()); ?> de <?php echo e($markets->total()); ?> marcas
-                        <?php if(request('search')): ?>
-                            <span class="text-blue-600 font-medium">
-                                (filtrado por "<?php echo e(request('search')); ?>")
-                            </span>
-                        <?php endif; ?>
                     </div>
                     <div class="flex items-center space-x-1" id="pagination-links">
                         
@@ -212,26 +207,18 @@
                 <?php if(auth()->guard()->check()): ?>
                     <?php if(auth()->user()->idRol == 1): ?>
                         <h3 class="text-lg font-medium text-gray-800 mb-2">No se encontraron marcas</h3>
-                        <?php if(request('search')): ?>
-                            <p class="text-gray-600">No hay marcas que coincidan con "<?php echo e(request('search')); ?>"</p>
-                            <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
-                                <i class="fas fa-times mr-1"></i>
-                                Limpiar búsqueda
-                            </button>
-                        <?php else: ?>
-                            <p class="text-gray-600">No hay marcas registradas en el sistema</p>
-                        <?php endif; ?>
+                        <p class="text-gray-600">No hay marcas que coincidan con tu búsqueda</p>
+                        <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
+                            <i class="fas fa-times mr-1"></i>
+                            Limpiar búsqueda
+                        </button>
                     <?php elseif(auth()->user()->idRol == 2): ?>
                         <h3 class="text-lg font-medium text-gray-800 mb-2">No hay marcas asignadas</h3>
-                        <?php if(request('search')): ?>
-                            <p class="text-gray-600">No hay marcas asignadas que coincidan con "<?php echo e(request('search')); ?>"</p>
-                            <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
-                                <i class="fas fa-times mr-1"></i>
-                                Limpiar búsqueda
-                            </button>
-                        <?php else: ?>
-                            <p class="text-gray-600">No tienes marcas asignadas actualmente</p>
-                        <?php endif; ?>
+                        <p class="text-gray-600">No hay marcas asignadas que coincidan con tu búsqueda</p>
+                        <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
+                            <i class="fas fa-times mr-1"></i>
+                            Limpiar búsqueda
+                        </button>
                     <?php endif; ?>
                 <?php endif; ?>
             </div>
@@ -243,7 +230,7 @@
 
 
 <!-- Edit Market Modal -->
-<div id="edit-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
         <!-- Header -->
         <div class="bg-red-500 p-4">
@@ -280,13 +267,14 @@
             <!-- Note Field -->
             <div class="mb-4">
                 <label for="edit-market-note" class="block text-sm font-medium text-gray-700 mb-2">
-                    Nota
+                    Nota *
                 </label>
                 <textarea id="edit-market-note" 
                           name="market_note" 
                           rows="3"
                           class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
-                          placeholder="Nota sobre los cambios..."></textarea>
+                          placeholder="Nota sobre los cambios..."
+                          required></textarea>
                 <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
             </div>
             
@@ -314,7 +302,7 @@
 
 
 <!-- Edit Market Confirmation Modal -->
-<div id="edit-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-[60]">
+<div id="edit-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[60]">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
         <!-- Header -->
         <div class="bg-red-500 p-4">
@@ -391,58 +379,29 @@
 // Define routes for JavaScript  
 window.MarketManagementRoutes = {
     index: '<?php echo e(route("market-management.index")); ?>',
-    update: '<?php echo e(route("market-management.update")); ?>'
+    update: '<?php echo e(route("market-management.update")); ?>',
+    search: '<?php echo e(route("market-management.search")); ?>',
+    allMarketsApi: '<?php echo e(route("market-management.all-markets.api")); ?>'
 };
 
 window.csrfToken = '<?php echo e(csrf_token()); ?>';
 
-// Funcionalidad de búsqueda
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    
-    if (searchInput) {
-        // Búsqueda con Enter
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
-        });
-        
-        // Búsqueda automática con debounce
-        let searchTimeout;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                performSearch();
-            }, 800); // Esperar 800ms después de que el usuario deje de escribir
-        });
-    }
-});
 
-function performSearch() {
-    const searchInput = document.getElementById('search-input');
-    const searchValue = searchInput.value.trim();
-    
-    // Construir URL con parámetro de búsqueda
-    let url = window.MarketManagementRoutes.index;
-    
-    if (searchValue) {
-        url += '?search=' + encodeURIComponent(searchValue);
-    }
-    
-    // Redirigir con la búsqueda
-    window.location.href = url;
-}
-
-function clearSearch() {
-    // Redirigir sin parámetros de búsqueda
-    window.location.href = window.MarketManagementRoutes.index;
-}
 
 // Función para redirigir al módulo de productos con filtro de mercado
 function redirectToProductsWithMarket(marketName) {
     // Guardar el mercado seleccionado en sessionStorage
     sessionStorage.setItem('autoSelectMarket', marketName);
+    
+    // Redirigir a la página de productos sin parámetros en la URL
+    const productosUrl = '<?php echo e(route("productos.index")); ?>';
+    window.location.href = productosUrl;
+}
+
+// Función para redirigir al módulo de productos con filtro de marca
+function redirectToProductsWithBrand(brandName) {
+    // Guardar la marca seleccionada en sessionStorage
+    sessionStorage.setItem('autoSelectBrand', brandName);
     
     // Redirigir a la página de productos sin parámetros en la URL
     const productosUrl = '<?php echo e(route("productos.index")); ?>';

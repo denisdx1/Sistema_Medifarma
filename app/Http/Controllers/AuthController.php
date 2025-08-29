@@ -29,6 +29,8 @@ class AuthController extends Controller
         if ($this->authService->attempt($credentials)) {
             $user = auth()->user();
             
+
+            
             // Verificar si requiere cambio de contraseña
             if ($this->authService->requiereCambioPassword($user)) {
                 return redirect()->route('usuarios.cambio-password')
@@ -44,7 +46,20 @@ class AuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
-        $this->authService->logout();
-        return redirect()->route('login');
+        try {
+            $this->authService->logout();
+            // Limpiar completamente la sesión
+            $request->session()->flush();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')->with('success', 'Has cerrado sesión correctamente');
+        } catch (\Exception $e) {
+            // Si hay algún error, forzar el logout y redirigir
+            Auth::logout();
+            $request->session()->flush();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')->with('info', 'Sesión cerrada');
+        }
     }
 }

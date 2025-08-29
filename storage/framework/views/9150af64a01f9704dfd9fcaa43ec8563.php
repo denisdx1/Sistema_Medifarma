@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('content'); ?>
 <div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-full px-4 sm:px-6 lg:px-8">
@@ -28,8 +26,20 @@
                         </div>
                     </div>
                     
-                    <!-- Panel de filtros original mejorado -->
-                    <div id="filters-panel" class="border-t border-gray-200 pt-4 mt-4">
+                    <!-- Panel de filtros con toggle -->
+                    <div class="border-t border-gray-200 pt-4 mt-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-900">
+                                <i class="fas fa-filter text-blue-500 mr-2"></i>
+                                Filtros de Búsqueda
+                            </h3>
+                            <button id="toggle-filters" 
+                                    class="inline-flex items-center px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-xs font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                <i class="fas fa-chevron-down mr-1" id="toggle-icon"></i>
+                                <span id="toggle-text">Ocultar Filtros</span>
+                            </button>
+                        </div>
+                        <div id="filters-panel" class="transition-all duration-300 ease-in-out">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                             <!-- Producto Filter -->
                             <div class="space-y-1">
@@ -189,7 +199,7 @@
                             <tr class="divide-x divide-gray-200">
                                 <!-- Checkbox: 3% -->
                                 <th class="w-[3%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    <input type="checkbox" id="select-all-products" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" title="Seleccionar todos">
+                                    <input type="checkbox" id="select-all-products" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                 </th>
                                 <!-- Descripción: 15% -->
                                 <th class="w-[15%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
@@ -206,10 +216,6 @@
                                 <!-- Ético/Popular: 9% -->  
                                 <th class="w-[9%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300">
                                     Ético/Popular
-                                </th>
-                                <!-- Fuente: 7% -->
-                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Fuente
                                 </th>
                                 <!-- Molécula: 14% -->
                                 <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
@@ -231,9 +237,13 @@
                                 <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
                                     Corporación
                                 </th>
-                                <!-- Mercado: 10% -->
+                                <!-- Fuente: 7% -->
                                 <th class="w-[10%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
                                     Mercado
+                                </th>
+                                <!-- Mercado: 10% -->
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
+                                    Fuente
                                 </th>
                                 <!-- Acciones: 4% -->
                                 <th class="w-[4%] px-1 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
@@ -248,13 +258,7 @@
                 </div>
             </div>
 
-            <!-- Loading State (backup) -->
-            <div id="loading-state" class="p-8 text-center hidden">
-                <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                    <span class="text-gray-600">Cargando productos...</span>
-                </div>
-            </div>
+
 
             <!-- Empty State -->
             <div id="empty-state" class="p-8 text-center hidden">
@@ -281,7 +285,7 @@
 
 
 <!-- Modal para Quitar Producto -->
-<div id="remove-product-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="remove-product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
         <!-- Header -->
         <div class="bg-red-500 p-3">
@@ -345,7 +349,7 @@
 </div>
 
 <!-- Modal para Cambiar Mercado -->
-<div id="change-market-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="change-market-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
         <!-- Header -->
         <div class="bg-red-500 p-3">
@@ -446,7 +450,7 @@
 </div>
 
 <!-- Modal de Confirmación Final para Quitar -->
-<div id="final-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="final-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-red-600 p-4">
@@ -493,7 +497,7 @@
 </div>
 
 <!-- Modal de Confirmación Final para Cambiar -->
-<div id="final-change-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="final-change-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-red-500 p-4">
@@ -549,7 +553,7 @@
 </div>
 
 <!-- Modal para Asignación Masiva de Productos -->
-<div id="bulk-assign-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="bulk-assign-modal" class="fixed inset-0  flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-red-500 p-2">
@@ -685,7 +689,7 @@
 </div>
 
 <!-- Modal de Confirmación para Asignación a Mercado Existente -->
-<div id="assign-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="assign-confirmation-modal" class="fixed inset-0  flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-gradient-to-r from-red-500 to-red-600 p-2">
@@ -756,7 +760,7 @@
 </div>
 
 <!-- Modal de Confirmación para Crear Mercado y Asignar -->
-<div id="create-market-confirmation-modal" class="fixed inset-0 backdrop-blur-lg flex items-center justify-center p-4 hidden z-50">
+<div id="create-market-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
         <!-- Header -->
         <div class="bg-red-500 p-2">
@@ -850,6 +854,44 @@
         </div>
     </div>
 </div>
+
+<!-- JavaScript para toggle de filtros -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.getElementById('toggle-filters');
+    const filtersPanel = document.getElementById('filters-panel');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    
+    // Estado inicial: filtros visibles
+    let filtersVisible = true;
+    
+    toggleButton.addEventListener('click', function() {
+        if (filtersVisible) {
+            // Ocultar filtros
+            filtersPanel.style.maxHeight = '0';
+            filtersPanel.style.overflow = 'hidden';
+            filtersPanel.style.opacity = '0';
+            toggleIcon.className = 'fas fa-chevron-right mr-1';
+            toggleText.textContent = 'Mostrar Filtros';
+            filtersVisible = false;
+        } else {
+            // Mostrar filtros
+            filtersPanel.style.maxHeight = filtersPanel.scrollHeight + 'px';
+            filtersPanel.style.overflow = 'visible';
+            filtersPanel.style.opacity = '1';
+            toggleIcon.className = 'fas fa-chevron-down mr-1';
+            toggleText.textContent = 'Ocultar Filtros';
+            filtersVisible = true;
+        }
+    });
+    
+    // Ajustar altura máxima cuando se carga la página
+    setTimeout(() => {
+        filtersPanel.style.maxHeight = filtersPanel.scrollHeight + 'px';
+    }, 100);
+});
+</script>
 
 <?php $__env->stopSection(); ?>
 

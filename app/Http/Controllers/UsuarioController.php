@@ -285,44 +285,35 @@ class UsuarioController extends Controller
 
             $estadoTexto = $nuevoEstado == 1 ? 'activado' : 'desactivado';
             
+            // Verificar si es una petición AJAX
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Usuario {$estadoTexto} exitosamente."
+                ]);
+            }
+            
             return back()->with('success', "Usuario {$estadoTexto} exitosamente.");
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al cambiar el estado del usuario: ' . $e->getMessage());
+            $errorMessage = 'Error al cambiar el estado del usuario: ' . $e->getMessage();
+            
+            // Verificar si es una petición AJAX
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 422);
+            }
+            
+            return back()->with('error', $errorMessage);
         }
     }
 
     /**
      * Delete user using stored procedure (soft delete)
      */
-    public function destroy($id)
-    {
-        try {
-            $usuario = User::findOrFail($id);
-            
-            // Verificar que no se esté eliminando a sí mismo
-            if (auth()->user()->idUsuario == $id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No puedes eliminarte a ti mismo.'
-                ], 422);
-            }
-
-            // Ejecutar stored procedure para eliminar usuario (soft delete)
-            DB::connection('sqlsrv')->statement('EXEC ODS.SP_DELETE_USUARIO ?', [$id]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => "Usuario '{$usuario->usuario}' eliminado exitosamente."
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al eliminar el usuario: ' . $e->getMessage()
-            ], 422);
-        }
-    }
+    
 
     /**
      * Show change password form for first login (vista completa estilo login)

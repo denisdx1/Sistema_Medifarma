@@ -66,12 +66,13 @@ class AuthService
 
     public function logout(): void
     {
+        // Logout del usuario
         Auth::logout();
         
-        // Invalidate the session
-        request()->session()->invalidate();
-        
-        // Regenerate the CSRF token
-        request()->session()->regenerateToken();
+        // Limpiar la sesión de forma segura
+        if (request()->hasSession()) {
+            request()->session()->flush();
+            request()->session()->regenerate();
+        }
     }
 }

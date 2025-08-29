@@ -19,6 +19,8 @@ body {
 .toast-error   { background-color: #fee2e2; color: var(--danger); }
 .toast-info    { background-color: #dbeafe; color: var(--info); }
 
+
+
 /* Primary action buttons */
 .btn-primary,
 .products-btn,

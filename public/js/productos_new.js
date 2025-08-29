@@ -46,8 +46,8 @@ $(document).ready(function() {
     // Initialize other components
     initializeToggleFilters();
     
-    // Load initial products
-    loadProducts();
+    // Check for auto-select market from sessionStorage and load products
+    checkAutoSelectMarketAndLoadProducts();
 
     // Clear all filters functionality
     $('#clear-all-filters').on('click', function() {
@@ -508,15 +508,8 @@ $(document).ready(function() {
         const tableBody = $('#products-table-body');
         
         if (products.length === 0) {
-            tableBody.html(`
-                <tr>
-                    <td colspan="11" class="px-6 py-8 text-center text-gray-500">
-                        <i class="fas fa-search text-4xl mb-4 block"></i>
-                        <p class="text-lg font-medium mb-2">No se encontraron productos</p>
-                        <p class="text-sm">Intenta con otros criterios de búsqueda o filtros</p>
-                    </td>
-                </tr>
-            `);
+            // Limpiar tabla y mostrar solo el estado vacío estático
+            tableBody.html('');
             $('#empty-state').removeClass('hidden');
             return;
         }
@@ -556,68 +549,68 @@ $(document).ready(function() {
         return `
             <tr class="hover:bg-gray-50 divide-x divide-gray-200">
                 <!-- Descripción 18% -->
-                <td class="w-[18%] px-2 py-1 text-[10px] text-gray-900 description-cell" title="${descripcionCompleta}">
+                <td class="w-[18%] px-2 py-1 text-[10px] text-gray-900 description-cell">
                     <div class="leading-tight font-medium whitespace-normal break-words text-left">
                         ${descripcionCompleta}
                     </div>
                 </td>
                 <!-- Producto 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 product-cell" title="${descripcionProducto}">
+                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 product-cell">
                     <div class="leading-tight whitespace-normal break-words text-left">
                         ${descripcionProducto}
                     </div>
                 </td>
                 <!-- Marca/Genérico 9% -->
                 <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-l-2 border-gray-300">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getBrandClass(marcaGenerico)}" title="${marcaGenerico}">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getBrandClass(marcaGenerico)}">
                         ${marcaGenerico}
                     </span>
                 </td>
                 <!-- Ético/Popular 9% -->
                 <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getEthicClass(eticoPopular)}" title="${eticoPopular}">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getEthicClass(eticoPopular)}">
                         ${eticoPopular}
                     </span>
                 </td>
                 <!-- Fuente 7% -->
                 <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}" title="${fuente}">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}">
                         ${fuente}
                     </span>
                 </td>
                 <!-- Molécula 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell" title="${molecula}">
+                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell">
                     <div class="text-[10px] leading-tight whitespace-normal break-words">
                         ${molecula}
                     </div>
                 </td>
                 <!-- FF3 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${descripcionFF3}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionFF3}
                     </div>
                 </td>
                 <!-- ATC4 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${descripcionATC4}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionATC4}
                     </div>
                 </td>
                 <!-- Laboratorio 11% -->
-                <td class="w-[11%] px-2 py-1 text-[10px] text-gray-500" title="${product['descripcionLaboratorio'] || '-'}">
+                <td class="w-[11%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${product['descripcionLaboratorio'] || '-'}
                     </div>
                 </td>
                 <!-- Corporación 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500" title="${product['descripcionCorporacion'] || '-'}">
+                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${product['descripcionCorporacion'] || '-'}
                     </div>
                 </td>
                 <!-- Mercado 6% -->
                 <td class="w-[6%] px-2 py-1 text-center text-[10px] text-gray-600">
-                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getMarketClass(mercado)}" title="${mercado}">
+                    <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getMarketClass(mercado)}">
                         ${mercado}
                     </span>
                 </td>
@@ -715,7 +708,6 @@ $(document).ready(function() {
 
     function showLoadingState() {
         $('#loading-overlay').removeClass('hidden');
-        $('#loading-state').removeClass('hidden');
         
         // Start loading timer
         loadingStartTime = Date.now();
@@ -727,7 +719,6 @@ $(document).ready(function() {
 
     function hideLoadingState() {
         $('#loading-overlay').addClass('hidden');
-        $('#loading-state').addClass('hidden');
         
         if (loadingTimer) {
             clearInterval(loadingTimer);
@@ -761,4 +752,113 @@ $(document).ready(function() {
             loadProducts(currentCursor, true, currentSearchQuery);
         }
     };
+
+    // Función para verificar si hay un mercado o marca para seleccionar automáticamente y cargar productos
+    function checkAutoSelectMarketAndLoadProducts() {
+        const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
+        const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
+        
+        if (autoSelectMarket) {
+            // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+            sessionStorage.removeItem('autoSelectMarket');
+            
+            // Función para verificar y aplicar el filtro de mercado
+            function tryApplyMarketFilter(attempts = 0) {
+                const mercadoSelect = $('#filter-mercado');
+                const totalOptions = mercadoSelect.find('option').length;
+                
+                // Verificar si la opción existe en el select
+                const optionExists = mercadoSelect.find(`option[value="${autoSelectMarket}"]`).length > 0;
+                
+                if (optionExists) {
+                    // Seleccionar el mercado en el filtro
+                    mercadoSelect.val(autoSelectMarket);
+                    
+                    // Actualizar el filtro interno
+                    currentFilters.mercado = autoSelectMarket;
+                    
+                    // Resaltar visualmente el campo de mercado para que el usuario vea que está filtrado
+                    mercadoSelect.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                    
+                    // Quitar el resaltado después de 3 segundos
+                    setTimeout(() => {
+                        mercadoSelect.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                    }, 3000);
+                    
+                    // Mostrar mensaje específico de carga con filtro de mercado
+                    updateLoadingText(`Cargando productos del mercado "${autoSelectMarket}"...`);
+                    
+                    // Cargar productos directamente con el filtro aplicado (evitando doble carga)
+                    loadProducts();
+                    
+                    return;
+                } 
+                
+                // Si no encontró la opción y no ha hecho muchos intentos, esperar y volver a intentar
+                if (attempts < 5 && totalOptions <= 1) { // Solo opciones básicas cargadas
+                    setTimeout(() => tryApplyMarketFilter(attempts + 1), 1000);
+                } else if (attempts >= 5) {
+                    // Si no encontró el mercado después de varios intentos, cargar productos sin filtro
+                    loadProducts();
+                }
+            }
+            
+            // Cargar opciones de mercado y luego aplicar el filtro
+            loadNormalFilterOptions('mercado').then(() => {
+                // Aplicar el filtro inmediatamente
+                tryApplyMarketFilter();
+            }).catch(() => {
+                // Si falla cargar las opciones, cargar productos sin filtro
+                loadProducts();
+            });
+        } else if (autoSelectBrand) {
+            // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+            sessionStorage.removeItem('autoSelectBrand');
+            
+            // Función para verificar y aplicar el filtro de marca
+            function tryApplyBrandFilter(attempts = 0) {
+                const brandInput = $('#filter-descripcionProducto');
+                
+                // Establecer el valor directamente en el input de marca
+                brandInput.val(autoSelectBrand);
+                
+                // Actualizar el filtro interno
+                currentFilters.descripcionProducto = autoSelectBrand;
+                
+                // Mostrar botón de limpiar
+                $('#clear-filter-descripcionProducto').removeClass('hidden');
+                
+                // Resaltar visualmente el campo de marca para que el usuario vea que está filtrado
+                brandInput.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                
+                // Quitar el resaltado después de 3 segundos
+                setTimeout(() => {
+                    brandInput.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+                }, 3000);
+                
+                // Mostrar mensaje específico de carga con filtro de marca
+                updateLoadingText(`Cargando productos de la marca "${autoSelectBrand}"...`);
+                
+                // Cargar productos directamente con el filtro aplicado (evitando doble carga)
+                loadProducts();
+            }
+            
+            // Aplicar el filtro de marca inmediatamente
+            tryApplyBrandFilter();
+        } else {
+            // Si no hay autoselección, cargar productos normalmente
+            loadProducts();
+        }
+    }
+
+    // Función para actualizar el texto de carga
+    function updateLoadingText(text) {
+        const loadingOverlay = $('#loading-overlay');
+        if (loadingOverlay.length > 0) {
+            const textElement = loadingOverlay.find('span');
+            if (textElement.length > 0) {
+                textElement.text(text);
+            }
+        }
+    }
 });

@@ -531,10 +531,14 @@ $(document).ready(function() {
             fuente: product.fuente
         }));
 
+        // Obtener la nota del mercado que se acaba de crear
+        const marketNote = document.getElementById('new-market-note').value.trim();
+
         console.log('Productos a asignar:', products);
         console.log('Datos a enviar:', {
             idMercado: parseInt(marketId),
-            products: products
+            products: products,
+            note: marketNote
         });
 
         $.ajax({
@@ -546,7 +550,8 @@ $(document).ready(function() {
             },
             data: {
                 idMercado: parseInt(marketId),
-                products: products
+                products: products,
+                note: marketNote
             },
             success: function(response) {
                 if (response.success) {
