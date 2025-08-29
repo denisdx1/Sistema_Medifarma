@@ -47,7 +47,11 @@ class AuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         try {
-            $this->authService->logout();
+            // Verificar si el usuario está autenticado antes de intentar logout
+            if (auth()->check()) {
+                $this->authService->logout();
+            }
+            
             // Limpiar completamente la sesión
             $request->session()->flush();
             $request->session()->invalidate();
@@ -63,7 +67,9 @@ class AuthController extends Controller
             return redirect()->route('login')->with('success', 'Has cerrado sesión correctamente');
         } catch (\Exception $e) {
             // Si hay algún error, forzar el logout y redirigir
-            Auth::logout();
+            if (auth()->check()) {
+                auth()->logout();
+            }
             $request->session()->flush();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

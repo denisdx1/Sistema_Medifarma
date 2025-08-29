@@ -94,13 +94,19 @@
 
                 
                 <!-- Logout Button -->
-                <form method="POST" action="{{ route('logout') }}" class="inline">
+                <form method="POST" action="{{ route('logout') }}" class="inline" id="logoutForm">
                     @csrf
                     <button type="submit" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
                         <i class="fas fa-sign-out-alt sm:mr-2"></i>
                         <span class="hidden sm:inline">Salir</span>
                     </button>
                 </form>
+                
+                <!-- Fallback logout link for expired sessions -->
+                <a href="{{ route('logout.get') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200 hidden" id="logoutFallback">
+                    <i class="fas fa-sign-out-alt sm:mr-2"></i>
+                    <span class="hidden sm:inline">Salir</span>
+                </a>
                 
                 <!-- Mobile menu button -->
                 <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200">
@@ -208,6 +214,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const mobileMenu = document.getElementById('mobile-menu');
     const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+    
+    // Manejo de logout con fallback para sesiones expiradas
+    const logoutForm = document.getElementById('logoutForm');
+    const logoutFallback = document.getElementById('logoutFallback');
+    
+    if (logoutForm) {
+        logoutForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = response.url || '/login';
+                } else if (response.status === 419) {
+                    // Token CSRF expirado, usar fallback
+                    logoutForm.classList.add('hidden');
+                    logoutFallback.classList.remove('hidden');
+                    // Mostrar mensaje al usuario
+                    alert('Su sesión ha expirado. Será redirigido al login.');
+                    window.location.href = '/logout';
+                } else {
+                    // Otro error, intentar redirigir directamente
+                    window.location.href = '/logout';
+                }
+            })
+            .catch(error => {
+                console.error('Error en logout:', error);
+                // En caso de error de red, usar fallback
+                logoutForm.classList.add('hidden');
+                logoutFallback.classList.remove('hidden');
+                window.location.href = '/logout';
+            });
+        });
+    }
     
     if (mobileMenuButton && mobileMenu) {
         mobileMenuButton.addEventListener('click', function() {
