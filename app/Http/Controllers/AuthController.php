@@ -52,6 +52,14 @@ class AuthController extends Controller
             $request->session()->flush();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+            
+            // Verificar si es un logout automático por inactividad
+            $isAutoLogout = $request->is('auto-logout') || $request->has('inactivity');
+            
+            if ($isAutoLogout) {
+                return redirect()->route('login')->with('warning', 'Su sesión ha expirado por inactividad. Por favor, inicie sesión nuevamente.');
+            }
+            
             return redirect()->route('login')->with('success', 'Has cerrado sesión correctamente');
         } catch (\Exception $e) {
             // Si hay algún error, forzar el logout y redirigir
@@ -59,6 +67,13 @@ class AuthController extends Controller
             $request->session()->flush();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+            
+            $isAutoLogout = $request->is('auto-logout') || $request->has('inactivity');
+            
+            if ($isAutoLogout) {
+                return redirect()->route('login')->with('warning', 'Su sesión ha expirado por inactividad. Por favor, inicie sesión nuevamente.');
+            }
+            
             return redirect()->route('login')->with('info', 'Sesión cerrada');
         }
     }

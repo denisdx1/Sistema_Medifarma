@@ -31,9 +31,10 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 Route::get('/logout-now', [AuthController::class, 'logout'])->name('logout.now');
+Route::get('/auto-logout', [AuthController::class, 'logout'])->name('auto-logout');
 
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'inactivity'])->group(function () {
     
     Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto', 'password.change'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');

@@ -129,6 +129,9 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+    <!-- Inactivity Handler -->
+    <script src="<?php echo e(asset('js/inactivity-handler.js')); ?>"></script>
+    
     <script>
         // Toast notification function
         function showToast(message, type = 'info', duration = 5000) {
@@ -182,6 +185,10 @@
         
         <?php if(session('info')): ?>
             showToast('<?php echo e(session('info')); ?>', 'info');
+        <?php endif; ?>
+        
+        <?php if(session('warning')): ?>
+            showToast('<?php echo e(session('warning')); ?>', 'warning');
         <?php endif; ?>
         
         // Show validation errors

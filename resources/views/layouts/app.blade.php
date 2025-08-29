@@ -110,6 +110,9 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+    <!-- Inactivity Handler -->
+    <script src="{{ asset('js/inactivity-handler.js') }}"></script>
+    
     <script>
         // Toast notification function
         function showToast(message, type = 'info', duration = 5000) {
@@ -163,6 +166,10 @@
         
         @if(session('info'))
             showToast('{{ session('info') }}', 'info');
+        @endif
+        
+        @if(session('warning'))
+            showToast('{{ session('warning') }}', 'warning');
         @endif
         
         // Show validation errors

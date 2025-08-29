@@ -93,6 +93,14 @@
                     </div>
                 </div>
                
+                <!-- Inactivity Indicator -->
+                <div class="hidden lg:flex items-center mr-2">
+                    <div class="flex items-center text-xs text-gray-500">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse" id="inactivity-indicator"></div>
+                        <span>Activo</span>
+                    </div>
+                </div>
+                
                 <!-- Logout Button -->
                 <form method="POST" action="<?php echo e(route('logout')); ?>" class="inline">
                     <?php echo csrf_field(); ?>
