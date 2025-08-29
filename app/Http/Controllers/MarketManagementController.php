@@ -540,7 +540,240 @@ class MarketManagementController extends Controller
         // Aplicar todos los filtros incluyendo fuente
         $this->applyIndividualFilters($query, $filters);
     }
-    
 
-    
+    /**
+     * Obtener opciones de filtro para productos del RESTO
+     */
+    public function getRestoFilterOptions(Request $request)
+    {
+        try {
+            $fuentes = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->select(DB::raw("DISTINCT CASE WHEN v.MERCADO = 'NUEVOS' THEN NULL ELSE COALESCE(c.fuente, 'IQV') END as fuente"))
+                ->where('v.MERCADO', 'RESTO')
+                ->whereNotNull('v.codigoPresentacion')
+                ->where('v.codigoPresentacion', '!=', '')
+                ->whereNotNull(DB::raw("CASE WHEN v.MERCADO = 'NUEVOS' THEN NULL ELSE COALESCE(c.fuente, 'IQV') END"))
+                ->orderBy('fuente')
+                ->pluck('fuente')
+                ->filter()
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'fuentes' => $fuentes
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener opciones de filtro: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener productos del RESTO para asignación
+     */
+    public function getRestoProducts(Request $request)
+    {
+        try {
+            $search = $request->get('search', '');
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 20);
+
+            $query = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->select(
+                    'v.codigoPresentacion',
+                    'v.descripcionPresentacion',
+                    DB::raw("CASE WHEN v.MERCADO = 'NUEVOS' THEN NULL ELSE COALESCE(c.fuente, 'IQV') END as fuente")
+                )
+                ->where('v.MERCADO', 'RESTO')
+                ->whereNotNull('v.codigoPresentacion')
+                ->where('v.codigoPresentacion', '!=', '');
+
+            // Aplicar búsqueda si se proporciona
+            if (!empty($search)) {
+                $query->where(function($subQuery) use ($search) {
+                    $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%");
+                });
+            }
+
+            // Obtener total de registros
+            $totalCount = $query->count();
+
+            // Obtener productos paginados
+            $products = $query->orderBy('v.descripcionPresentacion')
+                             ->offset(($page - 1) * $perPage)
+                             ->limit($perPage)
+                             ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $products,
+                'pagination' => [
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $totalCount,
+                    'total_pages' => ceil($totalCount / $perPage),
+                    'has_more_pages' => $page < ceil($totalCount / $perPage)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener productos del RESTO: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Asignar productos a un mercado específico
+     */
+    public function assignProducts(Request $request)
+    {
+        $validated = $request->validate([
+            'idMercado' => 'required|integer',
+            'products' => 'required|array|min:1',
+            'products.*.code' => 'required|string',
+            'products.*.fuente' => 'required|string|min:1',
+            'note' => 'required|string|max:1000'
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            // Verificar que el mercado existe y está activo
+            $mercado = DB::connection('sqlsrv')
+                ->table('ODS.TAB_MERCADO as m')
+                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                ->select('m.idMercado', 'm.mercado', 'e.estado')
+                ->where('m.idMercado', $validated['idMercado'])
+                ->where('e.estado', 'ACTIVO')
+                ->first();
+
+            if (!$mercado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El mercado no existe o no está activo'
+                ], 422);
+            }
+
+            $assignedCount = 0;
+            $errors = [];
+            $assignedProducts = [];
+
+            // Procesar cada producto
+            foreach ($validated['products'] as $product) {
+                try {
+                    // Verificar que el producto existe en VMAE_PROD_IQVIA con mercado RESTO
+                    $productoInfo = DB::connection('sqlsrv')
+                        ->table('dbo.VMAE_PROD_IQVIA')
+                        ->where('codigoPresentacion', $product['code'])
+                        ->where('MERCADO', 'RESTO')
+                        ->select('codigoPresentacion', 'descripcionPresentacion')
+                        ->first();
+                        
+                    if (!$productoInfo) {
+                        $errors[] = "Producto {$product['code']} no encontrado en RESTO";
+                        continue;
+                    }
+
+                    // Verificar que el producto no esté ya asignado al mercado destino
+                    $yaAsignado = DB::connection('sqlsrv')
+                        ->table('ODS.TAB_CONFIGURACION')
+                        ->where('codigo', $product['code'])
+                        ->where('idMercado', $validated['idMercado'])
+                        ->exists();
+                        
+                    if ($yaAsignado) {
+                        $errors[] = "Producto {$product['code']} ya está asignado al mercado";
+                        continue;
+                    }
+
+                    // Eliminar la configuración existente del producto (que debería estar en RESTO)
+                    DB::connection('sqlsrv')
+                        ->table('ODS.TAB_CONFIGURACION')
+                        ->where('codigo', $product['code'])
+                        ->delete();
+
+                    // Ejecutar el stored procedure para el nuevo mercado
+                    $userId = Auth::user()->idUsuario;
+                    
+                    DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?, ?', [
+                        $validated['idMercado'],
+                        $product['code'],
+                        $product['fuente'],
+                        $userId,
+                        $validated['note']
+                    ]);
+
+                    // Intentar actualizar la vista VMAE
+                    try {
+                        DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_VMAE_MERCADO ?, ?', [
+                            $product['code'],
+                            $mercado->mercado
+                        ]);
+                    } catch (\Exception $vmaeException) {
+                        try {
+                            DB::connection('sqlsrv')->statement("
+                                UPDATE dbo.VMAE_PROD_IQVIA 
+                                SET MERCADO = ? 
+                                WHERE codigoPresentacion = ?
+                            ", [$mercado->mercado, $product['code']]);
+                        } catch (\Exception $directUpdateException) {
+                            // No se pudo actualizar VMAE, pero continuamos
+                        }
+                    }
+
+                    $assignedCount++;
+                    $assignedProducts[] = [
+                        'code' => $product['code'],
+                        'name' => $productoInfo->descripcionPresentacion
+                    ];
+
+                } catch (\Exception $e) {
+                    $errors[] = "Error asignando producto {$product['code']}: " . $e->getMessage();
+                }
+            }
+
+            DB::commit();
+
+            // Enviar notificación por email si hay productos asignados
+            if ($assignedCount > 0) {
+                try {
+                    $notificationService = new NotificationService();
+                    $notificationService->sendProductAssignmentNotification(
+                        $mercado->mercado,
+                        $assignedProducts,
+                        Auth::user()->usuario,
+                        $validated['note']
+                    );
+                } catch (\Exception $e) {
+                    // Error en notificación, pero no afecta la operación principal
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Se asignaron {$assignedCount} productos al mercado {$mercado->mercado}",
+                'assigned_count' => $assignedCount,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al asignar productos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

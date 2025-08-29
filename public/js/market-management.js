@@ -6,6 +6,7 @@ window.csrfToken = window.csrfToken || '';
 // Global search functionality with AJAX
 let searchTimeout;
 let currentSearch = '';
+let productSearchTimeout = null; // Para búsqueda de productos
 
 // Utility function to safely escape strings for JavaScript
 function escapeForJs(str) {
@@ -100,7 +101,7 @@ function showLoadingState() {
 
 // Function to hide loading state
 function hideLoadingState() {
-    // This will be handled by updateTableWithResults
+    // Loading state is handled by the search function
 }
 
 // Function to update table with search results
@@ -111,401 +112,322 @@ function updateTableWithResults(markets) {
         tbody.html(`
             <tr>
                 <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                    <div class="flex flex-col items-center">
-                        <i class="fas fa-search text-4xl mb-4 text-gray-300"></i>
-                        <p class="text-lg">No se encontraron resultados</p>
-                        <p class="text-sm">Intenta con otros términos de búsqueda</p>
-                    </div>
+                    <i class="fas fa-search mr-2"></i>
+                    No se encontraron resultados
                 </td>
             </tr>
         `);
         return;
     }
     
-    let tableHTML = '';
+    let html = '';
     markets.forEach(market => {
-        tableHTML += generateMarketRow(market);
-    });
-    tbody.html(tableHTML);
-}
-
-// Function to generate market row HTML
-function generateMarketRow(market) {
-    // Escape values for safe HTML usage
-    const escapedMarca = escapeHtml(market.marca || '');
-    const escapedMercado = escapeHtml(market.mercado || '');
-    const escapedCodigo = escapeHtml(market.codigoPresentacion || '');
-    
-    // Generate status badge with icon
-    const statusBadge = generateStateBadge(market.estado);
-    
-    // Generate action buttons based on market status
-    const actionButtons = generateActionButtons(market);
-    
-    return `
-        <tr class="hover:bg-gray-50 market-row" data-market-id="${market.idMercado}" data-product-code="${escapedCodigo}">
-            <!-- Marca (Descripción Producto) -->
-            <td class="px-6 py-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-tags text-blue-600 text-xs"></i>
+        html += `
+            <tr class="hover:bg-gray-50 market-row" data-market-id="${market.idMercado}" data-product-code="${market.codigoPresentacion}">
+                <!-- Marca (Descripción Producto) -->
+                <td class="px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-8 h-8 bg-secondary-light rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-tags text-primary text-xs"></i>
+                        </div>
+                        <div>
+                            <button onclick="redirectToProductsWithBrand('${escapeForJs(market.marca)}')" 
+                                    class="font-medium text-gray-900 hover:text-primary hover:underline transition-colors cursor-pointer"
+                                    title="Ver productos de esta marca">
+                                ${escapeHtml(market.marca)}
+                            </button>
+                            <div class="text-sm text-gray-500">Código: ${escapeHtml(market.codigoPresentacion)}</div>
+                        </div>
                     </div>
-                    <div>
-                        <button onclick="redirectToProductsWithBrand('${escapedMarca}')" 
-                                class="font-medium text-gray-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
-                                title="Ver productos de esta marca">
-                            ${escapedMarca}
+                </td>
+                <!-- Mercado Asignado -->
+                <td class="px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-6 h-6 bg-secondary-purple rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-store text-primary text-xs"></i>
+                        </div>
+                        <button onclick="redirectToProductsWithMarket('${escapeForJs(market.mercado)}')" 
+                                class="font-medium text-primary hover:text-secondary hover:underline transition-colors cursor-pointer"
+                                title="Ver productos de este mercado">
+                            ${escapeHtml(market.mercado)}
                         </button>
-                        <div class="text-sm text-gray-500">Código: ${escapedCodigo}</div>
                     </div>
-                </div>
-            </td>
-            <!-- Mercado Asignado -->
-            <td class="px-6 py-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
-                        <i class="fas fa-store text-red-600 text-xs"></i>
+                </td>
+                <!-- Estado -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${market.estado == 'ACTIVO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                        <i class="fas ${market.estado == 'ACTIVO' ? 'fa-play' : 'fa-pause'} mr-1"></i>
+                        ${escapeHtml(market.estado)}
+                    </span>
+                </td>
+                <!-- Acciones -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                        <!-- Editar Nombre del Mercado -->
+                        <button onclick="openEditModal(${market.idMercado}, '${escapeForJs(market.mercado)}')"
+                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
+                                title="Editar nombre del mercado">
+                            <i class="fas fa-edit mr-1"></i>
+                            Editar Mercado
+                        </button>
+                        
+                        <!-- Asignar Producto -->
+                        <button onclick="redirectToProductsWithRestoAndMarket('${escapeForJs(market.mercado)}')"
+                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200"
+                                title="Asignar producto a este mercado">
+                            <i class="fas fa-plus mr-1"></i>
+                            Asignar Producto
+                        </button>
                     </div>
-                    <button onclick="redirectToProductsWithMarket('${escapedMercado}')" 
-                            class="font-medium text-red-600 hover:text-red-800 hover:underline transition-colors cursor-pointer"
-                            title="Ver productos de este mercado">
-                        ${escapedMercado}
-                    </button>
-                </div>
-            </td>
-            <!-- Estado -->
-            <td class="px-6 py-4 whitespace-nowrap">
-                ${statusBadge}
-            </td>
-            <!-- Acciones -->
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                ${actionButtons}
-            </td>
-        </tr>
-    `;
-}
-
-// Function to generate state badge with icon
-function generateStateBadge(estado) {
-    let badgeClass, icon;
-    
-    switch(estado) {
-        case 'ACTIVO':
-            badgeClass = 'bg-emerald-100 text-emerald-800';
-            icon = 'fa-play';
-            break;
-        case 'INACTIVO':
-            badgeClass = 'bg-red-100 text-red-800';
-            icon = 'fa-pause';
-            break;
-        default:
-            badgeClass = 'bg-gray-100 text-gray-800';
-            icon = 'fa-question';
-    }
-    
-    return `
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
-            <i class="fas ${icon} mr-1"></i>
-            ${estado}
-        </span>
-    `;
-}
-
-// Function to generate action buttons based on market status
-function generateActionButtons(market) {
-    let buttons = '';
-    
-    // Botón de Editar Mercado (solo este botón debe aparecer)
-    if (market.idMercado && !isNaN(market.idMercado)) {
-        // Escapar el nombre del mercado de manera segura para JavaScript
-        const safeMarketName = escapeForJs(market.mercado || market.marca || '');
-        
-        // Botón de Editar Mercado
-        buttons += `
-            <button onclick="openEditModal(${market.idMercado}, '${safeMarketName}')"
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
-                    title="Editar nombre del mercado">
-                <i class="fas fa-edit mr-1"></i>
-                Editar Mercado
-            </button>
+                </td>
+            </tr>
         `;
-    }
+    });
     
-    return buttons;
+    tbody.html(html);
 }
 
 // Function to update results info
 function updateResultsInfo(data, searchTerm) {
-    const resultsInfo = $('.results-info');
-    if (resultsInfo.length) {
-        resultsInfo.html(`
-            <span class="text-sm text-gray-600">
-                Mostrando ${data.data.length} de ${data.total} resultados
-            </span>
-        `);
+    const infoElement = $('#pagination-info');
+    if (infoElement.length) {
+        const total = data.total || 0;
+        const from = data.from || 0;
+        const to = data.to || 0;
+        
+        if (total > 0) {
+            infoElement.text(`${from} - ${to} de ${total} marcas encontradas para "${searchTerm}"`);
+        } else {
+            infoElement.text(`No se encontraron marcas para "${searchTerm}"`);
+        }
     }
 }
 
 // Function to update pagination
 function updatePagination(data, searchTerm) {
-    const paginationContainer = $('.pagination-container');
-    if (!paginationContainer.length || data.last_page <= 1) {
+    const paginationContainer = $('#pagination-links');
+    if (!paginationContainer.length) return;
+    
+    const currentPage = data.current_page || 1;
+    const lastPage = data.last_page || 1;
+    const total = data.total || 0;
+    
+    if (total === 0) {
+        paginationContainer.html('');
         return;
     }
     
-    let paginationHTML = '<nav class="flex items-center justify-between">';
-    paginationHTML += '<div class="flex-1 flex justify-between sm:hidden">';
-    
-    // Mobile pagination
-    if (data.current_page > 1) {
-        paginationHTML += `<a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page - 1}); return false;" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Anterior</a>`;
-    }
-    if (data.current_page < data.last_page) {
-        paginationHTML += `<a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page + 1}); return false;" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Siguiente</a>`;
-    }
-    
-    paginationHTML += '</div>';
-    paginationHTML += '<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">';
-    
-    // Desktop pagination
-    paginationHTML += '<div>';
-    paginationHTML += `<p class="text-sm text-gray-700">Mostrando <span class="font-medium">${(data.current_page - 1) * data.per_page + 1}</span> a <span class="font-medium">${Math.min(data.current_page * data.per_page, data.total)}</span> de <span class="font-medium">${data.total}</span> resultados</p>`;
-    paginationHTML += '</div>';
-    
-    paginationHTML += '<div>';
-    paginationHTML += '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">';
+    let paginationHtml = '';
     
     // Previous button
-    if (data.current_page > 1) {
-        paginationHTML += `<a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page - 1}); return false;" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"><i class="fas fa-chevron-left"></i></a>`;
+    if (currentPage > 1) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${currentPage - 1}); return false;" 
+               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        `;
+    } else {
+        paginationHtml += `
+            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+            </span>
+        `;
     }
     
     // Page numbers
-    const startPage = Math.max(1, data.current_page - 2);
-    const endPage = Math.min(data.last_page, data.current_page + 2);
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(lastPage, currentPage + 2);
     
-    for (let i = startPage; i <= endPage; i++) {
-        if (i === data.current_page) {
-            paginationHTML += `<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">${i}</span>`;
-        } else {
-            paginationHTML += `<a href="#" onclick="performGlobalSearch('${searchTerm}', ${i}); return false;" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">${i}</a>`;
+    if (start > 1) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', 1); return false;" 
+               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">1</a>
+        `;
+        if (start > 2) {
+            paginationHtml += '<span class="px-1 text-xs text-gray-400">...</span>';
         }
     }
     
-    // Next button
-    if (data.current_page < data.last_page) {
-        paginationHTML += `<a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page + 1}); return false;" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"><i class="fas fa-chevron-right"></i></a>`;
+    for (let i = start; i <= end; i++) {
+        if (i === currentPage) {
+            paginationHtml += `
+                <span class="px-2 py-1 text-xs text-white bg-red-600 rounded font-medium">${i}</span>
+            `;
+        } else {
+            paginationHtml += `
+                <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${i}); return false;" 
+                   class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${i}</a>
+            `;
+        }
     }
     
-    paginationHTML += '</nav>';
-    paginationHTML += '</div>';
-    paginationHTML += '</div>';
-    paginationHTML += '</nav>';
+    if (end < lastPage) {
+        if (end < lastPage - 1) {
+            paginationHtml += '<span class="px-1 text-xs text-gray-400">...</span>';
+        }
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${lastPage}); return false;" 
+               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${lastPage}</a>
+        `;
+    }
     
-    paginationContainer.html(paginationHTML);
-}
-
-// Function to show error message
-function showError(message) {
-    // You can implement a toast notification here
-    console.error(message);
-    alert(message);
+    // Next button
+    if (currentPage < lastPage) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${currentPage + 1}); return false;" 
+               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        `;
+    } else {
+        paginationHtml += `
+            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+        `;
+    }
+    
+    paginationContainer.html(paginationHtml);
 }
 
 // Function to reset to original view
 function resetToOriginalView() {
-    // Use AJAX to load original view instead of redirecting
-    performGlobalSearch('', 1);
+    window.location.href = window.MarketManagementRoutes.index;
 }
 
-// Function to clear search (AJAX version)
-function clearSearch() {
-    // Clear search input
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.value = '';
-    }
-    
-    // Reset to original view via AJAX
-    performGlobalSearch('', 1);
+// Function to clear search
+window.clearSearch = function() {
+    $('#search-input').val('');
+    resetToOriginalView();
 }
 
 // ========================================
-// FUNCIONES DE MODALES
+// FUNCIONES PARA EDICIÓN DE MERCADOS
 // ========================================
 
-// Open edit modal - VANILLA JS
-function openEditModal(marketId, marketName) {
-    const editMarketId = document.getElementById('edit-market-id');
-    const editMarketName = document.getElementById('edit-market-name');
-    const editMarketNote = document.getElementById('edit-market-note');
-    const editModal = document.getElementById('edit-modal');
-    
-    if (editMarketId) editMarketId.value = marketId;
-    if (editMarketName) {
-        editMarketName.value = marketName;
-        editMarketName.setAttribute('data-original', marketName);
-    }
-    if (editMarketNote) editMarketNote.value = '';
-    if (editModal) editModal.classList.remove('hidden');
-    if (editMarketName) editMarketName.focus();
+// Function to open edit modal
+window.openEditModal = function(marketId, currentName) {
+    $('#edit-market-id').val(marketId);
+    $('#edit-market-name').val(currentName);
+    $('#edit-modal').removeClass('hidden');
 }
 
-// Close edit modal - VANILLA JS
-function closeEditModal() {
-    const editModal = document.getElementById('edit-modal');
-    if (editModal) editModal.classList.add('hidden');
+// Function to close edit modal
+window.closeEditModal = function() {
+    $('#edit-modal').addClass('hidden');
+    $('#edit-market-name').val('');
+    $('#edit-market-id').val('');
 }
 
-// Open edit confirmation modal
-function openEditConfirmationModal() {
-    const editModal = document.getElementById('edit-modal');
-    const confirmationModal = document.getElementById('edit-confirmation-modal');
+// Function to open edit confirmation modal
+window.openEditConfirmationModal = function() {
+    const marketId = $('#edit-market-id').val();
+    const currentName = $('#edit-market-name').val();
+    const newName = $('#edit-market-name').val().trim();
     
-    // Get form elements
-    const editMarketName = document.getElementById('edit-market-name');
-    const editMarketNote = document.getElementById('edit-market-note');
-    const currentNameElement = document.getElementById('confirm-edit-current-name');
-    const newNameElement = document.getElementById('confirm-edit-new-name');
-    
-    // Validate required fields
-    const marketName = editMarketName ? editMarketName.value.trim() : '';
-    const marketNote = editMarketNote ? editMarketNote.value.trim() : '';
-    
-    // Check if name is empty
-    if (!marketName) {
-        showToast('El nombre del mercado es obligatorio', 'error');
-        if (editMarketName) editMarketName.focus();
+    if (!newName) {
+        showToast('El nombre del mercado no puede estar vacío', 'error');
         return;
     }
     
-    // Check if note is empty (obligatory)
-    if (!marketNote) {
-        showToast('La nota es obligatoria para realizar cambios', 'error');
-        if (editMarketNote) editMarketNote.focus();
+    if (newName === currentName) {
+        showToast('El nuevo nombre debe ser diferente al actual', 'warning');
         return;
     }
     
-    if (editMarketName) {
-        const originalName = editMarketName.getAttribute('data-original') || '';
-        const newName = editMarketName.value || '';
-        
-        // Fill the confirmation modal with the values
-        if (currentNameElement) currentNameElement.textContent = originalName || '-';
-        if (newNameElement) newNameElement.textContent = newName || '-';
-    }
-    
-    if (editModal) editModal.classList.add('hidden');
-    if (confirmationModal) confirmationModal.classList.remove('hidden');
+    $('#confirm-edit-current-name').text(currentName);
+    $('#confirm-edit-new-name').text(newName);
+    $('#edit-confirmation-modal').removeClass('hidden');
 }
 
-// Close edit confirmation modal
-function closeEditConfirmationModal() {
-    const confirmationModal = document.getElementById('edit-confirmation-modal');
-    if (confirmationModal) confirmationModal.classList.add('hidden');
+// Function to close edit confirmation modal
+window.closeEditConfirmationModal = function() {
+    $('#edit-confirmation-modal').addClass('hidden');
 }
 
-// Confirm edit market function
-function confirmEditMarket() {
-    const editMarketId = document.getElementById('edit-market-id');
-    const editMarketName = document.getElementById('edit-market-name');
-    const editMarketNote = document.getElementById('edit-market-note');
-    const confirmBtn = document.getElementById('confirm-edit-btn');
-    const btnText = confirmBtn.querySelector('.btn-text');
-    const btnLoading = confirmBtn.querySelector('.btn-loading');
+// Function to confirm edit market
+window.confirmEditMarket = function() {
+    const marketId = $('#edit-market-id').val();
+    const newName = $('#edit-market-name').val().trim();
     
-    if (!editMarketId || !editMarketName) {
-        showToast('Error: Datos del mercado no encontrados', 'error');
-        return;
-    }
-    
-    const marketId = editMarketId.value;
-    const marketName = editMarketName.value.trim();
-    const marketNote = editMarketNote ? editMarketNote.value.trim() : '';
-    
-    if (!marketName) {
-        showToast('El nombre del mercado es obligatorio', 'error');
+    if (!newName) {
+        showToast('El nombre del mercado no puede estar vacío', 'error');
         return;
     }
     
     // Show loading state
-    btnText.classList.add('hidden');
-    btnLoading.classList.remove('hidden');
-    confirmBtn.disabled = true;
+    const confirmButton = $('#confirm-edit-btn');
+    const btnText = confirmButton.find('.btn-text');
+    const btnLoading = confirmButton.find('.btn-loading');
     
-    // Prepare data
-    const formData = new FormData();
-    formData.append('market_id', marketId);
-    formData.append('market_name', marketName);
-    formData.append('market_note', marketNote);
-    formData.append('_token', window.csrfToken);
-    formData.append('_method', 'PUT'); // Laravel method spoofing for PUT requests
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    confirmButton.prop('disabled', true);
     
     // Send AJAX request
-    fetch(window.MarketManagementRoutes.update, {
-        method: 'POST', // Laravel method spoofing requires POST
-        body: formData,
+    $.ajax({
+        url: window.MarketManagementRoutes.update,
+        method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-CSRF-TOKEN': window.csrfToken,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({
+            idMercado: marketId,
+            nuevoNombre: newName
+        }),
+        success: function(response) {
+            if (response.success) {
+                showToast(response.message, 'success');
+                closeEditConfirmationModal();
+                closeEditModal();
+                
+                // Reload page to show changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showToast(response.message || 'Error al actualizar el mercado', 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMessage = 'Error al actualizar el mercado';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showToast(errorMessage, 'error');
+        },
+        complete: function() {
+            // Restore button state
+            btnText.removeClass('hidden');
+            btnLoading.addClass('hidden');
+            confirmButton.prop('disabled', false);
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            closeEditConfirmationModal();
-            closeEditModal();
-            
-            // Reload the page to show updated data
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            showToast(data.message || 'Error al actualizar el mercado', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Error de conexión al actualizar el mercado', 'error');
-    })
-    .finally(() => {
-        // Hide loading state
-        btnText.classList.remove('hidden');
-        btnLoading.classList.add('hidden');
-        confirmBtn.disabled = false;
     });
 }
 
 // ========================================
-// FUNCIONES DE TOAST
+// FUNCIONES DE UTILIDAD
 // ========================================
 
-// Toast function mejorada
-function showToast(message, type = 'info') {
-    // Crear el toast con JavaScript puro
+// Function to show error message
+function showError(message) {
+    showToast(message, 'error');
+}
+
+// Function to show toast notification
+window.showToast = function(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
-    // Aplicar colores según el tipo usando el branding primario
-    if (type === 'success') {
-        toast.style.backgroundColor = 'var(--primary)';
-    } else if (type === 'error') {
-        toast.style.backgroundColor = '#ef4444';
-    } else if (type === 'warning') {
-        toast.style.backgroundColor = '#f59e0b';
-    } else {
-        toast.style.backgroundColor = 'var(--secondary)';
-    }
-    
-    // Contenido del toast
-    const icon = type === 'success' ? 'fa-check-circle' : 
-                type === 'error' ? 'fa-exclamation-circle' : 
-                type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
-    
     toast.innerHTML = `
         <div class="flex items-center">
             <div class="flex-shrink-0">
-                <i class="fas ${icon} mr-2"></i>
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                  type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' :
+                  type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' :
+                  '<i class="fas fa-info-circle"></i>'}
             </div>
             <div class="ml-3">
                 <p class="text-sm">${message}</p>

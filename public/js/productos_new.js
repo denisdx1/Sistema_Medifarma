@@ -540,7 +540,7 @@ $(document).ready(function() {
         const descripcionProducto = product['descripcionProducto'] || '-';
         const marcaGenerico = product['marcaGenerico'] || '-';
         const eticoPopular = product['eticoPopular'] || '-';
-        const fuente = product['fuente'] || '-';
+                        const fuente = product['fuente'] || 'Sin fuente';
         const molecula = product['molecula'] || '-';
         const descripcionFF3 = product['descripcionFF3'] || '-';
         const descripcionATC4 = product['descripcionATC4'] || '-';
@@ -642,7 +642,12 @@ $(document).ready(function() {
     }
 
     function getFuenteClass(fuente) {
-        switch(fuente?.toUpperCase()) {
+        // Si la fuente es null, undefined o vacía, mostrar como "Sin fuente"
+        if (!fuente || fuente === null || fuente === undefined || fuente === '') {
+            return 'bg-gray-100 text-gray-500';
+        }
+        
+        switch(fuente.toUpperCase()) {
             case 'IQV':
                 return 'bg-blue-100 text-blue-800';
             case 'IQVIA':

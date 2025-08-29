@@ -170,7 +170,7 @@
                         Limpiar
                     </a>
                     <button type="submit" 
-                        class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-800 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                        class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
                         <i class="fas fa-search mr-2"></i>
                         Buscar
                     </button>

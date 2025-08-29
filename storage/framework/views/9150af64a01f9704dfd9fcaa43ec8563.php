@@ -91,10 +91,19 @@
                             <!-- Mercado Filter -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Mercado</label>
-                                <select id="filter-mercado" 
-                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
-                                    <option value="">Todos los mercados</option>
-                                </select>
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="filter-mercado"
+                                           placeholder="Buscar mercado..."
+                                           class="block w-full px-3 py-2 pr-8 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                                           autocomplete="off">
+                                    <button type="button" 
+                                            id="clear-filter-mercado" 
+                                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                    <div id="mercado-results" class="filter-dropdown"></div>
+                                </div>
                             </div>
                             
                             <!-- Molécula Filter -->
@@ -226,14 +235,14 @@
                                     </div>
                                 </th>
                                 <!-- Marca/Genérico: 9% -->
-                                <th class="w-[12%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="marcaGenerico">
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="marcaGenerico">
                                     <div class="flex items-center justify-center">
                                         <span>Marca/Genérico</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
                                 </th>
                                 <!-- Ético/Popular: 9% -->  
-                                <th class="w-[12%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="eticoPopular">
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="eticoPopular">
                                     <div class="flex items-center justify-center">
                                         <span>Ético/Popular</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
@@ -315,9 +324,7 @@
             <div class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50" id="pagination-container">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                     <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <div id="pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
-                            Cargando productos...
-                        </div>
+                        
                         <div id="sorting-info" class="text-xs text-primary hidden">
                             <i class="fas fa-sort mr-1"></i>
                             <span id="sorting-text">Ordenado por: </span>

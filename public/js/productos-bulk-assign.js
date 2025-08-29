@@ -34,6 +34,24 @@ $(document).ready(function() {
         // Cargar mercados disponibles
         loadBulkAvailableMarkets();
         setupBulkMarketSearch();
+        
+        // Verificar si hay un mercado pre-seleccionado desde el módulo de marcas
+        const preSelectedMarket = sessionStorage.getItem('preSelectedMarket');
+        if (preSelectedMarket) {
+            // Esperar a que los mercados se hayan cargado antes de intentar seleccionar
+            const checkMarketsLoaded = () => {
+                const marketItems = document.querySelectorAll('#bulk-markets-dropdown .market-item');
+                if (marketItems.length > 0) {
+                    selectPreSelectedMarket(preSelectedMarket);
+                } else {
+                    // Si aún no hay mercados, esperar un poco más
+                    setTimeout(checkMarketsLoaded, 200);
+                }
+            };
+            
+            // Iniciar la verificación después de un delay inicial
+            setTimeout(checkMarketsLoaded, 500);
+        }
     };
 
     // Cerrar modal
@@ -643,6 +661,13 @@ $(document).ready(function() {
             showToast(message, 'error');
         };
     }
+    
+    if (typeof showWarningNotification === 'undefined') {
+        window.showWarningNotification = function(message) {
+            console.log('WARNING:', message);
+            showToast(message, 'warning');
+        };
+    }
 
     // Cerrar modal con ESC
     document.addEventListener('keyup', function(e) {
@@ -899,4 +924,41 @@ $(document).ready(function() {
             closeAssignConfirmationModal();
         }
     });
+    
+    // ===== FUNCIÓN PARA SELECCIONAR MERCADO PRE-SELECCIONADO =====
+    
+    // Función para seleccionar automáticamente un mercado pre-seleccionado
+    function selectPreSelectedMarket(marketName) {
+        // Buscar el mercado en la lista de mercados disponibles
+        const marketItems = document.querySelectorAll('#bulk-markets-dropdown .market-item');
+        
+        for (let item of marketItems) {
+            // Buscar el elemento que contiene el nombre del mercado
+            const marketNameElement = item.querySelector('p.text-sm.font-medium.text-gray-900');
+            if (marketNameElement) {
+                const itemText = marketNameElement.textContent.trim();
+                if (itemText === marketName) {
+                    // Simular clic en el mercado
+                    item.click();
+                    
+                    // Mostrar notificación de mercado pre-seleccionado
+                    showSuccessNotification(`Mercado "${marketName}" pre-seleccionado automáticamente`);
+                    
+                    // Limpiar el sessionStorage después de usarlo
+                    sessionStorage.removeItem('preSelectedMarket');
+                    
+                    return;
+                }
+            }
+        }
+        
+        // Si no se encuentra el mercado, mostrar notificación y debug info
+        console.log('Mercado no encontrado:', marketName);
+        console.log('Mercados disponibles:', Array.from(document.querySelectorAll('#bulk-markets-dropdown .market-item')).map(item => {
+            const nameElement = item.querySelector('p.text-sm.font-medium.text-gray-900');
+            return nameElement ? nameElement.textContent.trim() : 'Sin nombre';
+        }));
+        
+        showWarningNotification(`No se encontró el mercado "${marketName}" en la lista disponible`);
+    }
 });

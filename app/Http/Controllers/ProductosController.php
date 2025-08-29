@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Pagination\CursorPaginator;
+
 use App\Services\NotificationService;
 
 class ProductosController extends Controller
@@ -23,7 +23,7 @@ class ProductosController extends Controller
     }
 
     /**
-     * Get products with cursor pagination - OPTIMIZED
+     * Get products with traditional pagination - OPTIMIZED
      */
     public function getProductsApi(Request $request)
     {
@@ -31,7 +31,8 @@ class ProductosController extends Controller
             // Parámetros de búsqueda y paginación
             $search = trim($request->get('search', ''));
             $perPage = min(max((int) $request->get('per_page', 50), 20), 100);
-            $cursor = $request->get('cursor');
+            $page = max((int) $request->get('page', 1), 1);
+            $offset = ($page - 1) * $perPage;
 
             // Obtener filtros - solo los que tienen valor
             $filters = array_filter([
@@ -63,7 +64,10 @@ class ProductosController extends Controller
                     'v.marcaGenerico',
                     'v.eticoPopular',
                     'v.molecula',
-                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente"),
+                    DB::raw("CASE 
+                        WHEN v.MERCADO = 'NUEVOS' THEN NULL 
+                        ELSE COALESCE(c.fuente, 'IQV') 
+                    END as fuente"),
                     'v.codigoFF3',
                     'v.descripcionFF3',
                     'v.codigoATC4',
@@ -154,17 +158,7 @@ class ProductosController extends Controller
                 }
             }
 
-            // Cursor pagination
-            if ($cursor) {
-                try {
-                    $decodedCursor = json_decode(base64_decode($cursor), true);
-                    if (isset($decodedCursor['codigoPresentacion'])) {
-                        $baseQuery->where('v.codigoPresentacion', '>', $decodedCursor['codigoPresentacion']);
-                    }
-                } catch (\Exception $e) {
-                    // Cursor inválido, ignorar
-                }
-            }
+
 
             // Aplicar ordenamiento dinámico
             if ($sortField) {
@@ -194,30 +188,29 @@ class ProductosController extends Controller
                 $baseQuery->orderBy('v.codigoPresentacion', 'asc');
             }
 
-            // Obtener productos con límite +1 para verificar paginación
-            $productos = $baseQuery->limit($perPage + 1)->get();
+            // Obtener el total de registros para la paginación
+            $totalCount = $baseQuery->count();
             
-            $hasMorePages = $productos->count() > $perPage;
-            if ($hasMorePages) {
-                $productos = $productos->take($perPage);
-            }
-
-            // Generar cursor siguiente
-            $nextCursor = null;
-            if ($hasMorePages && $productos->isNotEmpty()) {
-                $lastItem = $productos->last();
-                $nextCursor = base64_encode(json_encode([
-                    'codigoPresentacion' => $lastItem->codigoPresentacion
-                ]));
-            }
+            // Obtener productos con paginación tradicional
+            $productos = $baseQuery->offset($offset)->limit($perPage)->get();
+            
+            // Calcular información de paginación
+            $totalPages = ceil($totalCount / $perPage);
+            $hasNextPage = $page < $totalPages;
+            $hasPreviousPage = $page > 1;
 
             return response()->json([
                 'success' => true,
                 'data' => $productos->toArray(),
                 'pagination' => [
-                    'next_cursor' => $nextCursor,
-                    'has_more_pages' => $hasMorePages,
-                    'has_previous_pages' => false,
+                    'current_page' => $page,
+                    'total_pages' => $totalPages,
+                    'total_count' => $totalCount,
+                    'per_page' => $perPage,
+                    'has_next_page' => $hasNextPage,
+                    'has_previous_page' => $hasPreviousPage,
+                    'from' => $offset + 1,
+                    'to' => min($offset + $perPage, $totalCount)
                 ],
                 'loaded_count' => $productos->count(),
                 'search' => [
@@ -428,6 +421,10 @@ class ProductosController extends Controller
                         })
                         ->unique()
                         ->values()
+                        ->map(function($mercado) {
+                            // Convertir RESTO a SIN ASIGNAR para mostrar en el filtro
+                            return $mercado === 'RESTO' ? 'SIN ASIGNAR' : $mercado;
+                        })
                         ->toArray();
                     
                     break;
@@ -436,16 +433,25 @@ class ProductosController extends Controller
                     $fuenteQuery = DB::connection('sqlsrv')
                         ->table('dbo.VMAE_PROD_IQVIA as v')
                         ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                        ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"));
+                        ->select(DB::raw("CASE 
+                            WHEN v.MERCADO = 'NUEVOS' THEN NULL 
+                            ELSE COALESCE(c.fuente, 'IQV') 
+                        END as fuente"));
                     
                     if ($search) {
-                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQV') LIKE ?", ["{$search}%"]);
+                        $fuenteQuery->havingRaw("CASE 
+                            WHEN v.MERCADO = 'NUEVOS' THEN NULL 
+                            ELSE COALESCE(c.fuente, 'IQV') 
+                        END LIKE ?", ["{$search}%"]);
                     }
                     
                     $results = $fuenteQuery->distinct()
                         ->orderBy('fuente')
                         ->limit($limit)
                         ->pluck('fuente')
+                        ->filter(function($fuente) {
+                            return $fuente !== null && $fuente !== '';
+                        })
                         ->toArray();
                     break;
 

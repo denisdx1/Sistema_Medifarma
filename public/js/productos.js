@@ -8,9 +8,10 @@ $(document).ready(function() {
     
 
     
-    let currentCursor = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalCount = 0;
     let isLoading = false;
-    let totalProductsLoaded = 0;
     let loadingTimer = null;
     let loadingStartTime = null;
     
@@ -68,7 +69,7 @@ $(document).ready(function() {
         checkAutoSelectMarketAndLoadProducts();
     } else {
         // Solo cargar productos si no hay autoselección
-        loadProducts();
+        loadProducts(1);
     }
 
     // Clear all filters functionality
@@ -100,11 +101,13 @@ $(document).ready(function() {
         clearSorting();
         
         // Reset pagination
-        currentCursor = null;
-        totalProductsLoaded = 0;
+        currentPage = 1;
+        
+        // Reset loading text to default
+        updateLoadingText('Cargando productos...');
         
         // Reload products
-        loadProducts();
+        loadProducts(1);
     });
 
     // Clear sorting functionality
@@ -118,18 +121,17 @@ $(document).ready(function() {
         clearSorting();
         
         // Reset pagination
-        currentCursor = null;
-        totalProductsLoaded = 0;
+        currentPage = 1;
         
         // Reload products
-        loadProducts();
+        loadProducts(1);
     });
 
     // Search functionality removed
 
     // Initialize searchable filters (for large datasets)
     function initializeSearchableFilters() {
-        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion'];
+        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion', 'mercado'];
         
         searchableFilters.forEach(filterKey => {
             const input = $(`#filter-${filterKey}`);
@@ -143,8 +145,14 @@ $(document).ready(function() {
             input.on('input', function() {
                 const query = $(this).val().trim();
                 
+                // Para el filtro de mercado, convertir "SIN ASIGNAR" a "RESTO" para el backend
+                let backendValue = query;
+                if (filterKey === 'mercado' && query === 'SIN ASIGNAR') {
+                    backendValue = 'RESTO';
+                }
+                
                 // Actualizar currentFilters inmediatamente
-                currentFilters[filterKey] = query;
+                currentFilters[filterKey] = backendValue;
                 
                 // Show/hide clear button
                 if (query.length > 0) {
@@ -193,6 +201,16 @@ $(document).ready(function() {
                 resultsDiv.removeClass('show');
                 currentFilters[filterKey] = '';
                 
+                // Reset loading text if clearing descripcionProducto filter
+                if (filterKey === 'descripcionProducto') {
+                    updateLoadingText('Cargando productos...');
+                }
+                
+                // Reset loading text if clearing mercado filter
+                if (filterKey === 'mercado') {
+                    updateLoadingText('Cargando productos...');
+                }
+                
                 applyFilters();
             });
         });
@@ -200,7 +218,7 @@ $(document).ready(function() {
 
     // Initialize normal filters (select dropdowns for small datasets)
     function initializeNormalFilters() {
-        const normalFilters = ['marcaGenerico', 'eticoPopular', 'fuente', 'mercado'];
+        const normalFilters = ['marcaGenerico', 'eticoPopular', 'fuente'];
         
         normalFilters.forEach(filterKey => {
             const select = $(`#filter-${filterKey}`);
@@ -238,6 +256,13 @@ $(document).ready(function() {
                 clearButton.addClass('hidden');
                 currentFilters[filterKey] = '';
                 
+                // Reset loading text if clearing mercado filter
+                if (filterKey === 'mercado') {
+                    updateLoadingText('Cargando productos...');
+                }
+
+     
+               
                 applyFilters();
             });
         });
@@ -366,9 +391,16 @@ $(document).ready(function() {
             const value = $(this).data('value');
             const filter = $(this).data('filter');
             
-            // Set the input value
+            // Para el filtro de mercado, convertir "SIN ASIGNAR" a "RESTO" para el backend
+            let backendValue = value;
+            if (filter === 'mercado' && value === 'SIN ASIGNAR') {
+                backendValue = 'RESTO';
+            }
+            
+            // Set the input value (mostrar el valor amigable al usuario)
             $(`#filter-${filter}`).val(value);
-            currentFilters[filter] = value;
+            // Guardar el valor para el backend (puede ser diferente al mostrado)
+            currentFilters[filter] = backendValue;
             
             // Show/hide clear button
             const clearButton = $(`#clear-filter-${filter}`);
@@ -390,8 +422,7 @@ $(document).ready(function() {
 
     function applyFilters() {
         // Reset pagination when filtering
-        currentCursor = null;
-        totalProductsLoaded = 0;
+        currentPage = 1;
         
         // Hide any existing dropdown results immediately (only product filters)
         $('.products-filters .filter-dropdown').removeClass('show');
@@ -399,9 +430,12 @@ $(document).ready(function() {
         // Actualizar contador de filtros activos
         updateActiveFiltersCounter();
         
+        // Reset loading text to default
+        updateLoadingText('Cargando productos...');
+        
         // Limpiar tabla antes de cargar nuevos productos
         const tableBody = $('#products-table-body');
-        tableBody.html('<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando productos...</td></tr>');
+        tableBody.html('');
         
         // Si ya hay una petición en curso, cancelar esta aplicación de filtros
         if (isLoading) {
@@ -409,7 +443,7 @@ $(document).ready(function() {
         }
         
         // Load products with current filters
-        loadProducts();
+        loadProducts(1);
     }
 
 
@@ -435,7 +469,7 @@ $(document).ready(function() {
 
     // Search functionality removed
 
-    function loadProducts(cursor = null, append = false) {
+    function loadProducts(page = 1, append = false) {
         if (isLoading) return;
         
         isLoading = true;
@@ -445,17 +479,16 @@ $(document).ready(function() {
         
         // Solo mostrar loading overlay para carga completa (no para "cargar más") y si no está ya visible
         if (!append && $('#loading-overlay').hasClass('hidden')) {
+            // Reset loading text to default for new loads
+            updateLoadingText('Cargando productos...');
             showLoadingState();
         }
 
         const url = `/productos/api`;
         const params = new URLSearchParams({
-            per_page: 50
+            per_page: 50,
+            page: page
         });
-
-        if (cursor) {
-            params.append('cursor', cursor);
-        }
 
         // Add sorting parameters
         if (currentSortField) {
@@ -484,19 +517,15 @@ $(document).ready(function() {
                 if (response.success) {
                     if (append) {
                         appendProductsToTable(response.data);
-                        totalProductsLoaded += response.data.length;
                     } else {
                         updateProductsTable(response.data);
-                        totalProductsLoaded = response.data.length;
                     }
                     
                     // Update pagination info
                     updatePaginationInfo(response);
                     
                     // Update total products counter
-                    updateProductsCounter(totalProductsLoaded);
-                    
-                    // Search results info removed
+                    updateProductsCounter(response.pagination.total_count);
                     
                 } else {
                     showError(response.message || 'Error al cargar productos');
@@ -565,7 +594,7 @@ $(document).ready(function() {
         const descripcionProducto = product['descripcionProducto'] || '-';
         const marcaGenerico = product['marcaGenerico'] || '-';
         const eticoPopular = product['eticoPopular'] || '-';
-        const fuente = product['fuente'] || '-';
+                        const fuente = product['fuente'] || 'Sin fuente';
         const molecula = product['molecula'] || '-';
         const descripcionFF3 = formatCodeDescription(product['codigoFF3'], product['descripcionFF3']);
         const descripcionATC4 = formatCodeDescription(product['codigoATC4'], product['descripcionATC4']);
@@ -574,6 +603,7 @@ $(document).ready(function() {
         const titleFF3 = formatCodeDescriptionPlain(product['codigoFF3'], product['descripcionFF3']);
         const titleATC4 = formatCodeDescriptionPlain(product['codigoATC4'], product['descripcionATC4']);
         const mercado = product['mercado'] || '-';
+        const mercadoDisplay = mercado === 'RESTO' ? 'SIN ASIGNAR' : mercado;
         const laboratorio = product['descripcionLaboratorio'] || '-';
         const corporacion = product['descripcionCorporacion'] || '-';
         
@@ -588,7 +618,7 @@ $(document).ready(function() {
                     <input type="checkbox" class="product-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
                            data-product-code="${product['codigoPresentacion']}"
                            data-product-name="${escapeForJs(product['descripcionPresentacion'])}"
-                           data-fuente="${product['fuente'] || 'IQV'}"
+                           data-fuente="${product['fuente'] || 'Sin fuente'}"
                            onchange="updateSelectedProducts()">
                 </td>
                 <!-- Descripción 15% -->
@@ -604,13 +634,13 @@ $(document).ready(function() {
                     </div>
                 </td>
                 <!-- Marca/Genérico 9% -->
-                <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-l-2 border-gray-300">
+                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500 border-l-2 border-gray-300">
                     <span class="text-[10px] font-medium ${getBrandClass(marcaGenerico)}">
                         ${marcaGenerico}
                     </span>
                 </td>
                 <!-- Ético/Popular 9% -->
-                <td class="w-[9%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300">
+                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300">
                     <span class="text-[10px] font-medium ${getEthicClass(eticoPopular)}">
                         ${eticoPopular}
                     </span>
@@ -651,7 +681,7 @@ $(document).ready(function() {
                     <div class="flex flex-col items-center justify-center">
                         <span class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-medium ${getMarketClass(mercado)} w-full">
                             <span class="text-center">
-                        ${mercado}
+                        ${mercadoDisplay}
                     </span>
                         </span>
                     </div>
@@ -700,7 +730,12 @@ $(document).ready(function() {
     }
 
     function getFuenteClass(fuente) {
-        switch(fuente?.toUpperCase()) {
+        // Si la fuente es null, undefined o vacía, mostrar como "Sin fuente"
+        if (!fuente || fuente === null || fuente === undefined || fuente === '') {
+            return 'bg-gray-100 text-gray-500';
+        }
+        
+        switch(fuente.toUpperCase()) {
             case 'IQV':
                 return 'bg-blue-100 text-blue-800';
             case 'IQVIA':
@@ -763,28 +798,62 @@ $(document).ready(function() {
         const paginationInfo = $('#pagination-info');
         const paginationControls = $('#pagination-controls');
         
-        if (response.pagination.has_more_pages) {
-            // Show load more button
-            paginationControls.html(`
-                <button id="load-more-btn" 
-                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary transition-colors text-sm"
-                        onclick="loadMoreProducts()">
-                    <i class="fas fa-plus mr-2"></i>
-                    Cargar más productos
+        // Actualizar variables globales
+        currentPage = response.pagination.current_page;
+        totalPages = response.pagination.total_pages;
+        totalCount = response.pagination.total_count;
+        
+        // Mostrar información de paginación
+        paginationInfo.text(`Página ${currentPage} de ${totalPages} - Mostrando ${response.pagination.from} a ${response.pagination.to} de ${totalCount} productos`);
+        
+        // Generar controles de paginación
+        let paginationHTML = '<div class="flex items-center justify-center space-x-2">';
+        
+        // Botón anterior
+        if (response.pagination.has_previous_page) {
+            paginationHTML += `
+                <button onclick="goToPage(${currentPage - 1})" 
+                        class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-chevron-left mr-1"></i>
+                    Anterior
                 </button>
-            `);
-            currentCursor = response.pagination.next_cursor;
-        } else {
-            paginationControls.html(`
-                <span class="text-sm text-gray-500">
-                    <i class="fas fa-check-circle mr-1"></i>
-                    Todos los productos cargados
-                </span>
-            `);
-            currentCursor = null;
+            `;
         }
         
-        paginationInfo.text(`Mostrando ${totalProductsLoaded} productos`);
+        // Números de página
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                paginationHTML += `
+                    <span class="px-3 py-1 text-sm bg-primary text-white rounded-md font-medium">
+                        ${i}
+                    </span>
+                `;
+            } else {
+                paginationHTML += `
+                    <button onclick="goToPage(${i})" 
+                            class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                        ${i}
+                    </button>
+                `;
+            }
+        }
+        
+        // Botón siguiente
+        if (response.pagination.has_next_page) {
+            paginationHTML += `
+                <button onclick="goToPage(${currentPage + 1})" 
+                        class="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Siguiente
+                    <i class="fas fa-chevron-right ml-1"></i>
+                </button>
+            `;
+        }
+        
+        paginationHTML += '</div>';
+        paginationControls.html(paginationHTML);
     }
 
     function updateProductsCounter(count) {
@@ -800,6 +869,11 @@ $(document).ready(function() {
         // Mostrar overlay de carga solo en la tabla
         $('#loading-overlay').removeClass('hidden');
         
+        // Reset loading text to default if not already set
+        if (!$('#loading-text').text() || $('#loading-text').text().includes('Cargando productos del mercado')) {
+            updateLoadingText('Cargando productos...');
+        }
+        
         // Start loading timer
         loadingStartTime = Date.now();
         loadingTimer = setInterval(() => {
@@ -810,7 +884,10 @@ $(document).ready(function() {
     
     function updateLoadingText(text) {
         $('#loading-text').text(text);
-        $('#loading-subtext').text('Por favor espere');
+        // Solo cambiar el subtexto si no es un mensaje específico de filtro
+        if (!text.includes('mercado') && !text.includes('marca')) {
+            $('#loading-subtext').text('Por favor espere');
+        }
     }
 
     function hideLoadingState() {
@@ -871,10 +948,10 @@ $(document).ready(function() {
 
     // Funciones del sidebar eliminadas - usando diseño original
 
-    // Global function for load more button
-    window.loadMoreProducts = function() {
-        if (currentCursor && !isLoading) {
-            loadProducts(currentCursor, true);
+    // Global function for pagination
+    window.goToPage = function(page) {
+        if (page >= 1 && page <= totalPages && !isLoading) {
+            loadProducts(page);
         }
     };
 
@@ -1063,50 +1140,37 @@ function checkAutoSelectMarketAndLoadProducts() {
         
         // Función para verificar y aplicar el filtro de mercado
         function tryApplyMarketFilter(attempts = 0) {
-            const mercadoSelect = $('#filter-mercado');
-            const totalOptions = mercadoSelect.find('option').length;
+            const mercadoInput = $('#filter-mercado');
             
-            // Verificar si la opción existe en el select
-            const optionExists = mercadoSelect.find(`option[value="${autoSelectMarket}"]`).length > 0;
-            
-            if (optionExists) {
-                // Seleccionar el mercado en el filtro
-                mercadoSelect.val(autoSelectMarket);
-                
-                // Actualizar el filtro interno
-                currentFilters.mercado = autoSelectMarket;
-                
-                // Resaltar visualmente el campo de mercado para que el usuario vea que está filtrado
-                mercadoSelect.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
-                
-                // Quitar el resaltado después de 3 segundos
-                setTimeout(() => {
-                    mercadoSelect.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
-                }, 3000);
-                
-                // Cargar productos directamente con el filtro aplicado (evitando doble carga)
-                loadProducts();
-                
-                return;
-            } 
-            
-            // Si no encontró la opción y no ha hecho muchos intentos, esperar y volver a intentar
-            if (attempts < 5 && totalOptions <= 1) { // Solo opciones básicas cargadas
-                setTimeout(() => tryApplyMarketFilter(attempts + 1), 1000);
-            } else if (attempts >= 5) {
-                // Si no encontró el mercado después de varios intentos, cargar productos sin filtro
-                loadProducts();
+            // Para el filtro de mercado, convertir "RESTO" a "SIN ASIGNAR" para mostrar al usuario
+            let displayValue = autoSelectMarket;
+            if (autoSelectMarket === 'RESTO') {
+                displayValue = 'SIN ASIGNAR';
             }
+            
+            // Establecer el valor en el input de mercado
+            mercadoInput.val(displayValue);
+            
+            // Actualizar el filtro interno con el valor real para el backend
+            currentFilters.mercado = autoSelectMarket;
+            
+            // Mostrar botón de limpiar
+            $('#clear-filter-mercado').removeClass('hidden');
+            
+            // Resaltar visualmente el campo de mercado para que el usuario vea que está filtrado
+            mercadoInput.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            
+            // Quitar el resaltado después de 3 segundos
+            setTimeout(() => {
+                mercadoInput.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            }, 3000);
+            
+            // Cargar productos directamente con el filtro aplicado
+            loadProducts(1);
         }
         
-        // Cargar opciones de mercado y luego aplicar el filtro
-        loadNormalFilterOptions('mercado').then(() => {
-            // Aplicar el filtro inmediatamente
-            tryApplyMarketFilter();
-        }).catch(() => {
-            // Si falla cargar las opciones, cargar productos sin filtro
-            loadProducts();
-        });
+        // Aplicar el filtro inmediatamente
+        tryApplyMarketFilter();
     } else if (autoSelectBrand) {
         // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
         sessionStorage.removeItem('autoSelectBrand');
@@ -1133,14 +1197,14 @@ function checkAutoSelectMarketAndLoadProducts() {
             }, 3000);
             
                             // Cargar productos directamente con el filtro aplicado (evitando doble carga)
-                loadProducts();
+                loadProducts(1);
         }
         
         // Aplicar el filtro de marca inmediatamente
         tryApplyBrandFilter();
     } else {
         // Si no hay autoselección, cargar productos normalmente
-        loadProducts();
+        loadProducts(1);
     }
 }
 
@@ -1175,11 +1239,10 @@ function checkAutoSelectMarketAndLoadProducts() {
         updateSortingInfo();
 
         // Reset pagination
-        currentCursor = null;
-        totalProductsLoaded = 0;
+        currentPage = 1;
 
         // Reload products with new sorting
-        loadProducts();
+        loadProducts(1);
     }
 
     // Update sort icons

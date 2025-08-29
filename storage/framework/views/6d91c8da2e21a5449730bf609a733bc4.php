@@ -129,8 +129,7 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
-    <!-- Inactivity Handler -->
-    <script src="<?php echo e(asset('js/inactivity-handler.js')); ?>"></script>
+
     
     <script>
         // Toast notification function

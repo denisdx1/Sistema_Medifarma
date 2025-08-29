@@ -27,14 +27,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 });
 
-// Rutas de logout - Múltiples métodos para evitar problemas
+// Rutas de logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
-Route::get('/logout-now', [AuthController::class, 'logout'])->name('logout.now');
-Route::get('/auto-logout', [AuthController::class, 'logout'])->name('auto-logout');
 
 
-Route::middleware(['auth', 'inactivity'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     
     Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto', 'password.change'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');
