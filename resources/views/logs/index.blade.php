@@ -10,20 +10,20 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-xl font-bold text-gray-900">
-                        <i class="fas fa-clipboard-list text-red-600 mr-2"></i>
+                        <i class="fas fa-clipboard-list text-primary mr-2"></i>
                         Logs de Mercados
                     </h1>
                     <p class="text-xs text-gray-600 mt-1">Sistema de auditoría - Solo administradores</p>
                 </div>
                 <div class="flex space-x-2">
                     <button onclick="exportLogs()" 
-                            class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-green-600 to-green-800 border border-transparent rounded-md shadow-sm text-xs font-medium text-white hover:from-green-700 hover:to-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                            class="inline-flex items-center px-3 py-2 bg-primary border-transparent rounded-md shadow-sm text-xs font-medium text-white hover:from-primary hover:to-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
                         <i class="fas fa-download mr-1"></i>
                         Exportar CSV
                     </button>
                     
                     <button onclick="location.reload()" 
-                            class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-red-600 to-red-800 border border-transparent rounded-md shadow-sm text-xs font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                            class="inline-flex items-center px-3 py-2 bg-primary border border-transparent rounded-md shadow-sm text-xs font-medium text-white hover:from-secondary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
                         <i class="fas fa-sync-alt mr-1"></i>
                         Actualizar
                     </button>
@@ -41,9 +41,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-gray-600">Total Registros</p>
-                        <p class="text-lg font-bold text-red-600">{{ number_format($totalRecords) }}</p>
+                        <p class="text-lg font-bold text-primary">{{ number_format($totalRecords) }}</p>
                     </div>
-                    <div class="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-md">
+                    <div class="p-2 bg-primary rounded-md">
                         <i class="fas fa-list-alt text-white text-sm"></i>
                     </div>
                 </div>
@@ -54,9 +54,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-gray-600">Usuarios Activos</p>
-                        <p class="text-lg font-bold text-blue-600">{{ $usuarios->count() }}</p>
+                        <p class="text-lg font-bold text-secondary">{{ $usuarios->count() }}</p>
                     </div>
-                    <div class="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-md">
+                    <div class="p-2 bg-primary rounded-md">
                         <i class="fas fa-users text-white text-sm"></i>
                     </div>
                 </div>
@@ -67,9 +67,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-gray-600">Tipos de Acción</p>
-                        <p class="text-lg font-bold text-green-600">{{ $acciones->count() }}</p>
+                        <p class="text-lg font-bold text-secondary">{{ $acciones->count() }}</p>
                     </div>
-                    <div class="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-md">
+                    <div class="p-2 bg-primary rounded-md">
                         <i class="fas fa-tasks text-white text-sm"></i>
                     </div>
                 </div>
@@ -80,9 +80,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs font-medium text-gray-600">Página Actual</p>
-                        <p class="text-lg font-bold text-purple-600">{{ $page }} de {{ $totalPages }}</p>
+                        <p class="text-lg font-bold text-primary">{{ $page }} de {{ $totalPages }}</p>
                     </div>
-                    <div class="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-md">
+                    <div class="p-2 bg-primary rounded-md">
                         <i class="fas fa-file-alt text-white text-sm"></i>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
             <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
                 <div class="flex items-center justify-between">
                     <h3 class="text-sm font-semibold text-gray-900">
-                        <i class="fas fa-filter text-red-500 mr-2"></i>
+                        <i class="fas fa-filter text-primary mr-2"></i>
                         Filtros de Búsqueda
                     </h3>
                     <div class="flex items-center space-x-2">
@@ -229,7 +229,7 @@
                     <!-- Botones -->
                     <div class="flex items-end space-x-2">
                         <button type="submit" 
-                                class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-800 border border-transparent rounded-lg shadow-sm text-xs font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                                class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-primary border border-transparent rounded-lg shadow-sm text-xs font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
                             <i class="fas fa-search mr-2"></i>
                             Aplicar Filtros
                         </button>

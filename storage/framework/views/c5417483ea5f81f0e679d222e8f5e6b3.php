@@ -8,7 +8,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        <i class="fas fa-users text-red-600 mr-2"></i>
+                        <i class="fas fa-users text-primary mr-2"></i>
                         Gestión de Usuarios
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">Administra usuarios del sistema y sus permisos</p>
@@ -16,7 +16,7 @@
                 <div class="flex space-x-3">
                     <button type="button" 
                             onclick="abrirModalCrear()"
-                            class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-800 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-red-700 hover:to-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                            class="inline-flex items-center px-4 py-2 bg-primary border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-secondary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
                         <i class="fas fa-plus mr-2"></i>
                         Nuevo Usuario
                     </button>
@@ -35,9 +35,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Total Usuarios</p>
-                        <p class="text-2xl font-bold text-blue-600"><?php echo e($estadisticas['total']); ?></p>
+                        <p class="text-2xl font-bold text-primary"><?php echo e($estadisticas['total']); ?></p>
                     </div>
-                    <div class="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                    <div class="p-3 bg-primary rounded-lg">
                         <i class="fas fa-users text-white text-xl"></i>
                     </div>
                 </div>
@@ -48,9 +48,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Usuarios Activos</p>
-                        <p class="text-2xl font-bold text-green-600"><?php echo e($estadisticas['activos']); ?></p>
+                        <p class="text-2xl font-bold text-secondary"><?php echo e($estadisticas['activos']); ?></p>
                     </div>
-                    <div class="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg">
+                    <div class="p-3 bg-primary rounded-lg">
                         <i class="fas fa-user-check text-white text-xl"></i>
                     </div>
                 </div>
@@ -61,9 +61,9 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600">Administradores</p>
-                        <p class="text-2xl font-bold text-red-600"><?php echo e($estadisticas['administradores']); ?></p>
+                        <p class="text-2xl font-bold text-primary"><?php echo e($estadisticas['administradores']); ?></p>
                     </div>
-                    <div class="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg">
+                    <div class="p-3 bg-primary rounded-lg">
                         <i class="fas fa-user-shield text-white text-xl"></i>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
                         <p class="text-sm font-medium text-gray-600">Usuarios Inactivos</p>
                         <p class="text-2xl font-bold text-gray-600"><?php echo e($estadisticas['inactivos']); ?></p>
                     </div>
-                    <div class="p-3 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg">
+                    <div class="p-3 bg-primary rounded-lg">
                         <i class="fas fa-user-times text-white text-xl"></i>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
         <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-8">
             <div class="p-6 border-b border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-900">
-                    <i class="fas fa-filter text-blue-500 mr-2"></i>
+                    <i class="fas fa-filter text-primary mr-2"></i>
                     Filtros de Búsqueda
                 </h3>
             </div>
@@ -331,7 +331,7 @@
                                         <h3 class="text-lg font-medium text-gray-900 mb-2">No hay usuarios</h3>
                                         <p class="text-gray-500">No se encontraron usuarios con los filtros seleccionados.</p>
                                         <button onclick="abrirModalCrear()" 
-                                                class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
+                                                class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors duration-200">
                                             <i class="fas fa-plus mr-2"></i>
                                             Crear primer usuario
                                         </button>
@@ -358,7 +358,7 @@
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between p-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">
-                        <i class="fas fa-user-plus text-red-600 mr-2"></i>
+                        <i class="fas fa-user-plus text-primary mr-2"></i>
                         Crear Nuevo Usuario
                     </h3>
                     <button type="button" onclick="cerrarModalCrear()" class="text-gray-400 hover:text-gray-600">
@@ -373,7 +373,7 @@
                         <!-- Nombre Completo -->
                         <div>
                             <label for="crear_usuario" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-user text-red-500 mr-1"></i>
+                                <i class="fas fa-user text-primary mr-1"></i>
                                 Nombre Completo *
                             </label>
                             <input type="text" 
@@ -381,7 +381,7 @@
                                    name="usuario" 
                                    required
                                    maxlength="255"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
                                    placeholder="Ej: Denis Ruiz">
                             <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_usuario"></div>
                         </div>
@@ -389,7 +389,7 @@
                         <!-- Nombre de Usuario/Login -->
                         <div>
                             <label for="crear_login" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-user-circle text-red-500 mr-1"></i>
+                                <i class="fas fa-user-circle text-primary mr-1"></i>
                                 Nombre de Usuario *
                             </label>
                             <input type="text" 
@@ -397,7 +397,7 @@
                                    name="login" 
                                    required
                                    maxlength="50"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
                                    placeholder="Ej: druizp">
                             <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_login"></div>
                         </div>
@@ -405,14 +405,14 @@
                         <!-- Email (para futuro uso) -->
                         <div>
                             <label for="crear_email" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-envelope text-red-500 mr-1"></i>
+                                <i class="fas fa-envelope text-primary mr-1"></i>
                                 Email (Opcional)
                             </label>
                             <input type="email" 
                                    id="crear_email" 
                                    name="email" 
                                    maxlength="255"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200"
                                    placeholder="ejemplo@medifarma.com">
                             <div class="text-red-500 text-sm mt-1 hidden" id="error_crear_email"></div>
                         </div>
@@ -420,7 +420,7 @@
                         <!-- Contraseña -->
                         <div>
                             <label for="crear_password" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-lock text-red-500 mr-1"></i>
+                                <i class="fas fa-lock text-primary mr-1"></i>
                                 Contraseña Temporal *
                             </label>
                             <div class="relative">
@@ -429,7 +429,7 @@
                                        name="password" 
                                        required
                                        minlength="6"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200 pr-10"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 pr-10"
                                        placeholder="Mínimo 6 caracteres">
                                 <button type="button" onclick="togglePassword('crear_password')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
@@ -441,7 +441,7 @@
                         <!-- Confirmar Contraseña -->
                         <div>
                             <label for="crear_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-lock text-red-500 mr-1"></i>
+                                <i class="fas fa-lock text-primary mr-1"></i>
                                 Confirmar Contraseña *
                             </label>
                             <div class="relative">
@@ -450,7 +450,7 @@
                                        name="password_confirmation" 
                                        required
                                        minlength="6"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200 pr-10"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 pr-10"
                                        placeholder="Repita la contraseña">
                                 <button type="button" onclick="togglePassword('crear_password_confirmation')" class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="fas fa-eye text-gray-400 hover:text-gray-600"></i>
@@ -462,13 +462,13 @@
                         <!-- Rol -->
                         <div>
                             <label for="crear_idRol" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-user-tag text-red-500 mr-1"></i>
+                                <i class="fas fa-user-tag text-primary mr-1"></i>
                                 Rol *
                             </label>
                             <select id="crear_idRol" 
                                     name="idRol" 
                                     required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200">
                                 <option value="">Seleccione un rol</option>
                                 <?php $__currentLoopData = $roles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idRol => $nombreRol): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($idRol); ?>"><?php echo e($nombreRol); ?></option>
@@ -480,7 +480,7 @@
                         <!-- Franquicias -->
                         <div class="md:col-span-2">
                             <label for="crear_idFranquicias" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building text-red-500 mr-1"></i>
+                                <i class="fas fa-building text-primary mr-1"></i>
                                 Franquicias * <span class="text-xs text-gray-500">(Puede seleccionar múltiples)</span>
                             </label>
                             <div class="border border-gray-300 rounded-lg max-h-40 overflow-y-auto bg-white">
@@ -489,7 +489,7 @@
                                         <input type="checkbox" 
                                                name="idFranquicias[]" 
                                                value="<?php echo e($idFranquicia); ?>"
-                                               class="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                                               class="mr-3 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
                                         <span class="text-sm text-gray-700"><?php echo e($nombreFranquicia); ?></span>
                                     </label>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -503,10 +503,10 @@
                     </div>
 
                     <!-- Info Message -->
-                    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="mt-6 p-4 bg-secondary-lighter border border-secondary-muted rounded-lg">
                         <div class="flex items-start">
-                            <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
-                            <div class="text-sm text-blue-700">
+                            <i class="fas fa-info-circle text-primary mt-0.5 mr-2"></i>
+                            <div class="text-sm text-primary">
                                 <strong>Nota importante:</strong> El usuario recibirá una contraseña temporal y será obligado a cambiarla en su primer inicio de sesión.
                             </div>
                         </div>
@@ -522,7 +522,7 @@
                         </button>
                         <button type="submit" 
                                 id="btnCrearUsuario"
-                                class="px-4 py-2 bg-gradient-to-r from-red-600 to-blue-600 text-white rounded-lg hover:from-red-700 hover:to-blue-700 transition-all duration-200">
+                                class="px-4 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-secondary hover:to-primary transition-all duration-200">
                             <i class="fas fa-save mr-2"></i>
                             Crear Usuario
                         </button>

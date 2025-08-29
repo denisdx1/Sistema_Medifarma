@@ -60,8 +60,6 @@ class MarketManagementController extends Controller
         // Eliminar duplicados y elementos vacíos
         $posiblesNombres = array_unique(array_filter($posiblesNombres));
 
-        // \Log::info('Filtrando por gerente: ' . $user->usuario . ' - Variaciones: ' . implode(', ', $posiblesNombres));
-
         // FILTRO SIMPLE: Solo por Gerente_Producto (sin franquicias)
         return $query->whereIn('v.Gerente_Producto', $posiblesNombres)
                      ->whereNotNull('v.Gerente_Producto');
@@ -194,14 +192,6 @@ class MarketManagementController extends Controller
 
             // Enviar notificación por email (con nota si existe)
             try {
-                \Log::info('DEBUG: Iniciando envío de notificación de actualización de mercado', [
-                    'usuario' => Auth::user()->usuario ?? 'Unknown',
-                    'user_id' => Auth::user()->idUsuario ?? 'Unknown',
-                    'mercado_anterior' => $existingMarket->mercado,
-                    'mercado_nuevo' => $marketName,
-                    'nota' => $marketNote
-                ]);
-                
                 $notificationService = new NotificationService();
                 $notificationService->notifyMarketUpdate(
                     $existingMarket->mercado, // nombre anterior
@@ -209,11 +199,8 @@ class MarketManagementController extends Controller
                     Auth::user(),
                     $marketNote               // nota del usuario
                 );
-                
-                \Log::info('DEBUG: Notificación de actualización completada exitosamente');
             } catch (\Exception $e) {
-                // Log del error pero no interrumpir el flujo
-                \Log::error('Error enviando notificación de actualización de mercado: ' . $e->getMessage());
+                // Error en notificación pero no interrumpir el flujo
             }
             
             DB::commit();

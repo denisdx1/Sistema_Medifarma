@@ -12,35 +12,35 @@
                 <div class="hidden md:ml-8 md:flex md:space-x-6">
                     <!-- Market Management -->
                     <a href="<?php echo e(route('market-management.index')); ?>" 
-                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('market-management.*') ? 'text-red-700 bg-red-50 border-b-2 border-red-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                        <i class="fas fa-clipboard-list mr-2 <?php echo e(request()->routeIs('market-management.*') ? 'text-red-600' : 'text-gray-400'); ?>"></i>
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                        <i class="fas fa-clipboard-list mr-2 <?php echo e(request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                         Marcas
                     </a>
                     
                     <!-- Productos Database -->
                     <a href="<?php echo e(route('productos.index')); ?>" 
-                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('productos.*') ? 'text-green-700 bg-green-50 border-b-2 border-green-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                        <i class="fas fa-database mr-2 <?php echo e(request()->routeIs('productos.*') ? 'text-green-600' : 'text-gray-400'); ?>"></i>
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                        <i class="fas fa-database mr-2 <?php echo e(request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                         Base de Productos
                     </a>
                     
                     <!-- Admin Section - Solo para administradores -->
                     <?php if(Auth::user()->isAdmin()): ?>
                         <a href="<?php echo e(route('usuarios.index')); ?>" 
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('usuarios.*') ? 'text-blue-700 bg-blue-50 border-b-2 border-blue-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                            <i class="fas fa-users mr-2 <?php echo e(request()->routeIs('usuarios.*') ? 'text-blue-600' : 'text-gray-400'); ?>"></i>
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                            <i class="fas fa-users mr-2 <?php echo e(request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                             Gestión Usuarios
-                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary">
                                 <i class="fas fa-shield-alt mr-1"></i>
                                 Admin
                             </span>
                         </a>
                         
                         <a href="<?php echo e(route('logs.index')); ?>" 
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('logs.*') ? 'text-purple-700 bg-purple-50 border-b-2 border-purple-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                            <i class="fas fa-clipboard-list mr-2 <?php echo e(request()->routeIs('logs.*') ? 'text-purple-600' : 'text-gray-400'); ?>"></i>
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 <?php echo e(request()->routeIs('logs.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                            <i class="fas fa-clipboard-list mr-2 <?php echo e(request()->routeIs('logs.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                             Logs de Sistema
-                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary">
                                 <i class="fas fa-eye mr-1"></i>
                                 Audit
                             </span>
@@ -57,12 +57,12 @@
                         <div class="text-sm font-medium text-gray-900"><?php echo e(Auth::user()->usuario); ?></div>
                         <div class="text-xs text-gray-500">
                             <?php if(Auth::user()->isAdmin()): ?>
-                                <span class="text-red-600 font-medium">
+                                <span class="text-primary font-medium">
                                     <i class="fas fa-shield-alt mr-1"></i>
                                     Administrador
                                 </span>
                             <?php elseif(Auth::user()->isGerenteProducto()): ?>
-                                <span class="text-green-600 font-medium">
+                                <span class="text-secondary font-medium">
                                     <i class="fas fa-user-tie mr-1"></i>
                                     Gerente Producto
                                 </span>
@@ -77,7 +77,7 @@
                 
                 <!-- User Avatar (Mobile) -->
                 <div class="md:hidden flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-sm">
+                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
                         <?php echo e(substr(Auth::user()->usuario, 0, 1)); ?>
 
                     </div>
@@ -85,9 +85,9 @@
                         <div class="text-xs font-medium text-gray-900 truncate max-w-20"><?php echo e(Auth::user()->usuario); ?></div>
                         <div class="text-xs text-gray-500">
                             <?php if(Auth::user()->isAdmin()): ?>
-                                <span class="text-red-600 font-medium">Admin</span>
+                                <span class="text-primary font-medium">Admin</span>
                             <?php elseif(Auth::user()->isGerenteProducto()): ?>
-                                <span class="text-green-600 font-medium">Gerente</span>
+                                <span class="text-secondary font-medium">Gerente</span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -96,7 +96,7 @@
                 <!-- Logout Button -->
                 <form method="POST" action="<?php echo e(route('logout')); ?>" class="inline">
                     <?php echo csrf_field(); ?>
-                    <button type="submit" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-gray-50 rounded-md transition-colors duration-200">
+                    <button type="submit" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
                         <i class="fas fa-sign-out-alt sm:mr-2"></i>
                         <span class="hidden sm:inline">Salir</span>
                     </button>
@@ -114,8 +114,8 @@
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <!-- Market Management -->
                 <a href="<?php echo e(route('market-management.index')); ?>" 
-                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('market-management.*') ? 'text-red-700 bg-red-50 border-l-4 border-red-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                    <i class="fas fa-clipboard-list mr-3 text-lg <?php echo e(request()->routeIs('market-management.*') ? 'text-red-600' : 'text-gray-400'); ?>"></i>
+                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                    <i class="fas fa-clipboard-list mr-3 text-lg <?php echo e(request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                     <div>
                         <div class="font-medium">Marcas</div>
                         <div class="text-xs text-gray-500">Gestión de marcas</div>
@@ -124,8 +124,8 @@
                 
                 <!-- Productos Database -->
                 <a href="<?php echo e(route('productos.index')); ?>" 
-                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('productos.*') ? 'text-green-700 bg-green-50 border-l-4 border-green-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                    <i class="fas fa-database mr-3 text-lg <?php echo e(request()->routeIs('productos.*') ? 'text-green-600' : 'text-gray-400'); ?>"></i>
+                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                    <i class="fas fa-database mr-3 text-lg <?php echo e(request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                     <div>
                         <div class="font-medium">Base de Productos</div>
                         <div class="text-xs text-gray-500">Catálogo completo</div>
@@ -141,12 +141,12 @@
                         </div>
                         
                         <a href="<?php echo e(route('usuarios.index')); ?>" 
-                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('usuarios.*') ? 'text-blue-700 bg-blue-50 border-l-4 border-blue-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                            <i class="fas fa-users mr-3 text-lg <?php echo e(request()->routeIs('usuarios.*') ? 'text-blue-600' : 'text-gray-400'); ?>"></i>
+                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                            <i class="fas fa-users mr-3 text-lg <?php echo e(request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                             <div>
                                 <div class="font-medium">Gestión Usuarios</div>
                                 <div class="text-xs text-gray-500">Administrar usuarios</div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary mt-1">
                                     <i class="fas fa-shield-alt mr-1"></i>
                                     Admin
                                 </span>
@@ -154,12 +154,12 @@
                         </a>
                         
                         <a href="<?php echo e(route('logs.index')); ?>" 
-                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('logs.*') ? 'text-purple-700 bg-purple-50 border-l-4 border-purple-500' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'); ?>">
-                            <i class="fas fa-clipboard-list mr-3 text-lg <?php echo e(request()->routeIs('logs.*') ? 'text-purple-600' : 'text-gray-400'); ?>"></i>
+                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 <?php echo e(request()->routeIs('logs.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter'); ?>">
+                            <i class="fas fa-clipboard-list mr-3 text-lg <?php echo e(request()->routeIs('logs.*') ? 'text-primary' : 'text-gray-400'); ?>"></i>
                             <div>
                                 <div class="font-medium">Logs de Sistema</div>
                                 <div class="text-xs text-gray-500">Auditoría del sistema</div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary mt-1">
                                     <i class="fas fa-eye mr-1"></i>
                                     Audit
                                 </span>
@@ -170,9 +170,9 @@
                 
                 <!-- User info mobile -->
                 <div class="border-t border-gray-200 mt-3 pt-3">
-                    <div class="px-3 py-2 bg-gray-50 rounded-lg">
+                    <div class="px-3 py-2 bg-secondary-lighter rounded-lg">
                         <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center font-bold text-lg mr-3">
+                            <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg mr-3">
                                 <?php echo e(substr(Auth::user()->usuario, 0, 1)); ?>
 
                             </div>
@@ -180,12 +180,12 @@
                                 <div class="text-base font-medium text-gray-900"><?php echo e(Auth::user()->usuario); ?></div>
                                 <div class="text-sm text-gray-500">
                                     <?php if(Auth::user()->isAdmin()): ?>
-                                        <span class="text-red-600 font-medium">
+                                        <span class="text-primary font-medium">
                                             <i class="fas fa-shield-alt mr-1"></i>
                                             Administrador
                                         </span>
                                     <?php elseif(Auth::user()->isGerenteProducto()): ?>
-                                        <span class="text-green-600 font-medium">
+                                        <span class="text-secondary font-medium">
                                             <i class="fas fa-user-tie mr-1"></i>
                                             Gerente Producto
                                         </span>

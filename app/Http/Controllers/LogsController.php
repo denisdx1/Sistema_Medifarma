@@ -143,11 +143,6 @@ class LogsController extends Controller
             ));
 
         } catch (\Exception $e) {
-            \Log::error('Error al cargar logs de mercado', [
-                'error' => $e->getMessage(),
-                'user' => Auth::user()->usuario
-            ]);
-
             return back()->with('error', 'Error al cargar los logs: ' . $e->getMessage());
         }
     }
@@ -245,11 +240,6 @@ class LogsController extends Controller
             return response()->stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            \Log::error('Error al exportar logs', [
-                'error' => $e->getMessage(),
-                'user' => Auth::user()->usuario
-            ]);
-
             return back()->with('error', 'Error al exportar logs: ' . $e->getMessage());
         }
     }
@@ -306,11 +296,6 @@ class LogsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error al obtener estadísticas de logs', [
-                'error' => $e->getMessage(),
-                'user' => Auth::user()->usuario
-            ]);
-
             return response()->json(['error' => 'Error al obtener estadísticas'], 500);
         }
     }

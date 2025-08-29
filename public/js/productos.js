@@ -31,6 +31,10 @@ $(document).ready(function() {
     };
     let filterTimeout = null;
 
+    // Sorting variables
+    let currentSortField = null;
+    let currentSortDirection = 'asc'; // 'asc' or 'desc'
+
     // Search functionality removed
     
     // Initialize filter functionality
@@ -38,6 +42,9 @@ $(document).ready(function() {
     
     // Initialize normal filters (select dropdowns)
     initializeNormalFilters();
+    
+    // Initialize sorting functionality
+    initializeSorting();
     
     // Sync filter state on page load
     syncFilterButtonsState();
@@ -88,6 +95,27 @@ $(document).ready(function() {
         });
         
         // Search functionality removed
+        
+        // Clear sorting
+        clearSorting();
+        
+        // Reset pagination
+        currentCursor = null;
+        totalProductsLoaded = 0;
+        
+        // Reload products
+        loadProducts();
+    });
+
+    // Clear sorting functionality
+    $('#clear-sorting').on('click', function() {
+        // Prevent multiple clicks during loading
+        if (isLoading) {
+            return;
+        }
+        
+        // Clear sorting
+        clearSorting();
         
         // Reset pagination
         currentCursor = null;
@@ -429,6 +457,12 @@ $(document).ready(function() {
             params.append('cursor', cursor);
         }
 
+        // Add sorting parameters
+        if (currentSortField) {
+            params.append('sort_field', currentSortField);
+            params.append('sort_direction', currentSortDirection);
+        }
+
         // Search functionality removed
 
         // Add filter parameters
@@ -541,10 +575,11 @@ $(document).ready(function() {
         const titleATC4 = formatCodeDescriptionPlain(product['codigoATC4'], product['descripcionATC4']);
         const mercado = product['mercado'] || '-';
         const laboratorio = product['descripcionLaboratorio'] || '-';
+        const corporacion = product['descripcionCorporacion'] || '-';
         
-        // Determinar si es Medifarma para resaltar toda la fila
-        const isMedifarma = laboratorio && laboratorio.toUpperCase().includes('MEDIFARMA');
-        const rowClass = isMedifarma ? 'hover:bg-red-50 divide-x divide-gray-200 bg-red-25' : 'hover:bg-gray-50 divide-x divide-gray-200';
+        // Determinar si es Medifarma Corp para resaltar toda la fila
+        const isMedifarmaCorp = corporacion && corporacion.toUpperCase().includes('MEDIFARMA CORP');
+        const rowClass = isMedifarmaCorp ? 'hover:bg-medifarma-light divide-x divide-gray-200 bg-medifarma-bg' : 'hover:bg-gray-50 divide-x divide-gray-200';
         
         return `
             <tr class="${rowClass}" data-product-code="${product['codigoPresentacion']}">
@@ -563,7 +598,7 @@ $(document).ready(function() {
                     </div>
                 </td>
                 <!-- Producto 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 product-cell">
+                <td class="w-[7%] px-2 py-1 text-[10px] text-gray-500 product-cell">
                     <div class="leading-tight whitespace-normal break-words text-left">
                         ${descripcionProducto}
                     </div>
@@ -587,27 +622,28 @@ $(document).ready(function() {
                     </div>
                 </td>
                 <!-- FF3 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
+                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionFF3}
                     </div>
                 </td>
                 <!-- ATC4 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
+                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500">
                     <div class="whitespace-normal break-words">
                         ${descripcionATC4}
                     </div>
                 </td>
-                <!-- Laboratorio 11% -->
-                <td class="w-[11%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}">
-                    <div class="whitespace-normal break-words">
-                        ${laboratorio}
-                    </div>
-                </td>
+                
                 <!-- Corporación 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] text-gray-500">
+                <td class="w-[9%] px-2 py-1 text-[10px] ${getCorporacionClass(product['descripcionCorporacion'])}">
                     <div class="whitespace-normal break-words">
                         ${product['descripcionCorporacion'] || '-'}
+                    </div>
+                </td>
+                <!-- Laboratorio 11% -->
+                <td class="w-[9%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}">
+                    <div class="whitespace-normal break-words">
+                        ${laboratorio}
                     </div>
                 </td>
                 <!-- Mercado 10% -->
@@ -685,8 +721,13 @@ $(document).ready(function() {
     }
 
     function getLaboratorioClass(laboratorio) {
-        if (laboratorio && laboratorio.toUpperCase().includes('MEDIFARMA')) {
-            return 'medifarma-lab text-red-700 font-semibold';
+        // Esta función ya no se usa para resaltar Medifarma, pero la mantenemos por compatibilidad
+        return 'text-gray-500';
+    }
+
+    function getCorporacionClass(corporacion) {
+        if (corporacion && corporacion.toUpperCase().includes('MEDIFARMA CORP')) {
+            return 'medifarma-corp text-medifarma font-semibold';
         } else {
             return 'text-gray-500';
         }
@@ -726,7 +767,7 @@ $(document).ready(function() {
             // Show load more button
             paginationControls.html(`
                 <button id="load-more-btn" 
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-secondary transition-colors text-sm"
                         onclick="loadMoreProducts()">
                     <i class="fas fa-plus mr-2"></i>
                     Cargar más productos
@@ -756,6 +797,7 @@ $(document).ready(function() {
         // Ocultar solo los dropdowns de filtros de productos
         $('.products-filters .filter-dropdown').removeClass('show');
         
+        // Mostrar overlay de carga solo en la tabla
         $('#loading-overlay').removeClass('hidden');
         
         // Start loading timer
@@ -872,69 +914,12 @@ $(document).ready(function() {
     };
 
     // Función global para quitar producto del mercado
-    window.removeProductFromMarket = function(){
-        if (!window.currentProductCode) {
-            return;
-        }
-        // Abrir modal de confirmación final
-        document.getElementById('final-confirmation-modal').classList.remove('hidden');
-    };
+    // Implementada en productos-actions.js
 
     // Funciones para Modal de Cambiar Mercado
-    window.openChangeMarketModal = function(productCode, productName) {
-        const modal = document.getElementById('change-market-modal');
-        
-        if (!modal) {
-            return;
-        }
-        
-        window.currentProductCode = productCode;
-        window.currentProductName = productName;
-        
-        const nameElement = document.getElementById('change-product-name');
-        const codeElement = document.getElementById('change-product-code');
-        const currentMarketElement = document.getElementById('current-market-name');
-        
-        if (nameElement) nameElement.textContent = productName;
-        if (codeElement) codeElement.textContent = productCode;
-        
-        // Buscar el mercado actual del producto en la tabla
-        const productRow = document.querySelector(`tr[data-product-code="${productCode}"]`);
-        if (productRow && currentMarketElement) {
-            const marketCell = productRow.querySelector('.market-cell span');
-            const currentMarket = marketCell ? marketCell.textContent.trim() : 'RESTO';
-            currentMarketElement.textContent = currentMarket;
-        }
-        
-        // Limpiar búsqueda y selección previa
-        const searchInput = document.getElementById('market-search-input');
-        const selectedDisplay = document.getElementById('selected-market-display');
-        const selectedMarketId = document.getElementById('selected-market-id');
-        
-        if (searchInput) searchInput.value = '';
-        if (selectedDisplay) selectedDisplay.classList.add('hidden');
-        if (selectedMarketId) selectedMarketId.value = '';
-        
-        // Limpiar el campo de nota
-        const noteElement = document.getElementById('change-market-note');
-        if (noteElement) noteElement.value = '';
-        
-        // Configurar búsqueda y cargar mercados
-        if (typeof setupMarketSearch === 'function') {
-            setupMarketSearch();
-        }
-        if (typeof loadAvailableMarkets === 'function') {
-            loadAvailableMarkets();
-        }
-        
-        modal.classList.remove('hidden');
-    };
+    // Implementadas en productos-actions.js
 
-    window.closeChangeMarketModal = function() {
-        document.getElementById('change-market-modal').classList.add('hidden');
-        window.currentProductCode = null;
-        window.currentProductName = null;
-    };
+    // Funciones de modales - implementadas en productos-actions.js
 
 
 
@@ -1064,6 +1049,9 @@ $(document).ready(function() {
         document.getElementById('select-all-products').indeterminate = false;
     };
 
+    // ===== FUNCIONES PARA MANEJO DE MERCADOS =====
+    // Implementadas en productos-actions.js
+
     // Función para verificar si hay un mercado o marca para seleccionar automáticamente y cargar productos
 function checkAutoSelectMarketAndLoadProducts() {
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
@@ -1155,4 +1143,102 @@ function checkAutoSelectMarketAndLoadProducts() {
         loadProducts();
     }
 }
+
+    // Initialize sorting functionality
+    function initializeSorting() {
+        // Add click event listeners to sortable headers
+        $('.sortable-header').on('click', function() {
+            const sortField = $(this).data('sort');
+            handleSortClick(sortField);
+        });
+    }
+
+    // Handle sort header click
+    function handleSortClick(sortField) {
+        // Prevent sorting if loading
+        if (isLoading) {
+            return;
+        }
+
+        // Toggle sort direction if same field, otherwise set to asc
+        if (currentSortField === sortField) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortField = sortField;
+            currentSortDirection = 'asc';
+        }
+
+        // Update sort icons
+        updateSortIcons(sortField, currentSortDirection);
+
+        // Update sorting info
+        updateSortingInfo();
+
+        // Reset pagination
+        currentCursor = null;
+        totalProductsLoaded = 0;
+
+        // Reload products with new sorting
+        loadProducts();
+    }
+
+    // Update sort icons
+    function updateSortIcons(activeField, direction) {
+        // Reset all sort icons and remove active class
+        $('.sortable-header').removeClass('active');
+        $('.sortable-header .sort-icon').removeClass('fa-sort-up fa-sort-down text-primary').addClass('fa-sort text-gray-400');
+        
+        // Update active sort icon and header
+        if (activeField) {
+            const activeHeader = $(`.sortable-header[data-sort="${activeField}"]`);
+            const activeIcon = activeHeader.find('.sort-icon');
+            
+            activeHeader.addClass('active');
+            
+            if (direction === 'asc') {
+                activeIcon.removeClass('fa-sort text-gray-400').addClass('fa-sort-up text-primary');
+            } else {
+                activeIcon.removeClass('fa-sort text-gray-400').addClass('fa-sort-down text-primary');
+            }
+        }
+    }
+
+    // Clear sorting
+    function clearSorting() {
+        currentSortField = null;
+        currentSortDirection = 'asc';
+        updateSortIcons(null, 'asc');
+        updateSortingInfo();
+    }
+
+    // Update sorting info display
+    function updateSortingInfo() {
+        const sortingInfo = $('#sorting-info');
+        const sortingText = $('#sorting-text');
+        
+        if (currentSortField) {
+            // Mapear nombres de campos a nombres legibles
+            const fieldNames = {
+                'descripcionPresentacion': 'Presentación',
+                'descripcionProducto': 'Marca',
+                'marcaGenerico': 'Marca/Genérico',
+                'eticoPopular': 'Ético/Popular',
+                'molecula': 'Molécula',
+                'descripcionFF3': 'FF3',
+                'descripcionATC4': 'ATC4',
+                'descripcionLaboratorio': 'Laboratorio',
+                'descripcionCorporacion': 'Corporación',
+                'mercado': 'Mercado',
+                'fuente': 'Fuente'
+            };
+            
+            const fieldName = fieldNames[currentSortField] || currentSortField;
+            const direction = currentSortDirection === 'asc' ? 'A-Z' : 'Z-A';
+            
+            sortingText.text(`Ordenado por: ${fieldName} (${direction})`);
+            sortingInfo.removeClass('hidden');
+        } else {
+            sortingInfo.addClass('hidden');
+        }
+    }
 });

@@ -17,9 +17,20 @@
 
     <?php echo $__env->yieldPushContent('styles'); ?>
     <style>
+        /* Nuevo branding de colores */
+        :root {
+            --primary: #6A5CBC;
+            --secondary: #9E88FD;
+            --secondary-light: #D3E0E0;
+            --secondary-lighter: #E7E7E7;
+            --secondary-muted: #bfced6;
+            --secondary-purple: #c4bee4;
+            --dark: #1d252d;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
         }
         
@@ -29,16 +40,16 @@
         }
         
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: var(--secondary-lighter);
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: var(--secondary-muted);
             border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: var(--secondary);
         }
         
         /* Toast notifications */
@@ -63,7 +74,7 @@
         }
         
         .toast-success {
-            background-color: #10b981;
+            background-color: var(--primary);
         }
         
         .toast-error {
@@ -75,7 +86,7 @@
         }
         
         .toast-info {
-            background-color: var(--info);
+            background-color: var(--secondary);
         }
     </style>
     

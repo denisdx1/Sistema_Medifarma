@@ -47,6 +47,10 @@ class ProductosController extends Controller
                 'mercado' => trim($request->get('filter_mercado', ''))
             ]);
 
+            // Obtener parámetros de ordenamiento
+            $sortField = $request->get('sort_field');
+            $sortDirection = $request->get('sort_direction', 'asc');
+
             // Query base con JOIN para obtener la fuente y mercado real de configuración
             $baseQuery = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
@@ -113,22 +117,17 @@ class ProductosController extends Controller
                             }
                             break;
                         case 'descripcionATC4':
-                            // Debug log
-                            \Log::info("Filtering ATC4 with value: " . $value);
-                            
                             // Verificar si el valor contiene un guión (formato código - descripción)
                             if (strpos($value, ' - ') !== false) {
                                 list($codigo, $descripcion) = explode(' - ', $value, 2);
                                 $codigo = trim($codigo);
                                 $descripcion = trim($descripcion);
-                                \Log::info("ATC4 split - Code: '$codigo', Description: '$descripcion'");
                                 
                                 $baseQuery->where(function($query) use ($codigo, $descripcion) {
                                     $query->whereRaw('UPPER(LTRIM(RTRIM(v.codigoATC4))) = ?', [strtoupper($codigo)])
                                           ->whereRaw('UPPER(LTRIM(RTRIM(v.descripcionATC4))) = ?', [strtoupper($descripcion)]);
                                 });
                             } else {
-                                \Log::info("ATC4 single value search: '$value'");
                                 // Buscar tanto por código como por descripción individual
                                 $baseQuery->where(function($query) use ($value) {
                                     $query->where('v.descripcionATC4', '=', $value)
@@ -167,7 +166,33 @@ class ProductosController extends Controller
                 }
             }
 
-            $baseQuery->orderBy('v.codigoPresentacion');
+            // Aplicar ordenamiento dinámico
+            if ($sortField) {
+                // Mapear campos de ordenamiento a las columnas correctas
+                $sortMapping = [
+                    'descripcionPresentacion' => 'v.descripcionPresentacion',
+                    'descripcionProducto' => 'v.descripcionProducto',
+                    'marcaGenerico' => 'v.marcaGenerico',
+                    'eticoPopular' => 'v.eticoPopular',
+                    'molecula' => 'v.molecula',
+                    'descripcionFF3' => 'v.descripcionFF3',
+                    'descripcionATC4' => 'v.descripcionATC4',
+                    'descripcionLaboratorio' => 'v.descripcionLaboratorio',
+                    'descripcionCorporacion' => 'v.descripcionCorporacion',
+                    'mercado' => 'mercado', // Campo calculado
+                    'fuente' => 'fuente' // Campo calculado
+                ];
+
+                if (isset($sortMapping[$sortField])) {
+                    $baseQuery->orderBy($sortMapping[$sortField], $sortDirection);
+                } else {
+                    // Ordenamiento por defecto si el campo no es válido
+                    $baseQuery->orderBy('v.codigoPresentacion', 'asc');
+                }
+            } else {
+                // Ordenamiento por defecto
+                $baseQuery->orderBy('v.codigoPresentacion', 'asc');
+            }
 
             // Obtener productos con límite +1 para verificar paginación
             $productos = $baseQuery->limit($perPage + 1)->get();
@@ -512,8 +537,7 @@ class ProductosController extends Controller
                     $validated['note'] ?? null
                 );
             } catch (\Exception $e) {
-                // Log del error pero no interrumpir el flujo
-                \Log::error('Error enviando notificación de eliminación de producto: ' . $e->getMessage());
+                // Error en notificación pero no interrumpir el flujo
             }
 
             return response()->json([
@@ -610,14 +634,6 @@ class ProductosController extends Controller
 
             // Enviar notificación por email
             try {
-                \Log::info('DEBUG: Iniciando envío de notificación de movimiento de producto', [
-                    'usuario' => Auth::user()->usuario ?? 'Unknown',
-                    'user_id' => Auth::user()->idUsuario ?? 'Unknown',
-                    'producto' => $validated['codigoPresentacion'],
-                    'mercado_anterior' => $mercadoAnterior,
-                    'mercado_nuevo' => $mercadoDestino->mercado
-                ]);
-                
                 $notificationService = new NotificationService();
                 $notificationService->notifyProductMoved(
                     $validated['codigoPresentacion'],
@@ -627,11 +643,8 @@ class ProductosController extends Controller
                     Auth::user(),
                     $validated['note'] ?? null
                 );
-                
-                \Log::info('DEBUG: Notificación de movimiento completada exitosamente');
             } catch (\Exception $e) {
-                // Log del error pero no interrumpir el flujo
-                \Log::error('Error enviando notificación de movimiento de producto: ' . $e->getMessage());
+                // Error en notificación pero no interrumpir el flujo
             }
 
             DB::commit();
@@ -706,19 +719,6 @@ class ProductosController extends Controller
      */
     public function createMarket(Request $request)
     {
-        // Agregar ID único para rastrear esta request específica
-        $requestId = uniqid('req_', true);
-        
-        \Log::info('🚀 ProductosController::createMarket - INICIO', [
-            'request_id' => $requestId,
-            'request_data' => $request->all(),
-            'user' => Auth::user()->usuario ?? 'Unknown',
-            'timestamp' => now()->toDateTimeString(),
-            'url' => $request->fullUrl(),
-            'method' => $request->method(),
-            'ip' => $request->ip(),
-            'session_id' => session()->getId()
-        ]);
 
         $request->validate([
             'market_name' => 'required|string|max:255',
@@ -753,16 +753,7 @@ class ProductosController extends Controller
                 ->select('m.idMercado', 'm.mercado', 'e.estado')
                 ->first();
 
-            \Log::info('Verificación de mercado existente:', [
-                'market_name' => $marketName,
-                'existing_market' => $existingMarket
-            ]);
-                
             if ($existingMarket) {
-                \Log::warning('Intento de crear mercado duplicado:', [
-                    'market_name' => $marketName,
-                    'existing_market_id' => $existingMarket->idMercado
-                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Ya existe un mercado activo con ese nombre'
@@ -770,39 +761,14 @@ class ProductosController extends Controller
             }
             
             // Llamar al stored procedure para insertar el mercado con los parámetros requeridos
-            \Log::info('🛠️ ProductosController - Ejecutando SP_INSERT_MERCADO', [
-                'request_id' => $requestId,
-                'market_name' => $marketName,
-                'user_id' => $userId,
-                'timestamp' => now()->toDateTimeString()
-            ]);
-            
             DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?, ?', [$marketName, (int)$userId, $marketNote]);
-            
-            // Verificar cuántos mercados con este nombre se crearon
-            $mercadosCreados = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO')
-                ->where('mercado', $marketName)
-                ->get();
-                
-            \Log::info('✅ ProductosController - SP_INSERT_MERCADO ejecutado exitosamente', [
-                'market_name' => $marketName,
-                'mercados_encontrados_con_este_nombre' => $mercadosCreados->count(),
-                'detalles_mercados' => $mercadosCreados->toArray()
-            ]);
 
             // Enviar notificación por correo (con nota si existe)
             try {
                 $notificationService = new NotificationService();
                 $notificationService->notifyNewMarket($marketName, $user, $marketNote);
             } catch (\Exception $emailException) {
-                // Log del error de email pero no fallar la creación del mercado
-                \Log::warning('Error enviando notificación de correo para nuevo mercado', [
-                    'mercado' => $marketName,
-                    'usuario' => $user->usuario,
-                    'nota' => $marketNote,
-                    'error' => $emailException->getMessage()
-                ]);
+                // Error en notificación pero no fallar la creación del mercado
             }
 
             DB::commit();
@@ -840,10 +806,6 @@ class ProductosController extends Controller
      */
     public function assignProducts(Request $request)
     {
-        \Log::info('Iniciando assignProducts', [
-            'request_data' => $request->all(),
-            'user' => Auth::user()->usuario ?? 'Unknown'
-        ]);
 
         $validated = $request->validate([
             'idMercado' => 'required|integer',
@@ -853,7 +815,7 @@ class ProductosController extends Controller
             'note' => 'required|string|max:1000' // Nota ahora es obligatoria
         ]);
 
-        \Log::info('Datos validados:', $validated);
+
 
         try {
             DB::beginTransaction();
@@ -867,13 +829,7 @@ class ProductosController extends Controller
                 ->where('e.estado', 'ACTIVO')
                 ->first();
 
-            \Log::info('Mercado obtenido de la BD:', [
-                'idMercado_solicitado' => $validated['idMercado'],
-                'mercado_encontrado' => $mercado
-            ]);
-                
             if (!$mercado) {
-                \Log::error('Mercado no encontrado o inactivo', ['idMercado' => $validated['idMercado']]);
                 return response()->json([
                     'success' => false,
                     'message' => 'El mercado no existe o no está activo'
@@ -922,14 +878,6 @@ class ProductosController extends Controller
                     // Obtener el ID del usuario autenticado
                     $userId = Auth::user()->idUsuario;
                     
-                    \Log::info('Ejecutando SP_INSERT_CONFIGURACION', [
-                        'idMercado' => $validated['idMercado'],
-                        'codigo' => $product['code'],
-                        'fuente' => $product['fuente'],
-                        'idUsuario' => $userId,
-                        'mercado_nombre' => $mercado->mercado
-                    ]);
-                    
                     DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
@@ -940,38 +888,21 @@ class ProductosController extends Controller
 
                     // PASO 3: Intentar actualizar la vista VMAE (si existe un SP para eso)
                     try {
-                        \Log::info('Intentando actualizar vista VMAE para producto', [
-                            'codigo' => $product['code'],
-                            'nuevo_mercado' => $mercado->mercado
-                        ]);
-                        
                         // Verificar si existe SP para actualizar VMAE
                         DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_VMAE_MERCADO ?, ?', [
                             $product['code'],         // @codigo
                             $mercado->mercado        // @mercado
                         ]);
-                        
-                        \Log::info('Vista VMAE actualizada exitosamente');
                     } catch (\Exception $vmaeException) {
-                        \Log::warning('No se pudo actualizar vista VMAE (SP posiblemente no existe)', [
-                            'error' => $vmaeException->getMessage(),
-                            'codigo' => $product['code']
-                        ]);
-                        
                         // Intentar actualización directa de la vista si es una tabla materializada
                         try {
-                            \Log::info('Intentando actualización directa de VMAE');
                             DB::connection('sqlsrv')->statement("
                                 UPDATE dbo.VMAE_PROD_IQVIA 
                                 SET MERCADO = ? 
                                 WHERE codigoPresentacion = ?
                             ", [$mercado->mercado, $product['code']]);
-                            
-                            \Log::info('Vista VMAE actualizada directamente');
                         } catch (\Exception $directUpdateException) {
-                            \Log::error('No se pudo actualizar VMAE directamente (es una vista)', [
-                                'error' => $directUpdateException->getMessage()
-                            ]);
+                            // No se pudo actualizar VMAE
                         }
                     }
 
@@ -983,11 +914,7 @@ class ProductosController extends Controller
                         ->select('c.codigo', 'm.mercado', 'c.idMercado')
                         ->first();
                     
-                    \Log::info('Verificación post-asignación', [
-                        'codigo' => $product['code'],
-                        'configuracion_actual' => $verificacion,
-                        'mercado_esperado' => $mercado->mercado
-                    ]);
+
 
                     $assignedCount++;
                     // Guardar tanto el código como el nombre del producto
@@ -1013,8 +940,7 @@ class ProductosController extends Controller
                         'user_note' => $validated['note'] ?? null // Incluir la nota del usuario
                     ], Auth::user());
                 } catch (\Exception $e) {
-                    // Log del error pero no interrumpir el flujo
-                    \Log::error('Error enviando notificación de asignación de productos: ' . $e->getMessage());
+                    // Error en notificación pero no interrumpir el flujo
                 }
             }
 

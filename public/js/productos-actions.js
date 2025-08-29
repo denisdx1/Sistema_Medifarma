@@ -4,6 +4,92 @@
 let marketSearchTimeout = null;
 let searchEventListenersAttached = false;
 
+// Funciones para Modal de Quitar Producto
+window.openRemoveProductModal = function(productCode, productName) {
+    const modal = document.getElementById('remove-product-modal');
+    
+    if (!modal) {
+        return;
+    }
+    
+    window.currentProductCode = productCode;
+    window.currentProductName = productName;
+    
+    const nameElement = document.getElementById('remove-product-name');
+    const codeElement = document.getElementById('remove-product-code');
+    
+    if (nameElement) nameElement.textContent = productName;
+    if (codeElement) codeElement.textContent = productCode;
+    
+    // Limpiar el campo de nota
+    const noteElement = document.getElementById('remove-product-note');
+    if (noteElement) noteElement.value = '';
+    
+    modal.classList.remove('hidden');
+};
+
+window.closeRemoveProductModal = function() {
+    document.getElementById('remove-product-modal').classList.add('hidden');
+    window.currentProductCode = null;
+    window.currentProductName = null;
+};
+
+// Funciones para Modal de Cambiar Mercado
+window.openChangeMarketModal = function(productCode, productName) {
+    const modal = document.getElementById('change-market-modal');
+    
+    if (!modal) {
+        return;
+    }
+    
+    window.currentProductCode = productCode;
+    window.currentProductName = productName;
+    
+    const nameElement = document.getElementById('change-product-name');
+    const codeElement = document.getElementById('change-product-code');
+    const currentMarketElement = document.getElementById('current-market-name');
+    
+    if (nameElement) nameElement.textContent = productName;
+    if (codeElement) codeElement.textContent = productCode;
+    
+    // Buscar el mercado actual del producto en la tabla
+    const productRow = document.querySelector(`tr[data-product-code="${productCode}"]`);
+    if (productRow && currentMarketElement) {
+        const marketCell = productRow.querySelector('.market-cell span');
+        const currentMarket = marketCell ? marketCell.textContent.trim() : 'RESTO';
+        currentMarketElement.textContent = currentMarket;
+    }
+    
+    // Limpiar búsqueda y selección previa
+    const searchInput = document.getElementById('market-search-input');
+    const selectedDisplay = document.getElementById('selected-market-display');
+    const selectedMarketId = document.getElementById('selected-market-id');
+    
+    if (searchInput) searchInput.value = '';
+    if (selectedDisplay) selectedDisplay.classList.add('hidden');
+    if (selectedMarketId) selectedMarketId.value = '';
+    
+    // Limpiar el campo de nota
+    const noteElement = document.getElementById('change-market-note');
+    if (noteElement) noteElement.value = '';
+    
+    // Configurar búsqueda y cargar mercados
+    if (typeof setupMarketSearch === 'function') {
+        setupMarketSearch();
+    }
+    if (typeof loadAvailableMarkets === 'function') {
+        loadAvailableMarkets();
+    }
+    
+    modal.classList.remove('hidden');
+};
+
+window.closeChangeMarketModal = function() {
+    document.getElementById('change-market-modal').classList.add('hidden');
+    window.currentProductCode = null;
+    window.currentProductName = null;
+};
+
 // Configurar event listeners para búsqueda de mercados
 function setupMarketSearch() {
     if (searchEventListenersAttached) return;
@@ -201,6 +287,34 @@ function showDropdownError(message) {
         </div>
     `;
 }
+
+// Función global para quitar producto del mercado
+window.removeProductFromMarket = function() {
+    if (!window.currentProductCode) {
+        showErrorNotification('Error: No se ha seleccionado un producto válido');
+        return;
+    }
+
+    // Validar que la nota no esté vacía
+    const noteElement = document.getElementById('remove-product-note');
+    const note = noteElement ? noteElement.value.trim() : '';
+    
+    if (!note) {
+        showErrorNotification('La nota es obligatoria para quitar un producto');
+        // Resaltar el campo de nota
+        if (noteElement) {
+            noteElement.focus();
+            noteElement.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+            setTimeout(() => {
+                noteElement.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            }, 3000);
+        }
+        return;
+    }
+
+    // Abrir modal de confirmación final
+    openFinalConfirmationModal();
+};
 
 // Función global para cambiar mercado del producto
 window.changeProductMarket = function() {

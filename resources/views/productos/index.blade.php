@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
+
+
 <div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-full px-4 sm:px-6 lg:px-8">
         <!-- Products Table -->
@@ -32,11 +34,11 @@
                     <div class="border-t border-gray-200 pt-4 mt-4">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-sm font-medium text-gray-900">
-                                <i class="fas fa-filter text-blue-500 mr-2"></i>
+                                <i class="fas fa-filter text-primary mr-2"></i>
                                 Filtros de Búsqueda
                             </h3>
                             <button id="toggle-filters" 
-                                    class="inline-flex items-center px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md text-xs font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                                    class="inline-flex items-center px-3 py-1.5 bg-secondary-purple border border-secondary rounded-md text-xs font-medium text-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
                                 <i class="fas fa-chevron-down mr-1" id="toggle-icon"></i>
                                 <span id="toggle-text">Ocultar Filtros</span>
                             </button>
@@ -46,12 +48,12 @@
                             <!-- Producto Filter -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Marca</label>
-                                <div class="relative">
-                                    <input type="text" 
-                                           id="filter-descripcionProducto"
-                                           placeholder="Buscar marca..."
-                                           class="block w-full px-3 py-2 pr-8 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                           autocomplete="off">
+                                                            <div class="relative">
+                                <input type="text" 
+                                       id="filter-descripcionProducto"
+                                       placeholder="Buscar marca..."
+                                       class="block w-full px-3 py-2 pr-8 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                                       autocomplete="off">
                                     <button type="button" 
                                             id="clear-filter-descripcionProducto" 
                                             class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 hidden">
@@ -65,7 +67,7 @@
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Marca/Genérico</label>
                                 <select id="filter-marcaGenerico" 
-                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todos</option>
                                 </select>
                             </div>
@@ -74,7 +76,7 @@
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Ético/Popular</label>
                                 <select id="filter-eticoPopular" 
-                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todos</option>
                                 </select>
                             </div>
@@ -83,7 +85,7 @@
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Fuente</label>
                                 <select id="filter-fuente" 
-                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todas las fuentes</option>
                                 </select>
                             </div>
@@ -92,7 +94,7 @@
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Mercado</label>
                                 <select id="filter-mercado" 
-                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todos los mercados</option>
                                 </select>
                             </div>
@@ -104,7 +106,7 @@
                                     <input type="text" 
                                            id="filter-molecula"
                                            placeholder="Buscar molécula..."
-                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
                                            autocomplete="off">
                                     <div id="molecula-results" class="filter-dropdown"></div>
                                 </div>
@@ -117,7 +119,7 @@
                                     <input type="text" 
                                            id="filter-descripcionFF3"
                                            placeholder="Buscar forma farmacéutica..."
-                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
                                            autocomplete="off">
                                     <div id="descripcionFF3-results" class="filter-dropdown"></div>
                                 </div>
@@ -130,7 +132,7 @@
                                     <input type="text" 
                                            id="filter-descripcionATC4"
                                            placeholder="Buscar clasificación ATC4..."
-                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
                                            autocomplete="off">
                                     <div id="descripcionATC4-results" class="filter-dropdown"></div>
                                 </div>
@@ -142,7 +144,7 @@
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionLaboratorio" 
-                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                                            placeholder="Buscar laboratorio..."
                                            autocomplete="off">
                                     <div id="descripcionLaboratorio-results" class="filter-dropdown"></div>
@@ -155,7 +157,7 @@
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionCorporacion" 
-                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                           class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                                            placeholder="Buscar corporación..."
                                            autocomplete="off">
                                     <div id="descripcionCorporacion-results" class="filter-dropdown"></div>
@@ -165,12 +167,20 @@
                         
                         <!-- Clear All Filters -->
                         <div class="mt-4 flex justify-between items-center">
-                            <button type="button" 
-                                    id="clear-all-filters" 
-                                    class="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm">
-                                <i class="fas fa-eraser mr-2"></i>
-                                Limpiar todos los filtros
-                            </button>
+                            <div class="flex space-x-2">
+                                <button type="button" 
+                                        id="clear-all-filters" 
+                                        class="px-4 py-2 bg-secondary-light text-dark rounded-md hover:bg-secondary-muted transition-colors text-sm">
+                                    <i class="fas fa-eraser mr-2"></i>
+                                    Limpiar todos los filtros
+                                </button>
+                                <button type="button" 
+                                        id="clear-sorting" 
+                                        class="px-4 py-2 bg-secondary-purple text-primary rounded-md hover:bg-secondary transition-colors text-sm">
+                                    <i class="fas fa-sort mr-2"></i>
+                                    Limpiar ordenamiento
+                                </button>
+                            </div>
                             <div class="text-xs text-gray-500">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 Los filtros se aplican automáticamente mientras escribes
@@ -180,20 +190,20 @@
                 </div>
             </div>
 
-            <div class="overflow-hidden border border-gray-200 rounded-lg bg-white">
-                <!-- Loading Overlay -->
+            <div class="overflow-hidden border border-gray-200 rounded-lg bg-white mt-6 relative">
+                <!-- Loading Overlay para la tabla de productos -->
                 <div id="loading-overlay" class="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-10 hidden">
                     <div class="text-center">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                        <span class="text-gray-700 font-medium text-sm" id="loading-text">Cargando productos...</span>
-                        <p class="text-xs text-gray-500 mt-1" id="loading-subtext">Por favor espere</p>
-                        <div class="mt-2 text-xs text-gray-400">
-                            <i class="fas fa-clock mr-1"></i>
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <span class="text-gray-700 font-medium text-lg" id="loading-text">Cargando productos...</span>
+                        <p class="text-sm text-gray-500 mt-2" id="loading-subtext">Por favor espere</p>
+                        <div class="mt-3 text-sm text-gray-400">
+                            <i class="fas fa-clock mr-2"></i>
                             <span id="loading-timer">0s</span>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Tabla con texto más pequeño para mostrar todo completo -->
                 <div class="max-h-[calc(100vh-12rem)] overflow-y-auto relative">
                     <table class="min-w-full divide-y divide-gray-200 products-table">
@@ -204,48 +214,82 @@
                                     <input type="checkbox" id="select-all-products" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                 </th>
                                 <!-- Descripción: 15% -->
-                                <th class="w-[15%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Presentacion
+                                <th class="w-[15%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionPresentacion">
+                                    <div class="flex items-center justify-between">
+                                        <span>Presentacion</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Marca: 14% -->
-                                <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Marca
+                                <th class="w-[7%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionProducto">
+                                    <div class="flex items-center justify-between">
+                                        <span>Marca</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Marca/Genérico: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300">
-                                    Marca/Genérico
+                                <th class="w-[12%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="marcaGenerico">
+                                    <div class="flex items-center justify-center">
+                                        <span>Marca/Genérico</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Ético/Popular: 9% -->  
-                                <th class="w-[9%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300">
-                                    Ético/Popular
+                                <th class="w-[12%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="eticoPopular">
+                                    <div class="flex items-center justify-center">
+                                        <span>Ético/Popular</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Molécula: 14% -->
-                                <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Molécula
+                                <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="molecula">
+                                    <div class="flex items-center justify-between">
+                                        <span>Molécula</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- FF3: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    FF3
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionFF3">
+                                    <div class="flex items-center justify-between">
+                                        <span>FF3</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- ATC4: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    ATC4
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionATC4">
+                                    <div class="flex items-center justify-between">
+                                        <span>ATC4</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Laboratorio: 11% -->
-                                <th class="w-[11%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Laboratorio
-                                </th>
+                                
                                 <!-- Corporación: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Corporación
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionCorporacion">
+                                    <div class="flex items-center justify-between">
+                                        <span>Corporación</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
-                                <!-- Fuente: 7% -->
-                                <th class="w-[10%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Mercado
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionLaboratorio">
+                                    <div class="flex items-center justify-between">
+                                        <span>Laboratorio</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Mercado: 10% -->
-                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
-                                    Fuente
+                                <th class="w-[10%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
+                                    <div class="flex items-center justify-center">
+                                        <span>Mercado</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
+                                </th>
+                                <!-- Fuente: 7% -->
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="fuente">
+                                    <div class="flex items-center justify-center">
+                                        <span>Fuente</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
                                 </th>
                                 <!-- Acciones: 4% -->
                                 <th class="w-[4%] px-1 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
@@ -272,8 +316,14 @@
             <!-- Pagination -->
             <div class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50" id="pagination-container">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                    <div id="pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
-                        Cargando productos...
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <div id="pagination-info" class="text-sm text-gray-600 text-center sm:text-left">
+                            Cargando productos...
+                        </div>
+                        <div id="sorting-info" class="text-xs text-primary hidden">
+                            <i class="fas fa-sort mr-1"></i>
+                            <span id="sorting-text">Ordenado por: </span>
+                        </div>
                     </div>
                     <div id="pagination-controls" class="flex items-center justify-center sm:justify-end space-x-2">
                         <!-- Pagination buttons will be generated here -->
@@ -290,7 +340,7 @@
 <div id="remove-product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-500 p-3">
+        <div class="bg-primary p-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-white flex items-center">
                     <i class="fas fa-trash mr-2"></i>
@@ -309,10 +359,10 @@
             </p>
             
             <!-- Product Info -->
-            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
-                <p class="text-xs text-red-600 font-medium">Producto:</p>
-                <p class="text-base font-bold text-red-800" id="remove-product-name">-</p>
-                <p class="text-xs text-red-600" id="remove-product-code">-</p>
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+                <p class="text-xs text-primary font-medium">Producto:</p>
+                <p class="text-base font-bold text-primary" id="remove-product-name">-</p>
+                <p class="text-xs text-primary" id="remove-product-code">-</p>
                 </div>
             
             <!-- Note Field -->
@@ -323,7 +373,7 @@
                 <textarea id="remove-product-note" 
                           name="remove_note" 
                           rows="2"
-                          class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
                           placeholder="Nota sobre por qué se quita..."></textarea>
                 <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
             </div>
@@ -335,7 +385,7 @@
                     Cancelar
                 </button>
                 <button id="confirm-remove-btn" onclick="removeProductFromMarket()" 
-                        class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all text-sm">
+                        class="flex-1 px-3 py-2 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all text-sm">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-trash mr-1"></i>
                         Quitar
@@ -354,7 +404,7 @@
 <div id="change-market-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-500 p-3">
+        <div class="bg-primary p-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-bold text-white flex items-center">
                     <i class="fas fa-exchange-alt mr-2"></i>
@@ -369,11 +419,11 @@
         <!-- Content -->
         <div class="p-4">
             <!-- Product Info -->
-            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
-                <p class="text-sm text-red-600 font-medium">Producto a cambiar:</p>
-                <p class="text-lg font-bold text-red-800" id="change-product-name">-</p>
-                <p class="text-sm text-red-600" id="change-product-code">-</p>
-                <p class="text-sm text-gray-600 mt-1">Mercado actual: <span class="font-medium text-red-700" id="current-market-name">-</span></p>
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+                <p class="text-sm text-primary font-medium">Producto a cambiar:</p>
+                <p class="text-lg font-bold text-primary" id="change-product-name">-</p>
+                <p class="text-sm text-primary" id="change-product-code">-</p>
+                <p class="text-sm text-gray-600 mt-1">Mercado actual: <span class="font-medium text-primary" id="current-market-name">-</span></p>
             </div>
 
             <!-- Market Selector -->
@@ -382,12 +432,12 @@
                 <div class="relative">
                     <input type="text" 
                            id="market-search-input" 
-                           class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                           class="w-full px-3 py-3 border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white"
                            placeholder="Buscar mercado..."
                            autocomplete="off">
                     
                     <!-- Dropdown de mercados -->
-                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-red-300 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
                         <div id="dropdown-loading" class="p-3 text-center text-gray-500 hidden">
                             <i class="fas fa-spinner fa-spin mr-2"></i>
                             Cargando mercados...
@@ -400,13 +450,13 @@
                 </div>
                 
                 <!-- Selected Market Display -->
-                <div id="selected-market-display" class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg hidden">
+                <div id="selected-market-display" class="mt-3 p-3 bg-secondary-lighter border border-secondary-muted rounded-lg hidden">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-red-900">Mercado seleccionado:</p>
-                            <p class="text-lg font-bold text-red-700" id="selected-market-name">-</p>
+                            <p class="text-sm font-medium text-primary">Mercado seleccionado:</p>
+                            <p class="text-lg font-bold text-primary" id="selected-market-name">-</p>
                         </div>
-                        <button onclick="clearSelectedMarket()" class="text-red-600 hover:text-red-800">
+                        <button onclick="clearSelectedMarket()" class="text-primary hover:text-secondary">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -423,7 +473,7 @@
                 <textarea id="change-market-note" 
                           name="change_note" 
                           rows="3"
-                          class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          class="w-full px-3 py-3 border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
                           placeholder="Nota sobre el cambio de mercado..."></textarea>
                 <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
             </div>
@@ -436,7 +486,7 @@
                 </button>
                 <button onclick="changeProductMarket()" 
                         id="change-market-btn"
-                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-exchange-alt mr-2"></i>
                         Cambiar
@@ -455,7 +505,7 @@
 <div id="final-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-600 p-4">
+        <div class="bg-primary p-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white flex items-center">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -469,8 +519,8 @@
         
         <!-- Content -->
         <div class="p-6">
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p class="text-red-800 font-medium">
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-4 mb-4">
+                <p class="text-primary font-medium">
                     ⚠️ Esta acción no se puede deshacer. 
                     El producto será quitado del mercado actual.
                 </p>
@@ -483,7 +533,7 @@
                     Cancelar
                 </button>
                 <button id="final-confirm-btn" onclick="proceedWithRemoval()" 
-                        class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-check mr-2"></i>
                         Confirmar
@@ -502,7 +552,7 @@
 <div id="final-change-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-500 p-4">
+        <div class="bg-primary p-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white flex items-center">
                     <i class="fas fa-exchange-alt mr-2"></i>
@@ -517,18 +567,18 @@
         <!-- Content -->
         <div class="p-6">
             <div class="mb-4">
-                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                    <p class="text-sm text-red-600 font-medium">Producto:</p>
-                    <p class="text-lg font-bold text-red-800" id="final-change-product-name">-</p>
+                <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-3 mb-3">
+                    <p class="text-sm text-primary font-medium">Producto:</p>
+                    <p class="text-lg font-bold text-primary" id="final-change-product-name">-</p>
                 </div>
                 
                 <div class="text-center my-2">
-                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                    <i class="fas fa-arrow-down text-primary text-xl"></i>
                 </div>
                 
-                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                    <p class="text-sm text-orange-600 font-medium">Nuevo mercado:</p>
-                    <p class="text-lg font-bold text-orange-800" id="final-change-market-name">-</p>
+                <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-3">
+                    <p class="text-sm text-primary font-medium">Nuevo mercado:</p>
+                    <p class="text-lg font-bold text-primary" id="final-change-market-name">-</p>
                 </div>
             </div>
             
@@ -539,7 +589,7 @@
                     Cancelar
                 </button>
                 <button id="final-change-confirm-btn" onclick="proceedWithMarketChange()" 
-                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-check mr-2"></i>
                         Confirmar
@@ -558,7 +608,7 @@
 <div id="bulk-assign-modal" class="fixed inset-0  flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-500 p-2">
+        <div class="bg-primary p-2">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white flex items-center">
                     <i class="fas fa-layer-group mr-1"></i>
@@ -574,12 +624,12 @@
         <div class="p-3">
             
             <!-- Selected Products Info -->
-            <div class="bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
-                <p class="text-xs font-medium text-red-900 mb-1">Productos seleccionados:</p>
-                <p class="text-sm font-bold text-red-800 mb-1" id="bulk-selected-count">0 productos</p>
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-2">
+                <p class="text-xs font-medium text-primary mb-1">Productos seleccionados:</p>
+                <p class="text-sm font-bold text-primary mb-1" id="bulk-selected-count">0 productos</p>
                 
                 <!-- Lista de productos seleccionados (siempre visible) -->
-                <div id="selected-products-list" class="bg-white rounded-lg border border-red-200 p-1 max-h-16 overflow-y-auto">
+                <div id="selected-products-list" class="bg-white rounded-lg border border-primary p-1 max-h-16 overflow-y-auto">
                     <div id="selected-products-content"></div>
                 </div>
             </div>
@@ -592,7 +642,7 @@
                 <div class="border-b border-gray-200 mb-2">
                     <nav class="-mb-px flex space-x-4">
                         <button onclick="switchToExistingMarket()" id="existing-market-tab" 
-                                class="tab-button active py-1 px-1 border-b-2 border-red-500 font-medium text-xs text-red-600">
+                                class="tab-button active py-1 px-1 border-b-2 border-primary font-medium text-xs text-primary">
                             Mercado Existente
                         </button>
                         <button onclick="switchToCreateMarket()" id="create-market-tab" 
@@ -607,12 +657,12 @@
                     <div class="relative">
                         <input type="text" 
                                id="bulk-market-search-input" 
-                               class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                               class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white"
                                placeholder="Buscar mercado..."
                                autocomplete="off">
                         
                         <!-- Dropdown de mercados -->
-                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-red-300 rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
+                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
                             <div id="bulk-dropdown-loading" class="p-2 text-center text-gray-500 hidden">
                                 <i class="fas fa-spinner fa-spin mr-1"></i>
                                 <span class="text-xs">Cargando...</span>
@@ -625,13 +675,13 @@
                     </div>
                     
                     <!-- Mercado seleccionado -->
-                    <div id="bulk-selected-market-display" class="hidden p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <div id="bulk-selected-market-display" class="hidden p-2 bg-secondary-lighter border border-secondary-muted rounded-lg">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-xs font-medium text-red-900">Mercado seleccionado:</p>
-                                <p class="text-sm font-bold text-red-700" id="bulk-selected-market-name">-</p>
+                                <p class="text-xs font-medium text-primary">Mercado seleccionado:</p>
+                                <p class="text-sm font-bold text-primary" id="bulk-selected-market-name">-</p>
                             </div>
-                            <button onclick="clearBulkSelectedMarket()" class="text-red-600 hover:text-red-800">
+                            <button onclick="clearBulkSelectedMarket()" class="text-primary hover:text-secondary">
                                 <i class="fas fa-times text-xs"></i>
                             </button>
                         </div>
@@ -644,21 +694,21 @@
                         <label class="block text-xs font-medium text-gray-700 mb-1">Nombre del nuevo mercado:</label>
                         <input type="text" 
                                id="new-market-name" 
-                               class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                               class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white"
                                placeholder="Nombre del nuevo mercado..."
                                maxlength="255">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Nota :</label>
                         <textarea id="new-market-note" 
-                                  class="w-full px-2 py-2 text-sm border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                                  class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
                                   placeholder="Nota sobre la creación..."
                                   rows="1"
                                   maxlength="1000"></textarea>
                     </div>
                     <button onclick="createNewMarketAndAssign()" 
                             id="create-and-assign-btn"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md font-medium text-sm transition-colors">
+                            class="w-full bg-primary hover:bg-secondary text-white px-2 py-1 rounded-md font-medium text-sm transition-colors">
                         <i class="fas fa-plus mr-1"></i>
                         Crear Mercado y Asignar
                     </button>
@@ -675,7 +725,7 @@
                 </button>
                 <button onclick="processBulkAssignment()" 
                         id="bulk-assign-confirm-btn"
-                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="flex-1 px-2 py-1 bg-primary hover:bg-secondary text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-layer-group mr-1"></i>
                         Asignar
@@ -694,7 +744,7 @@
 <div id="assign-confirmation-modal" class="fixed inset-0  flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-red-500 to-red-600 p-2">
+        <div class="bg-primary p-2">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white flex items-center">
                     <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -709,13 +759,13 @@
         <!-- Content -->
         <div class="p-3">
             <div class="text-center mb-3">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-2">
-                    <i class="fas fa-layer-group text-red-600 text-lg"></i>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary mb-2">
+                    <i class="fas fa-layer-group text-black text-lg"></i>
                 </div>
                 <h3 class="text-sm font-bold text-gray-900">¿Confirmar asignación?</h3>
                 <p class="text-xs text-gray-600 mt-1">
-                    Está a punto de asignar <span id="confirm-assign-count" class="font-semibold text-red-600">0</span> producto(s) 
-                    al mercado <span id="confirm-assign-market" class="font-semibold text-red-600"></span>
+                    Está a punto de asignar <span id="confirm-assign-count" class="font-semibold text-primary">0</span> producto(s) 
+                    al mercado <span id="confirm-assign-market" class="font-semibold text-primary"></span>
                 </p>
             </div>
             
@@ -746,7 +796,7 @@
                 </button>
                 <button onclick="proceedWithAssignment()" 
                         id="final-assign-btn"
-                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-2 py-1 bg-primary hover:bg-primary-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-check mr-1"></i>
                         Confirmar
@@ -765,7 +815,7 @@
 <div id="create-market-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
         <!-- Header -->
-        <div class="bg-red-500 p-2">
+        <div class="bg-primary p-2">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-bold text-white flex items-center">
                     <i class="fas fa-plus-circle mr-1"></i>
@@ -784,19 +834,19 @@
                                 <!-- Columna izquierda: Información del mercado -->
                 <div class="space-y-2">
             <!-- Información del mercado a crear -->
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-2">
-                        <h4 class="text-xs font-medium text-red-900 mb-1 flex items-center">
+                    <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2">
+                        <h4 class="text-xs font-medium text-primary mb-1 flex items-center">
                     <i class="fas fa-store mr-1"></i>
                     Mercado a crear:
                 </h4>
                         <div class="space-y-1">
-                            <div class="bg-white border border-red-200 rounded-lg p-1">
-                                <p class="text-xs text-red-600 font-medium">Nombre:</p>
-                                <p class="text-sm font-bold text-red-800" id="confirm-market-name"></p>
+                            <div class="bg-white border border-primary rounded-lg p-1">
+                                <p class="text-xs text-primary font-medium">Nombre:</p>
+                                <p class="text-sm font-bold text-primary" id="confirm-market-name"></p>
                             </div>
-                            <div class="bg-white border border-red-200 rounded-lg p-1" id="confirm-market-note-container" style="display: none;">
-                                <p class="text-xs text-red-600 font-medium">Nota:</p>
-                                <p class="text-xs text-red-700" id="confirm-market-note"></p>
+                            <div class="bg-white border border-primary rounded-lg p-1" id="confirm-market-note-container" style="display: none;">
+                                <p class="text-xs text-primary font-medium">Nota:</p>
+                                <p class="text-xs text-primary" id="confirm-market-note"></p>
                             </div>
                 </div>
             </div>
@@ -814,18 +864,18 @@
                 </div>
 
                 <!-- Columna derecha: Lista de productos -->
-                <div class="bg-red-50 border border-red-200 rounded-lg p-2">
-                    <h4 class="text-xs font-medium text-red-900 mb-1 flex items-center">
+                <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2">
+                    <h4 class="text-xs font-medium text-primary mb-1 flex items-center">
                         <i class="fas fa-list mr-1"></i>
                         Productos a asignar:
                     </h4>
-                    <div class="bg-white border border-red-200 rounded-lg p-1 mb-1">
+                    <div class="bg-white border border-primary rounded-lg p-1 mb-1">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-red-700 font-medium">Total de productos:</span>
-                            <span id="confirm-products-count" class="text-xs font-bold text-red-800 bg-red-100 px-1 py-0.5 rounded">0</span>
+                            <span class="text-xs text-primary font-medium">Total de productos:</span>
+                            <span id="confirm-products-count" class="text-xs font-bold text-primary bg-secondary-lighter px-1 py-0.5 rounded">0</span>
                 </div>
             </div>
-                    <div class="bg-white border border-red-200 rounded-lg p-1 h-24 overflow-y-auto">
+                    <div class="bg-white border border-primary rounded-lg p-1 h-24 overflow-y-auto">
                         <div id="confirm-products-content">
                             <!-- Lista se llenará dinámicamente -->
                         </div>
@@ -842,7 +892,7 @@
                 </button>
                 <button onclick="proceedWithMarketCreationAndAssignment()" 
                         id="final-create-assign-btn"
-                        class="flex-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-2 py-1 bg-primary hover:bg-secondary text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-check mr-1"></i>
                         Crear y Asignar

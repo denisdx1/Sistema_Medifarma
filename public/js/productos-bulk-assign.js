@@ -353,6 +353,33 @@ $(document).ready(function() {
             note = assignNoteField.value.trim();
         }
 
+        // Llamar a la función con nota
+        assignToExistingMarketWithNote(note);
+    }
+
+    // Asignar a mercado existente con nota específica
+    function assignToExistingMarketWithNote(note) {
+        const selectedMarketId = document.getElementById('bulk-selected-market-id').value;
+        
+        if (!selectedMarketId) {
+            showErrorNotification('Debe seleccionar un mercado');
+            return;
+        }
+
+        if (window.selectedProducts.size === 0) {
+            showErrorNotification('No hay productos seleccionados');
+            return;
+        }
+
+        // Mostrar loading
+        const btn = document.getElementById('bulk-assign-confirm-btn');
+        const btnText = btn.querySelector('.btn-text');
+        const btnLoading = btn.querySelector('.btn-loading');
+        
+        btnText.classList.add('hidden');
+        btnLoading.classList.remove('hidden');
+        btn.disabled = true;
+
         // Preparar datos
         const products = Array.from(window.selectedProducts).map(product => ({
             code: product.code,
@@ -378,10 +405,16 @@ $(document).ready(function() {
                     
                     // Cerrar modal y limpiar selecciones
                     closeBulkAssignModal();
-                    clearProductSelections();
                     
-                    // Recargar tabla
-                    loadProducts();
+                    // Limpiar selecciones si la función está disponible
+                    if (typeof clearProductSelections === 'function') {
+                        clearProductSelections();
+                    }
+                    
+                    // Recargar la página para mostrar los cambios
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
                     showErrorNotification(response.message || 'Error al asignar productos');
                 }
@@ -560,7 +593,11 @@ $(document).ready(function() {
                     // Cerrar ambas modales y limpiar selecciones
                     closeCreateMarketConfirmationModal();
                     closeBulkAssignModal();
-                    clearProductSelections();
+                    
+                    // Limpiar selecciones si la función está disponible
+                    if (typeof clearProductSelections === 'function') {
+                        clearProductSelections();
+                    }
                     
                     // Refrescar la página después de crear y asignar
                     setTimeout(() => {
@@ -852,8 +889,8 @@ $(document).ready(function() {
         // Cerrar modal de confirmación
         closeAssignConfirmationModal();
         
-        // Ejecutar la asignación original
-        assignToExistingMarket();
+        // Ejecutar la asignación con la nota ya validada
+        assignToExistingMarketWithNote(note);
     };
 
     // Event listener para cerrar modal haciendo clic fuera

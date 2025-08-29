@@ -362,6 +362,39 @@ function openEditConfirmationModal() {
     const editModal = document.getElementById('edit-modal');
     const confirmationModal = document.getElementById('edit-confirmation-modal');
     
+    // Get form elements
+    const editMarketName = document.getElementById('edit-market-name');
+    const editMarketNote = document.getElementById('edit-market-note');
+    const currentNameElement = document.getElementById('confirm-edit-current-name');
+    const newNameElement = document.getElementById('confirm-edit-new-name');
+    
+    // Validate required fields
+    const marketName = editMarketName ? editMarketName.value.trim() : '';
+    const marketNote = editMarketNote ? editMarketNote.value.trim() : '';
+    
+    // Check if name is empty
+    if (!marketName) {
+        showToast('El nombre del mercado es obligatorio', 'error');
+        if (editMarketName) editMarketName.focus();
+        return;
+    }
+    
+    // Check if note is empty (obligatory)
+    if (!marketNote) {
+        showToast('La nota es obligatoria para realizar cambios', 'error');
+        if (editMarketNote) editMarketNote.focus();
+        return;
+    }
+    
+    if (editMarketName) {
+        const originalName = editMarketName.getAttribute('data-original') || '';
+        const newName = editMarketName.value || '';
+        
+        // Fill the confirmation modal with the values
+        if (currentNameElement) currentNameElement.textContent = originalName || '-';
+        if (newNameElement) newNameElement.textContent = newName || '-';
+    }
+    
     if (editModal) editModal.classList.add('hidden');
     if (confirmationModal) confirmationModal.classList.remove('hidden');
 }
@@ -370,6 +403,77 @@ function openEditConfirmationModal() {
 function closeEditConfirmationModal() {
     const confirmationModal = document.getElementById('edit-confirmation-modal');
     if (confirmationModal) confirmationModal.classList.add('hidden');
+}
+
+// Confirm edit market function
+function confirmEditMarket() {
+    const editMarketId = document.getElementById('edit-market-id');
+    const editMarketName = document.getElementById('edit-market-name');
+    const editMarketNote = document.getElementById('edit-market-note');
+    const confirmBtn = document.getElementById('confirm-edit-btn');
+    const btnText = confirmBtn.querySelector('.btn-text');
+    const btnLoading = confirmBtn.querySelector('.btn-loading');
+    
+    if (!editMarketId || !editMarketName) {
+        showToast('Error: Datos del mercado no encontrados', 'error');
+        return;
+    }
+    
+    const marketId = editMarketId.value;
+    const marketName = editMarketName.value.trim();
+    const marketNote = editMarketNote ? editMarketNote.value.trim() : '';
+    
+    if (!marketName) {
+        showToast('El nombre del mercado es obligatorio', 'error');
+        return;
+    }
+    
+    // Show loading state
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    confirmBtn.disabled = true;
+    
+    // Prepare data
+    const formData = new FormData();
+    formData.append('market_id', marketId);
+    formData.append('market_name', marketName);
+    formData.append('market_note', marketNote);
+    formData.append('_token', window.csrfToken);
+    formData.append('_method', 'PUT'); // Laravel method spoofing for PUT requests
+    
+    // Send AJAX request
+    fetch(window.MarketManagementRoutes.update, {
+        method: 'POST', // Laravel method spoofing requires POST
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeEditConfirmationModal();
+            closeEditModal();
+            
+            // Reload the page to show updated data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showToast(data.message || 'Error al actualizar el mercado', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error de conexión al actualizar el mercado', 'error');
+    })
+    .finally(() => {
+        // Hide loading state
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+        confirmBtn.disabled = false;
+    });
 }
 
 // ========================================
@@ -382,15 +486,15 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
-    // Aplicar colores según el tipo
+    // Aplicar colores según el tipo usando el branding primario
     if (type === 'success') {
-        toast.style.backgroundColor = '#10b981';
+        toast.style.backgroundColor = 'var(--primary)';
     } else if (type === 'error') {
         toast.style.backgroundColor = '#ef4444';
     } else if (type === 'warning') {
         toast.style.backgroundColor = '#f59e0b';
     } else {
-        toast.style.backgroundColor = '#3b82f6';
+        toast.style.backgroundColor = 'var(--secondary)';
     }
     
     // Contenido del toast

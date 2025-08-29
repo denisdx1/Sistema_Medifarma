@@ -97,9 +97,101 @@
 
 /* Map product action buttons to primary palette */
 .products-btn {
-    background: linear-gradient(135deg, var(--primary) 0%, #cc0628 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     color: #fff;
     border: none;
 }
 
+/* Estilos para encabezados ordenables */
+.sortable-header {
+    position: relative;
+    user-select: none;
+}
+
+.sortable-header:hover {
+    background-color: #f9fafb !important;
+}
+
+.sortable-header .sort-icon {
+    transition: all 0.2s ease-in-out;
+    opacity: 0.6;
+}
+
+.sortable-header:hover .sort-icon {
+    opacity: 1;
+}
+
+.sortable-header .sort-icon.fa-sort-up,
+.sortable-header .sort-icon.fa-sort-down {
+    opacity: 1;
+    color: var(--primary) !important;
+}
+
+/* Estilos para iconos de ordenamiento activos */
+.sortable-header .sort-icon.fa-sort-up,
+.sortable-header .sort-icon.fa-sort-down {
+    color: var(--primary) !important;
+}
+
+/* Animación para el cambio de iconos de ordenamiento */
+.sortable-header .sort-icon {
+    transform: scale(1);
+    transition: transform 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.sortable-header:hover .sort-icon {
+    transform: scale(1.1);
+}
+
+/* Estilo para encabezados activos */
+.sortable-header.active {
+    background-color: rgba(106, 92, 188, 0.1) !important;
+    border-bottom: 2px solid var(--primary);
+}
+
+/* Indicador visual de ordenamiento activo */
+.sortable-header.active .sort-icon {
+    color: var(--primary) !important;
+    font-weight: bold;
+}
+
+/* Nuevo branding de colores */
+:root {
+    --primary: #6A5CBC;
+    --secondary: #9E88FD;
+    --secondary-light: #D3E0E0;
+    --secondary-lighter: #E7E7E7;
+    --secondary-muted: #bfced6;
+    --secondary-purple: #c4bee4;
+    --dark: #1d252d;
+}
+
+/* Estilos para Medifarma Corp con nuevo branding */
+.text-medifarma {
+    color: var(--primary) !important;
+}
+
+.bg-medifarma-bg {
+    background-color: rgba(106, 92, 188, 0.05) !important;
+}
+
+.hover\:bg-medifarma-light:hover {
+    background-color: rgba(106, 92, 188, 0.1) !important;
+}
+
+/* Clases de utilidad con nuevos colores */
 .text-primary { color: var(--primary) !important; }
+.text-secondary { color: var(--secondary) !important; }
+.text-dark { color: var(--dark) !important; }
+
+.bg-primary { background-color: var(--primary) !important; }
+.bg-secondary { background-color: var(--secondary) !important; }
+.bg-secondary-light { background-color: var(--secondary-light) !important; }
+.bg-secondary-lighter { background-color: var(--secondary-lighter) !important; }
+.bg-secondary-muted { background-color: var(--secondary-muted) !important; }
+.bg-secondary-purple { background-color: var(--secondary-purple) !important; }
+.bg-dark { background-color: var(--dark) !important; }
+
+.border-primary { border-color: var(--primary) !important; }
+.border-secondary { border-color: var(--secondary) !important; }
+.border-dark { border-color: var(--dark) !important; }

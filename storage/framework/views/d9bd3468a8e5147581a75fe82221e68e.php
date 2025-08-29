@@ -40,7 +40,7 @@
                                    id="search-input"
                                    name="search"
                                    value="<?php echo e(request('search')); ?>"
-                                   class="block w-80 pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                   class="block w-80 pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                                    placeholder="Buscar por marca o mercado..."
                                    autocomplete="off">
                             <?php if(request('search')): ?>
@@ -85,12 +85,12 @@
                             <!-- Marca (Descripción Producto) -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                        <i class="fas fa-tags text-blue-600 text-xs"></i>
+                                    <div class="flex-shrink-0 w-8 h-8 bg-secondary-light rounded-full flex items-center justify-center mr-3">
+                                        <i class="fas fa-tags text-primary text-xs"></i>
                                     </div>
                                     <div>
                                         <button onclick="redirectToProductsWithBrand('<?php echo e($market->marca); ?>')" 
-                                                class="font-medium text-gray-900 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
+                                                class="font-medium text-gray-900 hover:text-primary hover:underline transition-colors cursor-pointer"
                                                 title="Ver productos de esta marca">
                                             <?php echo e($market->marca); ?>
 
@@ -102,11 +102,11 @@
                             <!-- Mercado Asignado -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
-                                        <i class="fas fa-store text-red-600 text-xs"></i>
+                                    <div class="flex-shrink-0 w-6 h-6 bg-secondary-purple rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas fa-store text-primary text-xs"></i>
                                     </div>
                                     <button onclick="redirectToProductsWithMarket('<?php echo e($market->mercado); ?>')" 
-                                            class="font-medium text-red-600 hover:text-red-800 hover:underline transition-colors cursor-pointer"
+                                            class="font-medium text-primary hover:text-secondary hover:underline transition-colors cursor-pointer"
                                             title="Ver productos de este mercado">
                                         <?php echo e($market->mercado); ?>
 
@@ -126,7 +126,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <!-- Solo Editar Nombre del Mercado -->
                                 <button onclick="openEditModal(<?php echo e($market->idMercado); ?>, '<?php echo e(addslashes($market->mercado)); ?>')"
-                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
                                         title="Editar nombre del mercado">
                                     <i class="fas fa-edit mr-1"></i>
                                     Editar Mercado
@@ -208,14 +208,14 @@
                     <?php if(auth()->user()->idRol == 1): ?>
                         <h3 class="text-lg font-medium text-gray-800 mb-2">No se encontraron marcas</h3>
                         <p class="text-gray-600">No hay marcas que coincidan con tu búsqueda</p>
-                        <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
+                        <button onclick="clearSearch()" class="mt-3 text-primary hover:text-secondary font-medium">
                             <i class="fas fa-times mr-1"></i>
                             Limpiar búsqueda
                         </button>
                     <?php elseif(auth()->user()->idRol == 2): ?>
                         <h3 class="text-lg font-medium text-gray-800 mb-2">No hay marcas asignadas</h3>
                         <p class="text-gray-600">No hay marcas asignadas que coincidan con tu búsqueda</p>
-                        <button onclick="clearSearch()" class="mt-3 text-blue-600 hover:text-blue-700 font-medium">
+                        <button onclick="clearSearch()" class="mt-3 text-primary hover:text-secondary font-medium">
                             <i class="fas fa-times mr-1"></i>
                             Limpiar búsqueda
                         </button>
@@ -233,7 +233,7 @@
 <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
         <!-- Header -->
-        <div class="bg-red-500 p-4">
+        <div class="bg-primary p-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white flex items-center">
                     <i class="fas fa-edit mr-2"></i>
@@ -259,7 +259,7 @@
                 <input type="text" 
                        id="edit-market-name" 
                        name="market_name" 
-                       class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white"
+                       class="w-full px-3 py-3 border-2 border-primary rounded-lg focus:ring-2 focus:ring-secondary focus:border-primary bg-secondary-lighter focus:bg-white"
                        placeholder="Nombre del mercado"
                        required>
             </div>
@@ -272,7 +272,7 @@
                 <textarea id="edit-market-note" 
                           name="market_note" 
                           rows="3"
-                          class="w-full px-3 py-3 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-500 bg-red-50 focus:bg-white resize-none"
+                          class="w-full px-3 py-3 border-2 border-primary rounded-lg focus:ring-2 focus:ring-secondary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
                           placeholder="Nota sobre los cambios..."
                           required></textarea>
                 <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
@@ -288,7 +288,7 @@
                 <button type="button"
                         onclick="openEditConfirmationModal()"
                         id="edit-submit-btn"
-                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-save mr-2"></i>
                         Guardar
@@ -305,7 +305,7 @@
 <div id="edit-confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[60]">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-95 hover:scale-100">
         <!-- Header -->
-        <div class="bg-red-500 p-4">
+        <div class="bg-primary p-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white flex items-center">
                     <i class="fas fa-check-circle mr-2"></i>
@@ -321,18 +321,18 @@
         <div class="p-6">
             <!-- Comparison -->
             <div class="mb-4">
-                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                    <p class="text-sm text-red-600 font-medium">Actual:</p>
-                    <p class="text-lg font-bold text-red-800" id="confirm-edit-current-name">-</p>
+                <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-3 mb-3">
+                    <p class="text-sm text-primary font-medium">Actual:</p>
+                    <p class="text-lg font-bold text-primary" id="confirm-edit-current-name">-</p>
                 </div>
                 
                 <div class="text-center my-2">
-                    <i class="fas fa-arrow-down text-red-500 text-xl"></i>
+                    <i class="fas fa-arrow-down text-primary text-xl"></i>
                 </div>
                 
-                <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p class="text-sm text-red-600 font-medium">Nuevo:</p>
-                    <p class="text-lg font-bold text-red-800" id="confirm-edit-new-name">-</p>
+                <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-3">
+                    <p class="text-sm text-primary font-medium">Nuevo:</p>
+                    <p class="text-lg font-bold text-primary" id="confirm-edit-new-name">-</p>
                 </div>
             </div>
 
@@ -353,7 +353,7 @@
                 <button type="button"
                         onclick="confirmEditMarket()"
                         id="confirm-edit-btn"
-                        class="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                        class="flex-1 px-4 py-3 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
                     <span class="btn-text flex items-center justify-center">
                         <i class="fas fa-check mr-2"></i>
                         Confirmar
