@@ -981,6 +981,13 @@ $(document).ready(function() {
         const noteElement = document.getElementById('remove-product-note');
         if (noteElement) noteElement.value = '';
         
+        // Validación inicial - deshabilitar botón hasta que se ingrese una nota
+        const confirmBtn = document.getElementById('confirm-remove-btn');
+        if (confirmBtn) {
+            confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            confirmBtn.disabled = true;
+        }
+        
         modal.classList.remove('hidden');
     };
 

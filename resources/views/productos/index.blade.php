@@ -375,14 +375,23 @@
             <!-- Note Field -->
             <div class="mb-3">
                 <label for="remove-product-note" class="block text-xs font-medium text-gray-700 mb-1">
-                    Nota
+                    <i class="fas fa-sticky-note text-primary mr-1"></i>
+                    Nota *
                 </label>
                 <textarea id="remove-product-note" 
                           name="remove_note" 
                           rows="2"
                           class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
-                          placeholder="Nota sobre por qué se quita..."></textarea>
-                <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
+                          placeholder="Nota obligatoria sobre por qué se quita..."
+                          required></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Campo obligatorio. Se enviará por email.
+                </p>
+                <p class="text-xs text-red-500 mt-1 hidden" id="remove-note-error">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    La nota es obligatoria
+                </p>
             </div>
             
             <!-- Actions -->
@@ -475,14 +484,23 @@
             <!-- Note Field -->
             <div class="mb-4">
                 <label for="change-market-note" class="block text-sm font-medium text-gray-700 mb-2">
-                    Nota
+                    <i class="fas fa-sticky-note text-primary mr-1"></i>
+                    Nota *
                 </label>
                 <textarea id="change-market-note" 
                           name="change_note" 
                           rows="3"
                           class="w-full px-3 py-3 border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
-                          placeholder="Nota sobre el cambio de mercado..."></textarea>
-                <p class="text-xs text-gray-500 mt-1">Se enviará por email</p>
+                          placeholder="Nota obligatoria sobre el cambio de mercado..."
+                          required></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Campo obligatorio. Se enviará por email.
+                </p>
+                <p class="text-xs text-red-500 mt-1 hidden" id="change-note-error">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    La nota es obligatoria
+                </p>
             </div>
 
             <!-- Actions -->
@@ -706,12 +724,24 @@
                                maxlength="255">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Nota :</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                            <i class="fas fa-sticky-note text-primary mr-1"></i>
+                            Nota *
+                        </label>
                         <textarea id="new-market-note" 
                                   class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
-                                  placeholder="Nota sobre la creación..."
+                                  placeholder="Nota obligatoria sobre la creación..."
                                   rows="1"
-                                  maxlength="1000"></textarea>
+                                  maxlength="1000"
+                                  required></textarea>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Campo obligatorio. Se enviará por email.
+                        </p>
+                        <p class="text-xs text-red-500 mt-1 hidden" id="create-market-note-error">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            La nota es obligatoria
+                        </p>
                     </div>
                     <button onclick="createNewMarketAndAssign()" 
                             id="create-and-assign-btn"
@@ -787,12 +817,22 @@
             <!-- Campo de nota -->
             <div class="mb-3">
                 <label for="assign-note" class="block text-xs font-medium text-gray-700 mb-1">
-                    Nota
+                    <i class="fas fa-sticky-note text-primary mr-1"></i>
+                    Nota *
                 </label>
                 <textarea id="assign-note" 
-                          placeholder="Escribe una nota para el email de notificación..."
+                          placeholder="Nota obligatoria para el email de notificación..."
                           class="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 resize-none"
-                          rows="2"></textarea>
+                          rows="2"
+                          required></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Campo obligatorio. Se enviará por email.
+                </p>
+                <p class="text-xs text-red-500 mt-1 hidden" id="assign-note-error">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    La nota es obligatoria
+                </p>
             </div>
             
             <!-- Botones -->

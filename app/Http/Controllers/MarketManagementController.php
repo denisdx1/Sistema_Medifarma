@@ -168,18 +168,36 @@ class MarketManagementController extends Controller
                 ], 404);
             }
             
-            // Verificar si ya existe otro mercado con el mismo nombre
+            // Verificar si ya existe otro mercado con el mismo nombre (ignorando el actual)
             $duplicateMarket = DB::connection('sqlsrv')
                 ->table('ODS.TAB_MERCADO')
-                ->where('mercado', $marketName)
+                ->whereRaw('LTRIM(RTRIM(mercado)) = ?', [trim($marketName)])
                 ->where('idMercado', '!=', $request->market_id)
                 ->first();
                 
             if ($duplicateMarket) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ya existe otro mercado con ese nombre'
+                    'message' => 'Ya existe otro mercado con el nombre "' . $marketName . '"'
                 ], 422);
+            }
+            
+            // Verificar si el nuevo nombre es igual al actual (ignorando espacios)
+            $currentMarket = DB::connection('sqlsrv')
+                ->table('ODS.TAB_MERCADO')
+                ->where('idMercado', $request->market_id)
+                ->first();
+                
+            if ($currentMarket) {
+                $currentName = trim(strtolower($currentMarket->mercado));
+                $newName = trim(strtolower($marketName));
+                
+                if ($currentName === $newName) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El nuevo nombre debe ser diferente al nombre actual del mercado'
+                    ], 422);
+                }
             }
 
             // Llamar al stored procedure para actualizar el mercado

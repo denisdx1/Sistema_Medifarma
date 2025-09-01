@@ -27,6 +27,9 @@ $(document).ready(function() {
         document.getElementById('bulk-market-search-input').value = '';
         document.getElementById('new-market-name').value = '';
         document.getElementById('new-market-note').value = '';
+        
+        // El botón de asignación se habilita cuando se selecciona un mercado
+        // No se deshabilita por la nota aquí, ya que la nota se ingresa en la modal de confirmación
 
         // Mostrar modal
         document.getElementById('bulk-assign-modal').classList.remove('hidden');
@@ -52,6 +55,9 @@ $(document).ready(function() {
             // Iniciar la verificación después de un delay inicial
             setTimeout(checkMarketsLoaded, 500);
         }
+        
+        // Agregar validación en tiempo real para las notas
+        setupNoteValidation();
     };
 
     // Cerrar modal
@@ -76,10 +82,18 @@ $(document).ready(function() {
         document.getElementById('existing-market-panel').classList.remove('hidden');
         document.getElementById('create-market-panel').classList.add('hidden');
 
-        // Habilitar/deshabilitar botón
+        // Habilitar/deshabilitar botón según si hay mercado seleccionado
         const confirmBtn = document.getElementById('bulk-assign-confirm-btn');
         const selectedMarketId = document.getElementById('bulk-selected-market-id').value;
-        confirmBtn.disabled = !selectedMarketId;
+        if (confirmBtn) {
+            if (selectedMarketId) {
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                confirmBtn.disabled = true;
+            }
+        }
     };
 
     // Cambiar a tab de crear mercado
@@ -97,8 +111,19 @@ $(document).ready(function() {
         document.getElementById('create-market-panel').classList.remove('hidden');
         document.getElementById('existing-market-panel').classList.add('hidden');
 
-        // Habilitar botón (siempre habilitado en modo crear)
-        document.getElementById('bulk-assign-confirm-btn').disabled = false;
+        // Validar nota inicial para el botón de crear mercado
+        const createMarketNoteField = document.getElementById('new-market-note');
+        const createAndAssignBtn = document.getElementById('create-and-assign-btn');
+        if (createMarketNoteField && createAndAssignBtn) {
+            const note = createMarketNoteField.value.trim();
+            if (!note) {
+                createAndAssignBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                createAndAssignBtn.disabled = true;
+            } else {
+                createAndAssignBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                createAndAssignBtn.disabled = false;
+            }
+        }
     };
 
     // ===== FUNCIONES DE LISTA DE PRODUCTOS =====
@@ -291,8 +316,12 @@ $(document).ready(function() {
         document.getElementById('bulk-market-search-input').value = market.mercado;
         document.getElementById('bulk-markets-dropdown').classList.add('hidden');
         
-        // Habilitar botón de confirmación
-        document.getElementById('bulk-assign-confirm-btn').disabled = false;
+        // Habilitar botón de confirmación cuando se selecciona un mercado
+        const assignBtn = document.getElementById('bulk-assign-confirm-btn');
+        if (assignBtn) {
+            assignBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            assignBtn.disabled = false;
+        }
     }
 
     // Limpiar selección de mercado
@@ -302,9 +331,13 @@ $(document).ready(function() {
         document.getElementById('bulk-selected-market-display').classList.add('hidden');
         document.getElementById('bulk-market-search-input').value = '';
         
-        // Deshabilitar botón si estamos en tab existente
+        // Deshabilitar botón si estamos en tab existente y no hay mercado seleccionado
         if (currentTab === 'existing') {
-            document.getElementById('bulk-assign-confirm-btn').disabled = true;
+            const assignBtn = document.getElementById('bulk-assign-confirm-btn');
+            if (assignBtn) {
+                assignBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                assignBtn.disabled = true;
+            }
         }
         
         if (bulkAvailableMarkets.length > 0) {
@@ -877,6 +910,14 @@ $(document).ready(function() {
         
         productsContainer.innerHTML = productsHtml;
         
+        // Validación inicial - deshabilitar botón de confirmar hasta que se ingrese una nota
+        // Solo aquí se deshabilita por la nota, ya que es donde se ingresa
+        const confirmBtn = document.getElementById('bulk-assign-confirm-btn');
+        if (confirmBtn) {
+            confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            confirmBtn.disabled = true;
+        }
+        
         // Mostrar modal
         document.getElementById('assign-confirmation-modal').classList.remove('hidden');
     }
@@ -960,5 +1001,84 @@ $(document).ready(function() {
         }));
         
         showWarningNotification(`No se encontró el mercado "${marketName}" en la lista disponible`);
+    }
+    
+    // ===== VALIDACIÓN DE NOTAS EN TIEMPO REAL =====
+    
+    // Función para configurar la validación de notas en tiempo real
+    function setupNoteValidation() {
+        // Validación para la nota de asignación
+        const assignNoteField = document.getElementById('assign-note');
+        if (assignNoteField) {
+            assignNoteField.addEventListener('input', function() {
+                validateNoteField(this, 'assign-note-error');
+            });
+        }
+        
+        // Validación para la nota de crear mercado
+        const createMarketNoteField = document.getElementById('new-market-note');
+        if (createMarketNoteField) {
+            createMarketNoteField.addEventListener('input', function() {
+                validateNoteField(this, 'create-market-note-error');
+            });
+        }
+        
+        // Validación para la nota de quitar producto
+        const removeNoteField = document.getElementById('remove-product-note');
+        if (removeNoteField) {
+            removeNoteField.addEventListener('input', function() {
+                validateNoteField(this, 'remove-note-error');
+            });
+        }
+        
+        // Validación para la nota de cambiar mercado
+        const changeNoteField = document.getElementById('change-market-note');
+        if (changeNoteField) {
+            changeNoteField.addEventListener('input', function() {
+                validateNoteField(this, 'change-note-error');
+            });
+        }
+    }
+    
+    // Función para validar un campo de nota
+    function validateNoteField(noteField, errorId) {
+        const note = noteField.value.trim();
+        const errorMsg = document.getElementById(errorId);
+        const submitBtn = getSubmitButtonForNoteField(noteField.id);
+        
+        if (!note) {
+            noteField.classList.add('border-red-500');
+            noteField.classList.remove('border-primary');
+            if (errorMsg) errorMsg.classList.remove('hidden');
+            if (submitBtn) {
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.disabled = true;
+            }
+        } else {
+            noteField.classList.remove('border-red-500');
+            noteField.classList.add('border-primary');
+            if (errorMsg) errorMsg.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.disabled = false;
+            }
+        }
+    }
+    
+    // Función para obtener el botón de envío correspondiente a un campo de nota
+    function getSubmitButtonForNoteField(noteFieldId) {
+        switch (noteFieldId) {
+            case 'assign-note':
+                // Para la nota de asignación, el botón es el de confirmar en la modal de confirmación
+                return document.getElementById('bulk-assign-confirm-btn');
+            case 'new-market-note':
+                return document.getElementById('create-and-assign-btn');
+            case 'remove-product-note':
+                return document.getElementById('confirm-remove-btn');
+            case 'change-market-note':
+                return document.getElementById('change-market-btn');
+            default:
+                return null;
+        }
     }
 });

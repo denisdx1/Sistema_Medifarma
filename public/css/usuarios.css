@@ -1,0 +1,87 @@
+ /* Custom styles for the module */
+ .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilos para modales - Z-index máximo para estar por encima de todo */
+#modalCrearUsuario,
+#modalEditarUsuario {
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+}
+
+#modalCrearUsuario.hidden,
+#modalEditarUsuario.hidden {
+    display: none !important;
+}
+
+#modalCrearUsuario .relative,
+#modalEditarUsuario .relative {
+    z-index: 9999999 !important;
+    position: relative !important;
+    margin: auto !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+/* Asegurar que TODO el contenido del módulo tenga z-index muy bajo */
+.min-h-screen > div {
+    position: relative;
+    z-index: 1 !important;
+}
+
+.bg-white.rounded-xl.shadow-md {
+    position: relative;
+    z-index: 1 !important;
+}
+
+/* Tabla y contenido con z-index muy bajo */
+table, thead, tbody, tr, td, th {
+    position: relative;
+    z-index: 1 !important;
+}
+
+/* Header y filtros con z-index bajo */
+.bg-white.rounded-xl.shadow-lg {
+    position: relative;
+    z-index: 1 !important;
+}
+
+/* Botones y acciones con z-index bajo */
+button:not(#modalCrearUsuario button):not(#modalEditarUsuario button) {
+    position: relative;
+    z-index: 1 !important;
+}
+
+/* Contenedor principal */
+.min-h-screen {
+    overflow: visible !important;
+    position: relative;
+    z-index: 1 !important;
+}
+
+/* Animaciones básicas para las modales */
+#modalCrearUsuario.show,
+#modalEditarUsuario.show,
+#modalDesactivarUsuario.show {
+    z-index: 999999 !important;
+}
+
+/* Overlay básico para la modal */
+#modalDesactivarUsuario::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}

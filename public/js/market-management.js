@@ -310,8 +310,30 @@ window.clearSearch = function() {
 // Function to open edit modal
 window.openEditModal = function(marketId, currentName) {
     $('#edit-market-id').val(marketId);
+    $('#edit-market-original-name').val(currentName); // Guardar el nombre original
     $('#edit-market-name').val(currentName);
+    $('#edit-market-note').val(''); // Limpiar la nota
     $('#edit-modal').removeClass('hidden');
+    
+    // Agregar validación en tiempo real para la nota
+    $('#edit-market-note').on('input', function() {
+        const note = $(this).val().trim();
+        const submitBtn = $('#edit-submit-btn');
+        const errorMsg = $('#edit-note-error');
+        
+        if (!note) {
+            $(this).addClass('border-red-500').removeClass('border-primary');
+            submitBtn.addClass('opacity-50 cursor-not-allowed').prop('disabled', true);
+            errorMsg.removeClass('hidden');
+        } else {
+            $(this).removeClass('border-red-500').addClass('border-primary');
+            submitBtn.removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
+            errorMsg.addClass('hidden');
+        }
+    });
+    
+    // Validación inicial - deshabilitar botón hasta que se ingrese una nota
+    $('#edit-submit-btn').addClass('opacity-50 cursor-not-allowed').prop('disabled', true);
 }
 
 // Function to close edit modal
@@ -324,8 +346,9 @@ window.closeEditModal = function() {
 // Function to open edit confirmation modal
 window.openEditConfirmationModal = function() {
     const marketId = $('#edit-market-id').val();
-    const currentName = $('#edit-market-name').val();
+    const currentName = $('#edit-market-original-name').val(); // Usar el nombre original guardado
     const newName = $('#edit-market-name').val().trim();
+    const note = $('#edit-market-note').val().trim();
     
     if (!newName) {
         showToast('El nombre del mercado no puede estar vacío', 'error');
@@ -334,6 +357,11 @@ window.openEditConfirmationModal = function() {
     
     if (newName === currentName) {
         showToast('El nuevo nombre debe ser diferente al actual', 'warning');
+        return;
+    }
+    
+    if (!note) {
+        showToast('La nota es obligatoria', 'error');
         return;
     }
     
@@ -351,9 +379,15 @@ window.closeEditConfirmationModal = function() {
 window.confirmEditMarket = function() {
     const marketId = $('#edit-market-id').val();
     const newName = $('#edit-market-name').val().trim();
+    const note = $('#edit-market-note').val().trim();
     
     if (!newName) {
         showToast('El nombre del mercado no puede estar vacío', 'error');
+        return;
+    }
+    
+    if (!note) {
+        showToast('La nota es obligatoria', 'error');
         return;
     }
     
@@ -375,8 +409,9 @@ window.confirmEditMarket = function() {
             'Content-Type': 'application/json'
         },
         data: JSON.stringify({
-            idMercado: marketId,
-            nuevoNombre: newName
+            market_id: marketId,
+            market_name: newName,
+            market_note: $('#edit-market-note').val().trim()
         }),
         success: function(response) {
             if (response.success) {
@@ -527,4 +562,7 @@ $(document).ready(function() {
             }
         }
     });
+
+    
 });
+

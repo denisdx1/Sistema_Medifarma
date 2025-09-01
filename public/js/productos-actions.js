@@ -73,6 +73,13 @@ window.openChangeMarketModal = function(productCode, productName) {
     const noteElement = document.getElementById('change-market-note');
     if (noteElement) noteElement.value = '';
     
+    // Validación inicial - deshabilitar botón hasta que se ingrese una nota
+    const changeBtn = document.getElementById('change-market-btn');
+    if (changeBtn) {
+        changeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        changeBtn.disabled = true;
+    }
+    
     // Configurar búsqueda y cargar mercados
     if (typeof setupMarketSearch === 'function') {
         setupMarketSearch();
@@ -648,4 +655,65 @@ $(document).ready(function() {
             }
         });
     }
+    
+    // Agregar validación en tiempo real para las notas
+    setupNoteValidation();
 });
+
+// ===== VALIDACIÓN DE NOTAS EN TIEMPO REAL =====
+
+// Función para configurar la validación de notas en tiempo real
+function setupNoteValidation() {
+    // Validación para la nota de quitar producto
+    const removeNoteField = document.getElementById('remove-product-note');
+    if (removeNoteField) {
+        removeNoteField.addEventListener('input', function() {
+            validateNoteField(this, 'remove-note-error');
+        });
+    }
+    
+    // Validación para la nota de cambiar mercado
+    const changeNoteField = document.getElementById('change-market-note');
+    if (changeNoteField) {
+        changeNoteField.addEventListener('input', function() {
+            validateNoteField(this, 'change-note-error');
+        });
+    }
+}
+
+// Función para validar un campo de nota
+function validateNoteField(noteField, errorId) {
+    const note = noteField.value.trim();
+    const errorMsg = document.getElementById(errorId);
+    const submitBtn = getSubmitButtonForNoteField(noteField.id);
+    
+    if (!note) {
+        noteField.classList.add('border-red-500');
+        noteField.classList.remove('border-primary');
+        if (errorMsg) errorMsg.classList.remove('hidden');
+        if (submitBtn) {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = true;
+        }
+    } else {
+        noteField.classList.remove('border-red-500');
+        noteField.classList.add('border-primary');
+        if (errorMsg) errorMsg.classList.add('hidden');
+        if (submitBtn) {
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = false;
+        }
+    }
+}
+
+// Función para obtener el botón de envío correspondiente a un campo de nota
+function getSubmitButtonForNoteField(noteFieldId) {
+    switch (noteFieldId) {
+        case 'remove-product-note':
+            return document.getElementById('confirm-remove-btn');
+        case 'change-market-note':
+            return document.getElementById('change-market-btn');
+        default:
+            return null;
+    }
+}

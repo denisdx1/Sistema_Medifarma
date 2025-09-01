@@ -23,23 +23,23 @@
         }
 
         .card-login {
-            width: 420px;
+            width: 380px;
             background: #ffffff;
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--muted-2);
         }
 
         .logo {
             display: block;
-            margin: 0 auto 24px auto;
-            max-width: 160px;
+            margin: 0 auto 16px auto;
+            max-width: 120px;
             height: auto;
             /* Fallback para cuando no se encuentra la imagen */
             background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 6px;
+            padding: 16px;
             border: 2px dashed var(--muted-2);
         }
 
@@ -67,27 +67,31 @@
         h3 {
             color: #222222;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 1.25rem;
         }
 
         .text-muted {
             color: var(--muted) !important;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
         }
 
         .form-label {
             color: #333333;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 0.875rem;
         }
 
         .form-control {
             background: #ffffff;
             border: 2px solid var(--muted-2);
             color: #333333;
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 10px 14px;
+            border-radius: 6px;
             transition: all 0.15s ease;
+            font-size: 0.875rem;
         }
 
         .form-control:focus {
@@ -105,11 +109,12 @@
         .btn-primary {
             background: linear-gradient(90deg, var(--primary), var(--muted-2));
             border: none;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-weight: 600;
             color: #fff;
             transition: all 0.15s ease;
+            font-size: 0.875rem;
         }
 
         .btn-primary:hover {
@@ -122,50 +127,119 @@
             background: #fff0f0;
             border: 1px solid rgba(255,7,50,0.12);
             color: #7a0a12;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 24px;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
         }
 
         .alert-success {
             background: #eff7ef;
             border: 1px solid #cfe9d6;
             color: #155724;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 24px;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
         }
 
         .alert-warning {
             background: #fff8e1;
             border: 1px solid #ffcc02;
             color: #856404;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 24px;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
         }
 
         .mb-3 {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .password-requirements {
             background: #f8f9fa;
             border: 1px solid var(--muted-2);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 0.75rem;
             color: var(--muted);
         }
 
         .password-requirements ul {
-            margin: 8px 0 0 0;
-            padding-left: 20px;
+            margin: 6px 0 0 0;
+            padding-left: 16px;
         }
 
         .password-requirements li {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+        }
+
+        /* Media queries para pantallas pequeñas */
+        @media (max-width: 480px) {
+            .card-login {
+                width: 95%;
+                max-width: 350px;
+                padding: 20px;
+            }
+            
+            .logo {
+                max-width: 100px;
+                padding: 12px;
+            }
+            
+            h3 {
+                font-size: 1.125rem;
+            }
+            
+            .text-muted {
+                font-size: 0.8rem;
+                margin-bottom: 16px;
+            }
+            
+            .form-control {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .btn-primary {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+            
+            .password-requirements {
+                font-size: 0.7rem;
+                padding: 8px 10px;
+            }
+        }
+
+        /* Para pantallas muy pequeñas, hacer layout horizontal */
+        @media (max-width: 360px) {
+            .card-login {
+                width: 98%;
+                max-width: 320px;
+                padding: 16px;
+            }
+            
+            .form-row {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+            
+            .form-row .mb-3 {
+                flex: 1;
+                margin-bottom: 0;
+            }
+            
+            .form-row .mb-3:last-child {
+                margin-bottom: 16px;
+            }
+            
+            .password-requirements {
+                margin-bottom: 12px;
+            }
         }
     </style>
 </head>
@@ -220,12 +294,13 @@ endif;
 unset($__errorArgs, $__bag); ?>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Nueva Contraseña</label>
-            <input type="password" 
-                   name="password" 
-                   id="password"
-                   class="form-control <?php $__errorArgs = ['password'];
+        <div class="form-row">
+            <div class="mb-3">
+                <label class="form-label">Nueva Contraseña</label>
+                <input type="password" 
+                       name="password" 
+                       id="password"
+                       class="form-control <?php $__errorArgs = ['password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -233,30 +308,31 @@ $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" 
-                   placeholder="Mínimo 6 caracteres" 
-                   minlength="6"
-                   required>
-            <?php $__errorArgs = ['password'];
+                       placeholder="Mínimo 6 caracteres" 
+                       minlength="6"
+                       required>
+                <?php $__errorArgs = ['password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
 $message = $__bag->first($__errorArgs[0]); ?>
-                <div class="invalid-feedback"><?php echo e($message); ?></div>
-            <?php unset($message);
+                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-        </div>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label">Confirmar Nueva Contraseña</label>
-            <input type="password" 
-                   name="password_confirmation" 
-                   id="password_confirmation"
-                   class="form-control" 
-                   placeholder="Repita la nueva contraseña" 
-                   minlength="6"
-                   required>
+            <div class="mb-3">
+                <label class="form-label">Confirmar Nueva Contraseña</label>
+                <input type="password" 
+                       name="password_confirmation" 
+                       id="password_confirmation"
+                       class="form-control" 
+                       placeholder="Repita la nueva contraseña" 
+                       minlength="6"
+                       required>
+            </div>
         </div>
 
         <div class="password-requirements">
