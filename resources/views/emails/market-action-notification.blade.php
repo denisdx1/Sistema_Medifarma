@@ -129,8 +129,10 @@
                     PRODUCTO ASIGNADO
                 @elseif($actionType === 'move_product')
                     PRODUCTO CAMBIADO DE MERCADO
+                @elseif($actionType === 'change_market')
+                    CAMBIO MASIVO DE MERCADO
                 @elseif($actionType === 'remove_product')
-                    PRODUCTO REMOVIDO
+                    PRODUCTOS REMOVIDOS
                 @else
                     NOTIFICACIÓN DEL SISTEMA
                 @endif
@@ -215,21 +217,60 @@
                     </div>
 
                 @elseif($actionType === 'remove_product')
-                    <div class="section-title">Se ha removido un producto de un mercado</div>
+                    <div class="section-title">Se han removido productos de mercados</div>
                     <div class="detail-row">
-                        <span class="detail-label">Producto:</span>
-                        <span class="detail-value">{{ $actionData['product_name'] ?? $actionData['product_code'] }}</span>
+                        <span class="detail-label">Total de productos:</span>
+                        <span class="detail-value">{{ $actionData['removed_count'] }} productos</span>
                     </div>
-                    @if(isset($actionData['product_code']) && isset($actionData['product_name']))
-                    <div class="detail-row">
-                        <span class="detail-label">Código:</span>
-                        <span class="detail-value">{{ $actionData['product_code'] }}</span>
+
+                    @if(isset($actionData['removed_products']) && is_array($actionData['removed_products']))
+                    <div class="products-list">
+                        <strong>Productos removidos:</strong>
+                        @foreach($actionData['removed_products'] as $index => $product)
+                        <div class="product-item">
+                            @if(is_array($product))
+                                • {{ $product['name'] ?? 'Nombre no disponible' }} (Código: {{ $product['code'] }})
+                                <br>
+                                <small style="color: #666; margin-left: 20px;">
+                                    Removido de: <strong>{{ $product['previous_market'] }}</strong>
+                                </small>
+                            @else
+                                • {{ $product }}
+                            @endif
+                        </div>
+                        @endforeach
                     </div>
                     @endif
+
+                @elseif($actionType === 'change_market')
+                    <div class="section-title">Se han cambiado productos de mercado masivamente</div>
                     <div class="detail-row">
-                        <span class="detail-label">Removido de:</span>
-                        <span class="detail-value">{{ $actionData['market_name'] }}</span>
+                        <span class="detail-label">Mercado destino:</span>
+                        <span class="detail-value">{{ $actionData['new_market_name'] }}</span>
                     </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total de productos:</span>
+                        <span class="detail-value">{{ $actionData['changed_count'] }} productos</span>
+                    </div>
+
+                    @if(isset($actionData['changed_products']) && is_array($actionData['changed_products']))
+                    <div class="products-list">
+                        <strong>Productos cambiados:</strong>
+                        @foreach($actionData['changed_products'] as $index => $product)
+                        <div class="product-item">
+                            @if(is_array($product))
+                                • {{ $product['name'] ?? 'Nombre no disponible' }} (Código: {{ $product['code'] }})
+                                <br>
+                                <small style="color: #666; margin-left: 20px;">
+                                    Cambiado de: <strong>{{ $product['previous_market'] }}</strong> → <strong>{{ $product['new_market'] }}</strong>
+                                </small>
+                            @else
+                                • {{ $product }}
+                            @endif
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
 
                 @elseif($actionType === 'test')
                     <div class="section-title">Notificación de prueba del sistema</div>

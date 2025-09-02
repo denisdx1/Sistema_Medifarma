@@ -115,10 +115,10 @@ window.proceedWithBulkRemove = function() {
             closeBulkRemoveConfirmationModal();
             closeBulkRemoveModal();
             
-            // Recargar productos
-            if (typeof loadProducts === 'function') {
-                loadProducts();
-            }
+            // Actualizar la página completa
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
             
             // Limpiar selecciones
             clearProductSelections();
@@ -227,10 +227,10 @@ window.proceedWithBulkChange = function() {
             closeBulkChangeConfirmationModal();
             closeBulkChangeModal();
             
-            // Recargar productos
-            if (typeof loadProducts === 'function') {
-                loadProducts();
-            }
+            // Actualizar la página completa
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
             
             // Limpiar selecciones
             clearProductSelections();
@@ -676,8 +676,20 @@ function clearProductSelections() {
     checkboxes.forEach(checkbox => checkbox.checked = false);
     
     // Actualizar contador
-    if (typeof updateSelectedCount === 'function') {
-        updateSelectedCount();
+    if (typeof updateSelectedProducts === 'function') {
+        updateSelectedProducts();
+    } else {
+        // Fallback: actualizar contador manualmente
+        document.getElementById('selected-count').textContent = '0';
+        // Ocultar información de productos seleccionados
+        const infoDiv = document.getElementById('selected-products-info');
+        if (infoDiv) infoDiv.classList.add('hidden');
+        // Limpiar checkbox "seleccionar todos"
+        const selectAllCheckbox = document.getElementById('select-all-products');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        }
     }
     
     // Ocultar botones de acción masiva

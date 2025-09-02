@@ -89,17 +89,19 @@ class MarketManagementController extends Controller
                 )
                 ->whereNotNull('v.descripcionProducto')
                 ->where('v.descripcionProducto', '!=', '')
-                ->whereNotNull('v.Gerente_Producto')
-                ->whereNotNull('m.mercado')
-                ->where('m.mercado', '!=', '') // Asegurar que no esté vacío
                 ->groupBy('v.descripcionProducto', 'm.mercado'); // Group by para hacer DISTINCT
 
             // FILTRAR SEGÚN EL ROL DEL USUARIO
             if ($user && $user->idRol == 2) {
-                // GERENTE: Filtrar solo sus marcas
+                // GERENTE: Filtrar solo sus marcas (excluye registros sin gerente_producto)
                 $this->aplicarFiltroGerenteProducto($marketsQuery, $user);
+            } else {
+                // ADMIN (idRol == 1): Mostrar todas las marcas sin filtro, incluyendo:
+                // - Marcas con gerente_producto null
+                // - Marcas con mercado null (sin configuración)
+                // - Marcas con franquicia null
+                // No se aplican filtros adicionales
             }
-            // ADMIN (idRol == 1): Mostrar todas las marcas sin filtro
 
             // Búsqueda simple si se proporciona (compatible con GROUP BY)
             if (!empty($search)) {
@@ -328,17 +330,19 @@ class MarketManagementController extends Controller
                 )
                 ->whereNotNull('v.descripcionProducto')
                 ->where('v.descripcionProducto', '!=', '')
-                ->whereNotNull('v.Gerente_Producto')
-                ->whereNotNull('m.mercado')
-                ->where('m.mercado', '!=', '') // Asegurar que no esté vacío
                 ->groupBy('v.descripcionProducto', 'm.mercado'); // Group by para hacer DISTINCT
 
             // FILTRAR SEGÚN EL ROL DEL USUARIO
             if ($user && $user->idRol == 2) {
-                // GERENTE: Filtrar solo sus marcas
+                // GERENTE: Filtrar solo sus marcas (excluye registros sin gerente_producto)
                 $this->aplicarFiltroGerenteProducto($marketsQuery, $user);
+            } else {
+                // ADMIN (idRol == 1): Mostrar todas las marcas sin filtro, incluyendo:
+                // - Marcas con gerente_producto null
+                // - Marcas con mercado null (sin configuración)
+                // - Marcas con franquicia null
+                // No se aplican filtros adicionales
             }
-            // ADMIN (idRol == 1): Mostrar todas las marcas sin filtro
 
             // Búsqueda simple si se proporciona (compatible con GROUP BY)
             if (!empty($search)) {

@@ -146,11 +146,17 @@ function updateTableWithResults(markets) {
                         <div class="flex-shrink-0 w-6 h-6 bg-secondary-purple rounded-full flex items-center justify-center mr-2">
                             <i class="fas fa-store text-primary text-xs"></i>
                         </div>
-                        <button onclick="redirectToProductsWithMarket('${escapeForJs(market.mercado)}')" 
-                                class="font-medium text-primary hover:text-secondary hover:underline transition-colors cursor-pointer"
-                                title="Ver productos de este mercado">
-                            ${escapeHtml(market.mercado)}
-                        </button>
+                        ${market.mercado ? 
+                            `<button onclick="redirectToProductsWithMarket('${escapeForJs(market.mercado)}')" 
+                                    class="font-medium text-primary hover:text-secondary hover:underline transition-colors cursor-pointer"
+                                    title="Ver productos de este mercado">
+                                ${escapeHtml(market.mercado)}
+                            </button>` :
+                            `<span class="text-gray-400 italic" title="Sin mercado asignado">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Sin asignar
+                            </span>`
+                        }
                     </div>
                 </td>
                 <!-- Estado -->
@@ -164,21 +170,28 @@ function updateTableWithResults(markets) {
                 <!-- Acciones -->
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-2">
-                        <!-- Editar Nombre del Mercado -->
-                        <button onclick="openEditModal(${market.idMercado}, '${escapeForJs(market.mercado)}')"
-                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
-                                title="Editar nombre del mercado">
-                            <i class="fas fa-edit mr-1"></i>
-                            Editar Mercado
-                        </button>
-                        
-                        <!-- Asignar Producto -->
-                        <button onclick="redirectToProductsWithRestoAndMarket('${escapeForJs(market.mercado)}')"
-                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200"
-                                title="Asignar producto a este mercado">
-                            <i class="fas fa-plus mr-1"></i>
-                            Asignar Producto
-                        </button>
+                        ${market.mercado ? 
+                            `<!-- Editar Nombre del Mercado -->
+                            <button onclick="openEditModal(${market.idMercado}, '${escapeForJs(market.mercado)}')"
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
+                                    title="Editar nombre del mercado">
+                                <i class="fas fa-edit mr-1"></i>
+                                Editar Mercado
+                            </button>
+                            
+                            <!-- Asignar Producto -->
+                            <button onclick="redirectToProductsWithRestoAndMarket('${escapeForJs(market.mercado)}')"
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200"
+                                    title="Asignar producto a este mercado">
+                                <i class="fas fa-plus mr-1"></i>
+                                Asignar Producto
+                            </button>` :
+                            `<!-- Sin mercado asignado -->
+                            <span class="text-gray-400 italic text-xs">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Sin mercado asignado
+                            </span>`
+                        }
                     </div>
                 </td>
             </tr>

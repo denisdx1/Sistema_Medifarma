@@ -47,7 +47,8 @@ class NewMarketNotification extends Mailable
             'update' => 'Mercado Actualizado - ' . ($this->actionData['market_name'] ?? ''),
             'assign_product' => 'Producto Asignado a Mercado - ' . ($this->actionData['market_name'] ?? ''),
             'move_product' => 'Producto Cambiado de Mercado - ' . ($this->actionData['product_name'] ?? ''),
-            'remove_product' => 'Producto Removido de Mercado - ' . ($this->actionData['market_name'] ?? ''),
+            'change_market' => 'Cambio Masivo de Mercado - ' . ($this->actionData['new_market_name'] ?? ''),
+            'remove_product' => 'Productos Removidos de Mercados - ' . ($this->actionData['removed_count'] ?? '0') . ' productos',
         ];
 
         $subject = $subjects[$this->actionType] ?? 'Notificación del Sistema - Gestión de Mercados';

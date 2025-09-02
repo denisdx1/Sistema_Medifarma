@@ -23,21 +23,21 @@
                             <!-- Botones de acción masiva -->
                             <div class="flex space-x-2">
                                 <button id="bulk-assign-btn" 
-                                        class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        class="hidden bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                                         onclick="openBulkAssignModal()">
-                                    <i class="fas fa-layer-group mr-2"></i>
+                                    <i class="fas fa-layer-group mr-1.5"></i>
                                     Asignar al Mercado
                                 </button>
                                 <button id="bulk-remove-btn" 
-                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                                         onclick="openBulkRemoveModal()">
-                                    <i class="fas fa-trash mr-2"></i>
+                                    <i class="fas fa-trash mr-1.5"></i>
                                     Quitar Mercado
                                 </button>
                                 <button id="bulk-change-btn" 
-                                        class="hidden bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        class="hidden bg-primary hover:bg-primary-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                                         onclick="openBulkChangeModal()">
-                                    <i class="fas fa-exchange-alt mr-2"></i>
+                                    <i class="fas fa-exchange-alt mr-1.5"></i>
                                     Cambiar Mercado
                                 </button>
                             </div>

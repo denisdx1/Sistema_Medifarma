@@ -14,6 +14,17 @@ function inicializarEventos() {
     document.getElementById('formCrearUsuario').addEventListener('submit', manejarCreacionUsuario);
     document.getElementById('formEditarUsuario').addEventListener('submit', manejarEdicionUsuario);
 
+    // Evento para auto-rellenar email cuando se escribe en el campo usuario
+    const campoLogin = document.getElementById('crear_login');
+    if (campoLogin) {
+        campoLogin.addEventListener('input', function() {
+            const campoEmail = document.getElementById('crear_email');
+            if (campoEmail && this.value.trim() !== '') {
+                campoEmail.value = this.value.trim() + '@medifarma.com.pe';
+            }
+        });
+    }
+
     // Cerrar modales con ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {

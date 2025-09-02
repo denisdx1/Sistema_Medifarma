@@ -25,7 +25,7 @@
                     </a>
                     
                     <!-- Admin Section - Solo para administradores -->
-                    @if(Auth::user()->isAdmin())
+                    @if(Auth::check() && Auth::user()->isAdmin())
                         <a href="{{ route('usuarios.index') }}" 
                            class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
                             <i class="fas fa-users mr-2 {{ request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400' }}"></i>
@@ -51,55 +51,59 @@
             
             <!-- Right side - User info and logout -->
             <div class="flex items-center space-x-2 sm:space-x-4">
-                <!-- User Role Info (Desktop) -->
-                <div class="hidden lg:flex lg:items-center lg:space-x-4">
-                    <div class="text-right">
-                        <div class="text-sm font-medium text-gray-900">{{ Auth::user()->usuario }}</div>
-                        <div class="text-xs text-gray-500">
-                            @if(Auth::user()->isAdmin())
-                                <span class="text-primary font-medium">
-                                    <i class="fas fa-shield-alt mr-1"></i>
-                                    Administrador
-                                </span>
-                            @elseif(Auth::user()->isGerenteProducto())
-                                <span class="text-secondary font-medium">
-                                    <i class="fas fa-user-tie mr-1"></i>
-                                    Gerente Producto
-                                </span>
-                            @endif
-                            @if(Auth::user()->department)
-                                | {{ Auth::user()->department }}
-                            @endif
+                @if(Auth::check())
+                    <!-- User Role Info (Desktop) -->
+                    <div class="hidden lg:flex lg:items-center lg:space-x-4">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">{{ Auth::user()->usuario }}</div>
+                            <div class="text-xs text-gray-500">
+                                @if(Auth::user()->isAdmin())
+                                    <span class="text-primary font-medium">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Administrador
+                                    </span>
+                                @elseif(Auth::user()->isGerenteProducto())
+                                    <span class="text-secondary font-medium">
+                                        <i class="fas fa-user-tie mr-1"></i>
+                                        Gerente Producto
+                                    </span>
+                                @endif
+                                @if(Auth::user()->department)
+                                    | {{ Auth::user()->department }}
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- User Avatar (Mobile) -->
-                <div class="md:hidden flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                        {{ substr(Auth::user()->usuario, 0, 1) }}
-                    </div>
-                    <div class="text-left">
-                        <div class="text-xs font-medium text-gray-900 truncate max-w-20">{{ Auth::user()->usuario }}</div>
-                        <div class="text-xs text-gray-500">
-                            @if(Auth::user()->isAdmin())
-                                <span class="text-primary font-medium">Admin</span>
-                            @elseif(Auth::user()->isGerenteProducto())
-                                <span class="text-secondary font-medium">Gerente</span>
-                            @endif
+                    
+                    <!-- User Avatar (Mobile) -->
+                    <div class="md:hidden flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                            {{ substr(Auth::user()->usuario, 0, 1) }}
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs font-medium text-gray-900 truncate max-w-20">{{ Auth::user()->usuario }}</div>
+                            <div class="text-xs text-gray-500">
+                                @if(Auth::user()->isAdmin())
+                                    <span class="text-primary font-medium">Admin</span>
+                                @elseif(Auth::user()->isGerenteProducto())
+                                    <span class="text-secondary font-medium">Gerente</span>
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
-               
-
-                
-                
-                
-                <!-- Fallback logout link for expired sessions -->
-                <a href="{{ route('logout.get') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200 hidden" id="logoutFallback">
-                    <i class="fas fa-sign-out-alt sm:mr-2"></i>
-                    <span class="hidden sm:inline">Salir</span>
-                </a>
+                    
+                    <!-- Logout button -->
+                    <a href="{{ route('logout.get') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
+                        <i class="fas fa-sign-out-alt sm:mr-2"></i>
+                        <span class="hidden sm:inline">Salir</span>
+                    </a>
+                @else
+                    <!-- Login button for unauthenticated users -->
+                    <a href="{{ route('login') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
+                        <i class="fas fa-sign-in-alt sm:mr-2"></i>
+                        <span class="hidden sm:inline">Iniciar Sesión</span>
+                    </a>
+                @endif
                 
                 <!-- Mobile menu button -->
                 <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200">
@@ -111,44 +115,35 @@
         <!-- Mobile Navigation Menu -->
         <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 bg-white shadow-lg">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <!-- Market Management -->
-                <a href="{{ route('market-management.index') }}" 
-                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
-                    <i class="fas fa-clipboard-list mr-3 text-lg {{ request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400' }}"></i>
-                    <div>
-                        <div class="font-medium">Marcas</div>
-                        <div class="text-xs text-gray-500">Gestión de marcas</div>
-                    </div>
-                </a>
-                
-                <!-- Productos Database -->
-                <a href="{{ route('productos.index') }}" 
-                   class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
-                    <i class="fas fa-database mr-3 text-lg {{ request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400' }}"></i>
-                    <div>
-                        <div class="font-medium">Base de Productos</div>
-                        <div class="text-xs text-gray-500">Catálogo completo</div>
-                    </div>
-                </a>
-                
-                <!-- Admin Section - Solo para administradores -->
-                @if(Auth::user()->isAdmin())
-                    <div class="border-t border-gray-200 pt-2 mt-2">
-                        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            <i class="fas fa-shield-alt mr-2"></i>
-                            Administración
+                @if(Auth::check())
+                    <!-- Market Management -->
+                    <a href="{{ route('market-management.index') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-clipboard-list mr-3 text-lg {{ request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        <div>
+                            <div class="font-medium">Marcas</div>
+                            <div class="text-xs text-gray-500">Gestión de marcas</div>
                         </div>
-                        
+                    </a>
+                    
+                    <!-- Productos Database -->
+                    <a href="{{ route('productos.index') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-database mr-3 text-lg {{ request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        <div>
+                            <div class="font-medium">Base de Productos</div>
+                            <div class="text-xs text-gray-500">Gestión de productos</div>
+                        </div>
+                    </a>
+                    
+                    <!-- Admin Section Mobile -->
+                    @if(Auth::user()->isAdmin())
                         <a href="{{ route('usuarios.index') }}" 
                            class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
                             <i class="fas fa-users mr-3 text-lg {{ request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400' }}"></i>
                             <div>
                                 <div class="font-medium">Gestión Usuarios</div>
-                                <div class="text-xs text-gray-500">Administrar usuarios</div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary mt-1">
-                                    <i class="fas fa-shield-alt mr-1"></i>
-                                    Admin
-                                </span>
+                                <div class="text-xs text-gray-500">Administración</div>
                             </div>
                         </a>
                         
@@ -157,45 +152,31 @@
                             <i class="fas fa-clipboard-list mr-3 text-lg {{ request()->routeIs('logs.*') ? 'text-primary' : 'text-gray-400' }}"></i>
                             <div>
                                 <div class="font-medium">Logs de Sistema</div>
-                                <div class="text-xs text-gray-500">Auditoría del sistema</div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary mt-1">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    Audit
-                                </span>
+                                <div class="text-xs text-gray-500">Auditoría</div>
                             </div>
                         </a>
-                    </div>
-                @endif
-                
-                <!-- User info mobile -->
-                <div class="border-t border-gray-200 mt-3 pt-3">
-                    <div class="px-3 py-2 bg-secondary-lighter rounded-lg">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg mr-3">
-                                {{ substr(Auth::user()->usuario, 0, 1) }}
-                            </div>
-                            <div>
-                                <div class="text-base font-medium text-gray-900">{{ Auth::user()->usuario }}</div>
-                                <div class="text-sm text-gray-500">
-                                    @if(Auth::user()->isAdmin())
-                                        <span class="text-primary font-medium">
-                                            <i class="fas fa-shield-alt mr-1"></i>
-                                            Administrador
-                                        </span>
-                                    @elseif(Auth::user()->isGerenteProducto())
-                                        <span class="text-secondary font-medium">
-                                            <i class="fas fa-user-tie mr-1"></i>
-                                            Gerente Producto
-                                        </span>
-                                    @endif
-                                </div>
-                                @if(Auth::user()->department)
-                                    <div class="text-xs text-gray-400 mt-1">{{ Auth::user()->department }}</div>
-                                @endif
-                            </div>
+                    @endif
+                    
+                    <!-- Logout Mobile -->
+                    <a href="{{ route('logout.get') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 text-gray-600 hover:text-primary hover:bg-secondary-lighter">
+                        <i class="fas fa-sign-out-alt mr-3 text-lg text-gray-400"></i>
+                        <div>
+                            <div class="font-medium">Cerrar Sesión</div>
+                            <div class="text-xs text-gray-500">Salir del sistema</div>
                         </div>
-                    </div>
-                </div>
+                    </a>
+                @else
+                    <!-- Login Mobile for unauthenticated users -->
+                    <a href="{{ route('login') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 text-gray-600 hover:text-primary hover:bg-secondary-lighter">
+                        <i class="fas fa-sign-in-alt mr-3 text-lg text-gray-400"></i>
+                        <div>
+                            <div class="font-medium">Iniciar Sesión</div>
+                            <div class="text-xs text-gray-500">Acceder al sistema</div>
+                        </div>
+                    </a>
+                @endif
             </div>
         </div>
     </div>

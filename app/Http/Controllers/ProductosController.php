@@ -955,9 +955,8 @@ class ProductosController extends Controller
                     $notificationService->notifyMarketAction('assign_product', [
                         'assigned_products' => $assignedProducts,
                         'market_name' => $mercado->mercado,
-                        'assigned_count' => $assignedCount,
-                        'user_note' => $validated['note'] ?? null // Incluir la nota del usuario
-                    ], Auth::user());
+                        'assigned_count' => $assignedCount
+                    ], Auth::user(), $validated['note'] ?? null);
                 } catch (\Exception $e) {
                     // Error en notificación pero no interrumpir el flujo
                 }
@@ -1090,9 +1089,8 @@ class ProductosController extends Controller
                     $notificationService = new NotificationService();
                     $notificationService->notifyMarketAction('remove_product', [
                         'removed_products' => $removedProducts,
-                        'removed_count' => $removedCount,
-                        'user_note' => $note
-                    ], Auth::user());
+                        'removed_count' => $removedCount
+                    ], Auth::user(), $note);
                 } catch (\Exception $e) {
                     // Error en notificación pero no interrumpir el flujo
                 }
@@ -1343,9 +1341,8 @@ class ProductosController extends Controller
                     $notificationService->notifyMarketAction('change_market', [
                         'changed_products' => $changedProducts,
                         'new_market_name' => $mercado->mercado,
-                        'changed_count' => $changedCount,
-                        'user_note' => $note
-                    ], Auth::user());
+                        'changed_count' => $changedCount
+                    ], Auth::user(), $note);
                 } catch (\Exception $e) {
                     // Error en notificación pero no interrumpir el flujo
                 }

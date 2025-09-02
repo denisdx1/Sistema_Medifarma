@@ -129,8 +129,10 @@
                     PRODUCTO ASIGNADO
                 <?php elseif($actionType === 'move_product'): ?>
                     PRODUCTO CAMBIADO DE MERCADO
+                <?php elseif($actionType === 'change_market'): ?>
+                    CAMBIO MASIVO DE MERCADO
                 <?php elseif($actionType === 'remove_product'): ?>
-                    PRODUCTO REMOVIDO
+                    PRODUCTOS REMOVIDOS
                 <?php else: ?>
                     NOTIFICACIÓN DEL SISTEMA
                 <?php endif; ?>
@@ -216,21 +218,62 @@
                     </div>
 
                 <?php elseif($actionType === 'remove_product'): ?>
-                    <div class="section-title">Se ha removido un producto de un mercado</div>
+                    <div class="section-title">Se han removido productos de mercados</div>
                     <div class="detail-row">
-                        <span class="detail-label">Producto:</span>
-                        <span class="detail-value"><?php echo e($actionData['product_name'] ?? $actionData['product_code']); ?></span>
+                        <span class="detail-label">Total de productos:</span>
+                        <span class="detail-value"><?php echo e($actionData['removed_count']); ?> productos</span>
                     </div>
-                    <?php if(isset($actionData['product_code']) && isset($actionData['product_name'])): ?>
-                    <div class="detail-row">
-                        <span class="detail-label">Código:</span>
-                        <span class="detail-value"><?php echo e($actionData['product_code']); ?></span>
+
+                    <?php if(isset($actionData['removed_products']) && is_array($actionData['removed_products'])): ?>
+                    <div class="products-list">
+                        <strong>Productos removidos:</strong>
+                        <?php $__currentLoopData = $actionData['removed_products']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="product-item">
+                            <?php if(is_array($product)): ?>
+                                • <?php echo e($product['name'] ?? 'Nombre no disponible'); ?> (Código: <?php echo e($product['code']); ?>)
+                                <br>
+                                <small style="color: #666; margin-left: 20px;">
+                                    Removido de: <strong><?php echo e($product['previous_market']); ?></strong>
+                                </small>
+                            <?php else: ?>
+                                • <?php echo e($product); ?>
+
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                     <?php endif; ?>
+
+                <?php elseif($actionType === 'change_market'): ?>
+                    <div class="section-title">Se han cambiado productos de mercado masivamente</div>
                     <div class="detail-row">
-                        <span class="detail-label">Removido de:</span>
-                        <span class="detail-value"><?php echo e($actionData['market_name']); ?></span>
+                        <span class="detail-label">Mercado destino:</span>
+                        <span class="detail-value"><?php echo e($actionData['new_market_name']); ?></span>
                     </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total de productos:</span>
+                        <span class="detail-value"><?php echo e($actionData['changed_count']); ?> productos</span>
+                    </div>
+
+                    <?php if(isset($actionData['changed_products']) && is_array($actionData['changed_products'])): ?>
+                    <div class="products-list">
+                        <strong>Productos cambiados:</strong>
+                        <?php $__currentLoopData = $actionData['changed_products']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <div class="product-item">
+                            <?php if(is_array($product)): ?>
+                                • <?php echo e($product['name'] ?? 'Nombre no disponible'); ?> (Código: <?php echo e($product['code']); ?>)
+                                <br>
+                                <small style="color: #666; margin-left: 20px;">
+                                    Cambiado de: <strong><?php echo e($product['previous_market']); ?></strong> → <strong><?php echo e($product['new_market']); ?></strong>
+                                </small>
+                            <?php else: ?>
+                                • <?php echo e($product); ?>
+
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </div>
+                    <?php endif; ?>
 
                 <?php elseif($actionType === 'test'): ?>
                     <div class="section-title">Notificación de prueba del sistema</div>
