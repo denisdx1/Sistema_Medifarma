@@ -28,7 +28,8 @@ $(document).ready(function() {
         descripcionFF3: '',
         descripcionATC4: '',
         descripcionLaboratorio: '',
-        descripcionCorporacion: ''
+        descripcionCorporacion: '',
+        concentracion: ''
     };
     let filterTimeout = null;
 
@@ -43,6 +44,8 @@ $(document).ready(function() {
     
     // Initialize normal filters (select dropdowns)
     initializeNormalFilters();
+    
+
     
     // Initialize sorting functionality
     initializeSorting();
@@ -135,7 +138,7 @@ $(document).ready(function() {
 
     // Initialize searchable filters (for large datasets)
     function initializeSearchableFilters() {
-        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion', 'mercado'];
+        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion', 'mercado', 'concentracion'];
         
         searchableFilters.forEach(filterKey => {
             const input = $(`#filter-${filterKey}`);
@@ -675,8 +678,14 @@ $(document).ready(function() {
                         ${laboratorio}
                     </div>
                 </td>
-                <!-- Mercado 10% -->
-                <td class="w-[10%] px-2 py-1 text-center text-[9px] text-gray-600 market-cell">
+                <!-- Concentración 8% -->
+                <td class="w-[5%] px-2 py-1 text-center text-[10px] text-gray-600">
+                    <span class="text-[10px] font-medium">
+                        -
+                    </span>
+                </td>
+                <!-- Mercado 6% -->
+                <td class="w-[6%] px-2 py-1 text-center text-[9px] text-gray-600 market-cell">
                     <div class="flex flex-col items-center justify-center">
                         <span class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-medium ${getMarketClass(mercado)} w-full">
                             <span class="text-center">
@@ -685,8 +694,14 @@ $(document).ready(function() {
                         </span>
                     </div>
                 </td>
-                <!-- Fuente 7% -->
-                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500">
+                <!-- Size Pack 4% -->
+                <td class="w-[4%] px-2 py-1 text-center text-[10px] text-gray-600">
+                    <span class="text-[10px] font-medium">
+                        ${product['sizePack'] || '-'}
+                    </span>
+                </td>
+                <!-- Fuente 5% -->
+                <td class="w-[5%] px-2 py-1 text-center text-[10px] text-gray-500">
                     <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}">
                         ${fuente}
                     </span>
@@ -906,7 +921,7 @@ $(document).ready(function() {
         // Show error in the table
         $('#products-table-body').html(`
             <tr>
-                <td colspan="13" class="px-6 py-8 text-center text-red-600">
+                <td colspan="15" class="px-6 py-8 text-center text-red-600">
                     <i class="fas fa-exclamation-triangle text-4xl mb-4 block"></i>
                     <p class="text-lg font-medium mb-2">Error al cargar productos</p>
                     <p class="text-sm">${message}</p>
@@ -1342,6 +1357,7 @@ function checkAutoSelectMarketAndLoadProducts() {
                 'descripcionATC4': 'ATC4',
                 'descripcionLaboratorio': 'Laboratorio',
                 'descripcionCorporacion': 'Corporación',
+                'concentracion': 'Concentración',
                 'mercado': 'Mercado',
                 'fuente': 'Fuente'
             };
@@ -1354,5 +1370,21 @@ function checkAutoSelectMarketAndLoadProducts() {
         } else {
             sortingInfo.addClass('hidden');
         }
+    }
+    
+    // Función para formatear la concentración
+    function formatConcentracion(stghVal, stghMea) {
+        let result = '';
+        
+        if (stghVal && stghVal !== null && stghVal !== '') {
+            result += parseFloat(stghVal).toFixed(2);
+        }
+        
+        if (stghMea && stghMea !== null && stghMea !== '') {
+            if (result) result += ' ';
+            result += stghMea;
+        }
+        
+        return result || '-';
     }
 });

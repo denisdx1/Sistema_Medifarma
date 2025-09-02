@@ -217,29 +217,49 @@
                     </div>
 
                 @elseif($actionType === 'remove_product')
-                    <div class="section-title">Se han removido productos de mercados</div>
-                    <div class="detail-row">
-                        <span class="detail-label">Total de productos:</span>
-                        <span class="detail-value">{{ $actionData['removed_count'] }} productos</span>
-                    </div>
-
-                    @if(isset($actionData['removed_products']) && is_array($actionData['removed_products']))
-                    <div class="products-list">
-                        <strong>Productos removidos:</strong>
-                        @foreach($actionData['removed_products'] as $index => $product)
-                        <div class="product-item">
-                            @if(is_array($product))
-                                • {{ $product['name'] ?? 'Nombre no disponible' }} (Código: {{ $product['code'] }})
-                                <br>
-                                <small style="color: #666; margin-left: 20px;">
-                                    Removido de: <strong>{{ $product['previous_market'] }}</strong>
-                                </small>
-                            @else
-                                • {{ $product }}
-                            @endif
+                    <div class="section-title">Se ha removido un producto de un mercado</div>
+                    
+                    @if(isset($actionData['removed_count']) && isset($actionData['removed_products']))
+                        <!-- Remoción masiva -->
+                        <div class="detail-row">
+                            <span class="detail-label">Total de productos:</span>
+                            <span class="detail-value">{{ $actionData['removed_count'] }} productos</span>
                         </div>
-                        @endforeach
-                    </div>
+
+                        @if(isset($actionData['removed_products']) && is_array($actionData['removed_products']))
+                        <div class="products-list">
+                            <strong>Productos removidos:</strong>
+                            @foreach($actionData['removed_products'] as $index => $product)
+                            <div class="product-item">
+                                @if(is_array($product))
+                                    • {{ $product['name'] ?? 'Nombre no disponible' }} (Código: {{ $product['code'] }})
+                                    <br>
+                                    <small style="color: #666; margin-left: 20px;">
+                                        Removido de: <strong>{{ $product['previous_market'] }}</strong>
+                                    </small>
+                                @else
+                                    • {{ $product }}
+                                @endif
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    @else
+                        <!-- Remoción individual -->
+                        <div class="detail-row">
+                            <span class="detail-label">Producto:</span>
+                            <span class="detail-value">{{ $actionData['product_name'] ?? $actionData['product_code'] }}</span>
+                        </div>
+                        @if(isset($actionData['product_code']) && isset($actionData['product_name']))
+                        <div class="detail-row">
+                            <span class="detail-label">Código:</span>
+                            <span class="detail-value">{{ $actionData['product_code'] }}</span>
+                        </div>
+                        @endif
+                        <div class="detail-row">
+                            <span class="detail-label">Removido de:</span>
+                            <span class="detail-value">{{ $actionData['market_name'] }}</span>
+                        </div>
                     @endif
 
                 @elseif($actionType === 'change_market')

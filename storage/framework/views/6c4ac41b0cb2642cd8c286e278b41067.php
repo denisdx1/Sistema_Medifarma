@@ -218,30 +218,50 @@
                     </div>
 
                 <?php elseif($actionType === 'remove_product'): ?>
-                    <div class="section-title">Se han removido productos de mercados</div>
-                    <div class="detail-row">
-                        <span class="detail-label">Total de productos:</span>
-                        <span class="detail-value"><?php echo e($actionData['removed_count']); ?> productos</span>
-                    </div>
-
-                    <?php if(isset($actionData['removed_products']) && is_array($actionData['removed_products'])): ?>
-                    <div class="products-list">
-                        <strong>Productos removidos:</strong>
-                        <?php $__currentLoopData = $actionData['removed_products']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <div class="product-item">
-                            <?php if(is_array($product)): ?>
-                                • <?php echo e($product['name'] ?? 'Nombre no disponible'); ?> (Código: <?php echo e($product['code']); ?>)
-                                <br>
-                                <small style="color: #666; margin-left: 20px;">
-                                    Removido de: <strong><?php echo e($product['previous_market']); ?></strong>
-                                </small>
-                            <?php else: ?>
-                                • <?php echo e($product); ?>
-
-                            <?php endif; ?>
+                    <div class="section-title">Se ha removido un producto de un mercado</div>
+                    
+                    <?php if(isset($actionData['removed_count']) && isset($actionData['removed_products'])): ?>
+                        <!-- Remoción masiva -->
+                        <div class="detail-row">
+                            <span class="detail-label">Total de productos:</span>
+                            <span class="detail-value"><?php echo e($actionData['removed_count']); ?> productos</span>
                         </div>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </div>
+
+                        <?php if(isset($actionData['removed_products']) && is_array($actionData['removed_products'])): ?>
+                        <div class="products-list">
+                            <strong>Productos removidos:</strong>
+                            <?php $__currentLoopData = $actionData['removed_products']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="product-item">
+                                <?php if(is_array($product)): ?>
+                                    • <?php echo e($product['name'] ?? 'Nombre no disponible'); ?> (Código: <?php echo e($product['code']); ?>)
+                                    <br>
+                                    <small style="color: #666; margin-left: 20px;">
+                                        Removido de: <strong><?php echo e($product['previous_market']); ?></strong>
+                                    </small>
+                                <?php else: ?>
+                                    • <?php echo e($product); ?>
+
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <!-- Remoción individual -->
+                        <div class="detail-row">
+                            <span class="detail-label">Producto:</span>
+                            <span class="detail-value"><?php echo e($actionData['product_name'] ?? $actionData['product_code']); ?></span>
+                        </div>
+                        <?php if(isset($actionData['product_code']) && isset($actionData['product_name'])): ?>
+                        <div class="detail-row">
+                            <span class="detail-label">Código:</span>
+                            <span class="detail-value"><?php echo e($actionData['product_code']); ?></span>
+                        </div>
+                        <?php endif; ?>
+                        <div class="detail-row">
+                            <span class="detail-label">Removido de:</span>
+                            <span class="detail-value"><?php echo e($actionData['market_name']); ?></span>
+                        </div>
                     <?php endif; ?>
 
                 <?php elseif($actionType === 'change_market'): ?>

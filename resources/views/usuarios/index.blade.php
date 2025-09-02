@@ -21,6 +21,12 @@
                         Nuevo Usuario
                     </button>
                     
+                    <button type="button" 
+                            onclick="abrirModalConfiguracionNotificaciones()"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                        <i class="fas fa-bell mr-2"></i>
+                        Configurar Notificaciones
+                    </button>
                 </div>
             </div>
         </div>
@@ -350,13 +356,7 @@
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
-        <span class="text-gray-700">Procesando...</span>
-    </div>
-</div>
+
 
 <!-- MODALES FUERA DEL CONTENEDOR PRINCIPAL PARA Z-INDEX CORRECTO -->
 
@@ -414,13 +414,15 @@
                 <div>
                     <label for="crear_email" class="block text-xs font-medium text-gray-700 mb-1">
                         <i class="fas fa-envelope text-primary-600 mr-1"></i>
-                        Email (Opcional)
+                        Email *
                     </label>
                     <input type="email" 
                            id="crear_email" 
                            name="email" 
+                           required
+                           readonly
                            maxlength="255"
-                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
                            placeholder="ejemplo@medifarma.com">
                     <div class="text-primary-600 text-xs mt-0.5 hidden" id="error_crear_email"></div>
                 </div>
@@ -784,6 +786,127 @@
                             class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                         <i class="fas fa-check mr-2"></i>
                         <span id="btnConfirmarTexto">Confirmar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Configuración de Notificaciones -->
+        <div id="modalConfiguracionNotificaciones" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-4" style="z-index: 999999 !important;" onclick="if(event.target === this) cerrarModalConfiguracionNotificaciones()">
+            <div class="relative mx-auto border w-full max-w-3xl shadow-2xl rounded-lg bg-white transform transition-all duration-300 ease-in-out" style="z-index: 9999999 !important;">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-bell text-blue-600 mr-2"></i>
+                        <span id="modalConfiguracionTitulo">Configuración de Notificaciones</span>
+                    </h3>
+                    <button type="button" onclick="cerrarModalConfiguracionNotificaciones()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6">
+                    <form id="formConfiguracionNotificaciones">
+                        @csrf
+                        <input type="hidden" id="config_idConfiguracion" name="idConfiguracion">
+                        
+                        <!-- Sección para agregar nuevos correos -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                <i class="fas fa-plus text-green-600 mr-2"></i>
+                                Agregar Nuevo Correo
+                            </label>
+                            
+                            <div class="flex space-x-3">
+                                <div class="flex-1">
+                                    <input type="email" 
+                                           id="nuevoCorreo" 
+                                           placeholder="ejemplo@medifarma.com.pe"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200">
+                                </div>
+                                <button type="button" 
+                                        onclick="agregarCorreo()"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200">
+                                        <i class="fas fa-plus mr-2"></i>
+                                        Agregar
+                                </button>
+                            </div>
+                            
+                            <div class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Ingrese un correo válido y haga clic en "Agregar" para incluirlo en la lista
+                            </div>
+                        </div>
+                        
+                        <!-- Lista de correos configurados -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                <i class="fas fa-list text-blue-600 mr-2"></i>
+                                Correos Destinatarios Configurados
+                            </label>
+                            
+                            <div id="listaCorreos" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                <!-- Los correos se cargarán dinámicamente aquí -->
+                                <div class="text-center text-gray-500 py-4">
+                                    <i class="fas fa-inbox text-2xl mb-2"></i>
+                                    <p>No hay correos configurados</p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-xs text-gray-500 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Marque/desmarque los correos que desea que reciban notificaciones
+                            </div>
+                        </div>
+                        
+                        <!-- Estado general de notificaciones -->
+                        <div class="mb-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" 
+                                       id="config_activo" 
+                                       name="activo" 
+                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">
+                                    <i class="fas fa-toggle-on text-blue-600 mr-1"></i>
+                                    Activar sistema de notificaciones
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Información adicional -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2 text-sm"></i>
+                                <div class="text-sm text-blue-700">
+                                    <strong>Nota:</strong> Solo los correos marcados recibirán notificaciones. Las notificaciones también se enviarán al correo del usuario que realiza la acción en el sistema.
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                    <button type="button" 
+                            onclick="cerrarModalConfiguracionNotificaciones()"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        <i class="fas fa-times mr-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" 
+                            id="btnEliminarConfiguracion"
+                            onclick="eliminarConfiguracionNotificaciones()"
+                            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 hidden">
+                        <i class="fas fa-trash mr-1"></i>
+                        Eliminar
+                    </button>
+                    <button type="submit" 
+                            form="formConfiguracionNotificaciones"
+                            id="btnGuardarConfiguracion"
+                            class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+                        <i class="fas fa-save mr-2"></i>
+                        <span id="btnGuardarTexto">Guardar</span>
                     </button>
                 </div>
             </div>

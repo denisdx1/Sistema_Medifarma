@@ -56,10 +56,10 @@
                             </button>
                         </div>
                         <div id="filters-panel" class="transition-all duration-300 ease-in-out">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                             <!-- Producto Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Marca</label>
+                                <label class="text-[10px] font-medium text-gray-700">Marca</label>
                                                             <div class="relative">
                                 <input type="text" 
                                        id="filter-descripcionProducto"
@@ -77,7 +77,7 @@
                             
                             <!-- Marca/Genérico Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Marca/Genérico</label>
+                                <label class="text-[10px] font-medium text-gray-700">Marca/Genérico</label>
                                 <select id="filter-marcaGenerico" 
                                         class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todos</option>
@@ -86,7 +86,7 @@
                             
                             <!-- Ético/Popular Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Ético/Popular</label>
+                                <label class="text-[10px] font-medium text-gray-700">Ético/Popular</label>
                                 <select id="filter-eticoPopular" 
                                         class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todos</option>
@@ -95,7 +95,7 @@
                             
                             <!-- Fuente Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Fuente</label>
+                                <label class="text-[10px] font-medium text-gray-700">Fuente</label>
                                 <select id="filter-fuente" 
                                         class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white">
                                     <option value="">Todas las fuentes</option>
@@ -104,7 +104,7 @@
                             
                             <!-- Mercado Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Mercado</label>
+                                <label class="text-[10px] font-medium text-gray-700">Mercado</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-mercado"
@@ -122,7 +122,7 @@
                             
                             <!-- Molécula Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Molécula</label>
+                                <label class="text-[10px] font-medium text-gray-700">Molécula</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-molecula"
@@ -135,7 +135,7 @@
                             
                             <!-- FF3 Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Forma Farmacéutica (FF3)</label>
+                                <label class="text-[10px] font-medium text-gray-700">Forma Farmacéutica (FF3)</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionFF3"
@@ -148,7 +148,7 @@
                             
                             <!-- ATC4 Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Clasificación ATC4</label>
+                                <label class="text-[10px] font-medium text-gray-700">Clasificación ATC4</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionATC4"
@@ -161,7 +161,7 @@
                             
                             <!-- Laboratorio Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Laboratorio</label>
+                                <label class="text-[10px] font-medium text-gray-700">Laboratorio</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionLaboratorio" 
@@ -174,7 +174,7 @@
                             
                             <!-- Corporación Filter -->
                             <div class="space-y-1">
-                                <label class="text-xs font-medium text-gray-700">Corporación</label>
+                                <label class="text-[10px] font-medium text-gray-700">Corporación</label>
                                 <div class="relative">
                                     <input type="text" 
                                            id="filter-descripcionCorporacion" 
@@ -183,6 +183,15 @@
                                            autocomplete="off">
                                     <div id="descripcionCorporacion-results" class="filter-dropdown"></div>
                                 </div>
+                            </div>
+                            
+                            <!-- Concentración Filter -->
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-medium text-gray-700">Concentración</label>
+                                <input type="text" 
+                                       id="filter-concentracion" 
+                                       class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                                       placeholder="Buscar por concentración...">
                             </div>
                         </div>
                         
@@ -298,15 +307,29 @@
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
                                 </th>
-                                <!-- Mercado: 10% -->
-                                <th class="w-[10%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
+                                <!-- Concentración: 5% -->
+                                <th class="w-[5%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="concentracion">
+                                    <div class="flex items-center justify-center">
+                                        <span>Concentración</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
+                                </th>
+                                <!-- Mercado: 8% -->
+                                <th class="w-[8%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
                                     <div class="flex items-center justify-center">
                                         <span>Mercado</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
                                 </th>
-                                <!-- Fuente: 7% -->
-                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="fuente">
+                                <!-- SizePack: 8% -->
+                                <th class="w-[4%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
+                                    <div class="flex items-center justify-center">
+                                        <span>SizePack</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
+                                </th>
+                                <!-- Fuente: 5% -->
+                                <th class="w-[5%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="fuente">
                                     <div class="flex items-center justify-center">
                                         <span>Fuente</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>

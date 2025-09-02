@@ -6,15 +6,33 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Mail\NewMarketNotification;
+use App\Models\ConfiguracionNotificacion;
 
 class NotificationService
 {
     /**
-     * Lista de correos que recibirán notificaciones de administrador (fallback)
+     * Obtener correos configurados desde la base de datos
      */
-    private $adminEmails = [
-        'druizp@medifarma.com.pe'
-    ];
+    private function getCorreosConfigurados()
+    {
+        try {
+            $correos = ConfiguracionNotificacion::getCorreosConfigurados();
+            
+            // Si no hay correos configurados, usar fallback
+            if (empty($correos)) {
+                return ['druiz@medifarma.com.pe']; // Fallback por seguridad
+            }
+            
+            return $correos;
+        } catch (\Exception $e) {
+            Log::error('Error obteniendo correos configurados', [
+                'error' => $e->getMessage()
+            ]);
+            
+            // En caso de error, usar fallback
+            return ['druiz@medifarma.com.pe'];
+        }
+    }
 
     /**
      * Incluir siempre el email del usuario que realiza la acción
@@ -37,16 +55,16 @@ class NotificationService
                 ->pluck('u.email')
                 ->toArray();
 
-            // Si no hay emails reales en la base de datos, usar los emails de admin como fallback
-            return !empty($userEmails) ? $userEmails : $this->adminEmails;
+            // Si no hay emails reales en la base de datos, usar los emails configurados como fallback
+            return !empty($userEmails) ? $userEmails : $this->getCorreosConfigurados();
 
         } catch (\Exception $e) {
             Log::error('Error obteniendo emails de usuarios', [
                 'error' => $e->getMessage()
             ]);
             
-            // En caso de error, usar emails de admin como fallback
-            return $this->adminEmails;
+            // En caso de error, usar emails configurados como fallback
+            return $this->getCorreosConfigurados();
         }
     }
 
@@ -68,8 +86,8 @@ class NotificationService
             // Obtener todos los correos de usuarios activos
             $allUserEmails = $this->getAllUserEmails();
             
-            // Empezar con los emails de admin
-            $emailsToSend = $this->adminEmails;
+            // Empezar con los emails configurados
+            $emailsToSend = $this->getCorreosConfigurados();
             
             // Agregar el email del usuario que realiza la acción si está configurado y existe
             $userEmail = null;
@@ -94,7 +112,7 @@ class NotificationService
                 'user_email_from_accessor' => $user->email ?? 'No disponible',
                 'user_email_real_found' => $userEmail,
                 'user_email_will_be_included' => $userEmail ? 'YES' : 'NO',
-                'admin_emails' => $this->adminEmails,
+                'admin_emails' => $this->getCorreosConfigurados(),
                 'all_active_user_emails' => $allUserEmails,
                 'final_emails_to_send' => $emailsToSend,
                 'total_recipients' => count($emailsToSend),
@@ -113,12 +131,24 @@ class NotificationService
 
             // Enviar a los emails configurados
             if (!empty($emailsToSend)) {
-                Mail::to($emailsToSend[0])
-                    ->cc(array_slice($emailsToSend, 1))
+                // Separar emails configurados del email del usuario
+                $emailsConfigurados = $this->getCorreosConfigurados();
+                $emailsPara = $emailsConfigurados; // Todos los emails configurados van como PARA
+                $emailsCC = [];
+                
+                // Solo el email del usuario que realiza la acción va como CC
+                if ($userEmail && !in_array($userEmail, $emailsPara)) {
+                    $emailsCC[] = $userEmail;
+                }
+                
+                // Enviar email con todos los configurados como PARA y el usuario como CC
+                Mail::to($emailsPara)
+                    ->cc($emailsCC)
                     ->send($mail);
                     
                 Log::info('DEBUG: Email enviado exitosamente', [
-                    'destinatarios' => $emailsToSend,
+                    'destinatarios_para' => $emailsPara,
+                    'destinatarios_cc' => $emailsCC,
                     'incluye_usuario_accion' => $userEmail ? 'Sí' : 'No'
                 ]);
             } else {
@@ -271,19 +301,51 @@ class NotificationService
     }
 
     /**
-     * Configurar correos de administrador
-     */
-    public function setAdminEmails(array $emails)
-    {
-        $this->adminEmails = $emails;
-    }
-
-    /**
-     * Obtener correos de administrador configurados
+     * Obtener correos de administrador configurados (método público para compatibilidad)
      */
     public function getAdminEmails()
     {
-        return $this->adminEmails;
+        return $this->getCorreosConfigurados();
+    }
+    
+    /**
+     * Obtener información de la configuración actual
+     */
+    public function getConfiguracionNotificaciones()
+    {
+        return ConfiguracionNotificacion::getConfiguracionActiva();
+    }
+    
+    /**
+     * Crear nueva configuración de notificaciones
+     */
+    public function crearConfiguracionNotificaciones($correosDestinatarios)
+    {
+        return ConfiguracionNotificacion::crearConfiguracion($correosDestinatarios);
+    }
+    
+    /**
+     * Actualizar configuración de notificaciones
+     */
+    public function actualizarConfiguracionNotificaciones($idConfiguracion, $correosDestinatarios)
+    {
+        return ConfiguracionNotificacion::actualizarConfiguracion($idConfiguracion, $correosDestinatarios);
+    }
+    
+    /**
+     * Eliminar configuración de notificaciones
+     */
+    public function eliminarConfiguracionNotificaciones($idConfiguracion)
+    {
+        return ConfiguracionNotificacion::eliminarConfiguracion($idConfiguracion);
+    }
+    
+    /**
+     * Cambiar estado de las notificaciones
+     */
+    public function cambiarEstadoNotificaciones($idConfiguracion, $activo)
+    {
+        return ConfiguracionNotificacion::cambiarEstado($idConfiguracion, $activo);
     }
 
     /**
@@ -308,11 +370,13 @@ class NotificationService
     public function getNotificationRecipientsInfo()
     {
         $allUserEmails = $this->getAllUserEmails();
+        $correosConfigurados = $this->getCorreosConfigurados();
         
         return [
             'total_recipients' => count($allUserEmails),
             'recipients' => $allUserEmails,
-            'using_fallback' => $allUserEmails === $this->adminEmails
+            'correos_configurados' => $correosConfigurados,
+            'using_fallback' => $allUserEmails === $correosConfigurados
         ];
     }
 
@@ -335,7 +399,7 @@ class NotificationService
     public function debugEmailCollection($user = null)
     {
         $debugInfo = [
-            'admin_emails' => $this->adminEmails,
+            'admin_emails' => $this->getCorreosConfigurados(),
             'include_user_email' => $this->includeUserEmail,
             'all_user_emails' => $this->getAllUserEmails(),
         ];

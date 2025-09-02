@@ -45,7 +45,8 @@ class ProductosController extends Controller
                 'descripcionCorporacion' => trim($request->get('filter_descripcionCorporacion', '')),
                 'marcaGenerico' => trim($request->get('filter_marcaGenerico', '')),
                 'eticoPopular' => trim($request->get('filter_eticoPopular', '')),
-                'mercado' => trim($request->get('filter_mercado', ''))
+                'mercado' => trim($request->get('filter_mercado', '')),
+                'concentracion' => trim($request->get('filter_concentracion', ''))
             ]);
 
             // Obtener parámetros de ordenamiento
@@ -71,6 +72,10 @@ class ProductosController extends Controller
                     'v.descripcionATC4',
                     'v.descripcionLaboratorio',
                     'v.descripcionCorporacion',
+                    'v.sizePack',
+                    'v.stghVal',
+                    // Campo concatenado de concentración
+                    DB::raw("CONCAT(COALESCE(CAST(v.sizePack AS VARCHAR(10)), ''), ' ', COALESCE(CAST(v.stghVal AS VARCHAR(20)), '')) as concentracion"),
                     // Usar solo el mercado de la configuración (ya no hay COALESCE con NUEVOS por defecto)
                     DB::raw("m.mercado as mercado")
                 ]);
@@ -168,6 +173,12 @@ class ProductosController extends Controller
                         case 'eticoPopular':
                             $baseQuery->where('v.eticoPopular', '=', $value);
                             break;
+                        case 'concentracion':
+                            // Buscar en el campo concatenado de concentración
+                            $baseQuery->where(function($query) use ($value) {
+                                $query->whereRaw("CONCAT(COALESCE(CAST(v.sizePack AS VARCHAR(10)), ''), ' ', COALESCE(CAST(v.stghVal AS VARCHAR(20)), '')) LIKE ?", ["%{$value}%"]);
+                            });
+                            break;
                     }
                 }
             }
@@ -187,6 +198,7 @@ class ProductosController extends Controller
                     'descripcionATC4' => 'v.descripcionATC4',
                     'descripcionLaboratorio' => 'v.descripcionLaboratorio',
                     'descripcionCorporacion' => 'v.descripcionCorporacion',
+                    'concentracion' => 'concentracion', // Campo calculado
                     'mercado' => 'mercado', // Campo calculado
                     'fuente' => 'fuente' // Campo calculado
                 ];

@@ -130,7 +130,7 @@ class UsuarioController extends Controller
         $request->validate([
             'usuario' => 'required|string|max:255', // Nombre completo
             'login' => 'required|string|max:50',
-            'email' => 'nullable|email|max:255', // Email opcional por ahora
+            'email' => 'required|email|max:255', // Email obligatorio
             'password' => 'required|string|min:6|confirmed',
             'idRol' => ['required', 'integer', Rule::in(array_keys(User::getRoles()))],
             'idFranquicias' => 'required|array|min:1',
@@ -478,5 +478,129 @@ class UsuarioController extends Controller
         // TODO: Verificar campo en BD que indique si requiere cambio de contraseña
         // Por ahora retorna false para evitar bucles infinitos
         return false;
+    }
+    
+    // ===== MÉTODOS PARA CONFIGURACIÓN DE NOTIFICACIONES =====
+    
+    /**
+     * Obtener configuración de notificaciones
+     */
+    public function getConfiguracionNotificaciones()
+    {
+        try {
+            // Obtener configuración con TODOS los correos combinados
+            $configuracion = \App\Models\ConfiguracionNotificacion::getConfiguracionConTodosLosCorreos();
+            
+            // Debug: obtener información de la tabla
+            $debug = \App\Models\ConfiguracionNotificacion::debugTabla();
+            
+            return response()->json([
+                'success' => true,
+                'configuracion' => $configuracion,
+                'debug' => $debug
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener la configuración: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Crear nueva configuración de notificaciones
+     */
+    public function storeConfiguracionNotificaciones(Request $request)
+    {
+        $request->validate([
+            'correosDestinatarios' => 'required|string|max:1000',
+            'activo' => 'required|boolean'
+        ], [
+            'correosDestinatarios.required' => 'Los correos destinatarios son requeridos.',
+            'correosDestinatarios.max' => 'Los correos destinatarios no pueden exceder 1000 caracteres.'
+        ]);
+        
+        try {
+            $resultado = \App\Models\ConfiguracionNotificacion::crearConfiguracion($request->correosDestinatarios);
+            
+            if ($resultado['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $resultado['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message']
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la configuración: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Actualizar configuración de notificaciones
+     */
+    public function updateConfiguracionNotificaciones(Request $request, $id)
+    {
+        $request->validate([
+            'correosDestinatarios' => 'required|string|max:1000',
+            'activo' => 'required|boolean'
+        ], [
+            'correosDestinatarios.required' => 'Los correos destinatarios son requeridos.',
+            'correosDestinatarios.max' => 'Los correos destinatarios no pueden exceder 1000 caracteres.'
+        ]);
+        
+        try {
+            $resultado = \App\Models\ConfiguracionNotificacion::actualizarConfiguracion($id, $request->correosDestinatarios);
+            
+            if ($resultado['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $resultado['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message']
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar la configuración: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Eliminar configuración de notificaciones
+     */
+    public function destroyConfiguracionNotificaciones($id)
+    {
+        try {
+            $resultado = \App\Models\ConfiguracionNotificacion::eliminarConfiguracion($id);
+            
+            if ($resultado['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $resultado['message']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message']
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar la configuración: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

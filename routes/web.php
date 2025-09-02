@@ -4,10 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    // TEMPORAL: Saltarse autenticación - acceso directo a administración de mercados
-    //return redirect()->route('market-administration.index');
-    
-    // CÓDIGO ORIGINAL COMENTADO - Descomentar cuando la autenticación esté lista
+
     if (Auth::check()) {
         return redirect()->route('market-management.index');
     }
@@ -105,6 +102,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/exportar', [UsuarioController::class, 'exportar'])->name('exportar');
         // API endpoints para modales
         Route::get('/{id}/datos', [UsuarioController::class, 'getDatos'])->name('get-datos')->where('id', '[0-9]+');
+        
+        // Rutas para configuración de notificaciones
+        Route::get('/configuracion-notificaciones', [UsuarioController::class, 'getConfiguracionNotificaciones'])->name('configuracion-notificaciones');
+        Route::post('/configuracion-notificaciones', [UsuarioController::class, 'storeConfiguracionNotificaciones'])->name('configuracion-notificaciones.store');
+        Route::put('/configuracion-notificaciones/{id}', [UsuarioController::class, 'updateConfiguracionNotificaciones'])->name('configuracion-notificaciones.update');
+        Route::delete('/configuracion-notificaciones/{id}', [UsuarioController::class, 'destroyConfiguracionNotificaciones'])->name('configuracion-notificaciones.destroy');
     });
 
 
