@@ -56,7 +56,7 @@ window.openChangeMarketModal = function(productCode, productName) {
     const productRow = document.querySelector(`tr[data-product-code="${productCode}"]`);
     if (productRow && currentMarketElement) {
         const marketCell = productRow.querySelector('.market-cell span');
-        const currentMarket = marketCell ? marketCell.textContent.trim() : 'RESTO';
+        const currentMarket = marketCell ? marketCell.textContent.trim() : 'SIN_ASIGNAR';
         currentMarketElement.textContent = currentMarket;
     }
     

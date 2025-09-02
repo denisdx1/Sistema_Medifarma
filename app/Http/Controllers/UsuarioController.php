@@ -88,15 +88,28 @@ class UsuarioController extends Controller
     {
         try {
             $usuario = User::findOrFail($id);
+            
+            // Obtener todas las franquicias del usuario
+            $franquiciasUsuario = $usuario->getMisFranquicias();
+            $idFranquicias = [];
+            
+            if (is_array($franquiciasUsuario)) {
+                foreach($franquiciasUsuario as $franquicia) {
+                    if (is_array($franquicia) && isset($franquicia['idFranquicia'])) {
+                        $idFranquicias[] = (int) $franquicia['idFranquicia'];
+                    }
+                }
+            }
+            
             return response()->json([
                 'success' => true,
                 'usuario' => [
                     'idUsuario' => $usuario->idUsuario,
                     'usuario' => $usuario->usuario,
                     'login' => $usuario->login,
-                    'email' => $usuario->email, // Campo email agregado
+                    'email' => $usuario->email,
                     'idRol' => $usuario->idRol,
-                    'idFranquicia' => $usuario->idFranquicia, // Cambiado de franquicia a idFranquicia
+                    'idFranquicias' => $idFranquicias, // Array de franquicias
                     'idEstado' => $usuario->idEstado,
                 ]
             ]);
@@ -180,16 +193,13 @@ class UsuarioController extends Controller
         $franquiciasDisponibles = array_keys(User::getFranquicias()); // Obtener solo los IDs
 
         $request->validate([
-            'usuario' => 'required|string|max:255', // Aumentado para nombre completo
-            'login' => 'required|string|max:50', // Cambiado de email a string
-            'email' => 'nullable|email|max:255', // Campo email opcional
+            'usuario' => 'required|string|max:255',
+            'login' => 'required|string|max:50',
+            'email' => 'nullable|email|max:255',
             'password' => 'nullable|string|min:6|confirmed',
             'idRol' => ['required', 'integer', Rule::in(array_keys(User::getRoles()))],
-            'idFranquicia' => [
-                'required',
-                'integer',
-                Rule::in($franquiciasDisponibles)
-            ],
+            'idFranquicias' => 'required|array|min:1',
+            'idFranquicias.*' => 'required|integer|in:' . implode(',', $franquiciasDisponibles),
             'idEstado' => 'required|integer|in:1,0',
         ]);
 
@@ -221,41 +231,89 @@ class UsuarioController extends Controller
         }
 
         try {
+            // Convertir array de franquicias a string separado por comas
+            $franquiciasIds = implode(',', $request->idFranquicias);
+            
+            // Escapar caracteres especiales para evitar problemas de SQL
+            $usuario = str_replace("'", "''", $request->usuario);
+            $login = str_replace("'", "''", $request->login);
+            $email = $request->email ? str_replace("'", "''", $request->email) : '';
+            
+            // Log para debugging
+            \Log::info('Actualizando usuario', [
+                'id' => $id,
+                'usuario' => $usuario,
+                'login' => $login,
+                'email' => $email,
+                'franquicias' => $franquiciasIds,
+                'rol' => $request->idRol
+            ]);
+            
             // Ejecutar stored procedure para actualizar usuario
             if ($request->filled('password')) {
                 // Si se proporciona nueva contraseña, hashearla en PHP
-                $passwordHashHex = hash('sha256', $request->password); // Formato hexadecimal
+                $passwordHashHex = hash('sha256', $request->password);
                 
-                DB::connection('sqlsrv')->statement('
-                    DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), ?, 2);
-                    EXEC ODS.SP_UPDATE_USUARIO ?, ?, ?, ?, ?, @passwordBinary, ?;
-                ', [
-                    $passwordHashHex,
-                    $id,
-                    $request->idRol,
-                    $request->idFranquicia,
-                    $request->usuario,
-                    $request->login,
-                    $request->email
-                ]);
+                // Usar parámetros nombrados para mayor claridad
+                $query = "
+                    DECLARE @passwordBinary VARBINARY(32) = CONVERT(VARBINARY(32), '{$passwordHashHex}', 2);
+                    EXEC ODS.SP_UPDATE_USUARIO 
+                        @idUsuario = {$id},
+                        @idRol = {$request->idRol},
+                        @idFranquicia = '{$franquiciasIds}',
+                        @usuario = '{$usuario}',
+                        @login = '{$login}',
+                        @password = @passwordBinary,
+                        @email = '{$email}';
+                ";
+                
+                // Log de la query para debugging
+                \Log::info('Query con password', ['query' => $query]);
+                
+                // Ejecutar la query
+                try {
+                    DB::connection('sqlsrv')->statement($query);
+                    \Log::info('Query ejecutada exitosamente');
+                } catch (\Exception $e) {
+                    \Log::error('Error ejecutando query', [
+                        'error' => $e->getMessage(),
+                        'query' => $query
+                    ]);
+                    throw $e;
+                }
             } else {
                 // Si no se cambia la contraseña, usar la actual
-                DB::connection('sqlsrv')->statement('
-                    EXEC ODS.SP_UPDATE_USUARIO ?, ?, ?, ?, ?, 
-                    (SELECT password FROM ODS.TAB_USUARIO WHERE idUsuario = ?), ?', [
-                    $id,
-                    $request->idRol,
-                    $request->idFranquicia,
-                    $request->usuario,
-                    $request->login,
-                    $id,
-                    $request->email
-                ]);
+                $query = "
+                    DECLARE @currentPassword VARBINARY(32) = (SELECT password FROM ODS.TAB_USUARIO WHERE idUsuario = {$id});
+                    EXEC ODS.SP_UPDATE_USUARIO 
+                        @idUsuario = {$id},
+                        @idRol = {$request->idRol},
+                        @idFranquicia = '{$franquiciasIds}',
+                        @usuario = '{$usuario}',
+                        @login = '{$login}',
+                        @password = @currentPassword,
+                        @email = '{$email}';
+                ";
+                
+                // Log de la query para debugging
+                \Log::info('Query sin password', ['query' => $query]);
+                
+                // Ejecutar la query
+                try {
+                    DB::connection('sqlsrv')->statement($query);
+                    \Log::info('Query ejecutada exitosamente');
+                } catch (\Exception $e) {
+                    \Log::error('Error ejecutando query', [
+                        'error' => $e->getMessage(),
+                        'query' => $query
+                    ]);
+                    throw $e;
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Usuario actualizado exitosamente.'
+                'message' => 'Usuario actualizado exitosamente con ' . count($request->idFranquicias) . ' franquicia(s) asignada(s).'
             ]);
 
         } catch (\Exception $e) {

@@ -18,13 +18,27 @@
                                 <i class="fas fa-check-square mr-1"></i>
                                 <span id="selected-count">0</span> producto(s) seleccionado(s)
                             </div>
-                            <!-- Botón de asignación masiva -->
-                            <button id="bulk-assign-btn" 
-                                    class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                                    onclick="openBulkAssignModal()">
-                                <i class="fas fa-layer-group mr-2"></i>
-                                Asignar al Mercado
-                            </button>
+                            <!-- Botones de acción masiva -->
+                            <div class="flex space-x-2">
+                                <button id="bulk-assign-btn" 
+                                        class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        onclick="openBulkAssignModal()">
+                                    <i class="fas fa-layer-group mr-2"></i>
+                                    Asignar al Mercado
+                                </button>
+                                <button id="bulk-remove-btn" 
+                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        onclick="openBulkRemoveModal()">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Quitar Mercado
+                                </button>
+                                <button id="bulk-change-btn" 
+                                        class="hidden bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        onclick="openBulkChangeModal()">
+                                    <i class="fas fa-exchange-alt mr-2"></i>
+                                    Cambiar Mercado
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -364,7 +378,7 @@
             </p>
             
             <!-- Product Info -->
-            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+            <div class="bg-secondary-light border border-secondary-muted rounded-lg p-2 mb-3">
                 <p class="text-xs text-primary font-medium">Producto:</p>
                 <p class="text-base font-bold text-primary" id="remove-product-name">-</p>
                 <p class="text-xs text-primary" id="remove-product-code">-</p>
@@ -379,7 +393,7 @@
                 <textarea id="remove-product-note" 
                           name="remove_note" 
                           rows="2"
-                          class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-lighter focus:bg-white resize-none"
+                          class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-secondary-light focus:bg-white resize-none"
                           placeholder="Nota obligatoria sobre por qué se quita..."
                           required></textarea>
                 <p class="text-xs text-gray-500 mt-1">
@@ -433,7 +447,7 @@
         <!-- Content -->
         <div class="p-4">
             <!-- Product Info -->
-            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+            <div class="bg-secondary-light border border-secondary-muted rounded-lg p-2 mb-3">
                 <p class="text-sm text-primary font-medium">Producto a cambiar:</p>
                 <p class="text-lg font-bold text-primary" id="change-product-name">-</p>
                 <p class="text-sm text-primary" id="change-product-code">-</p>
@@ -451,7 +465,7 @@
                            autocomplete="off">
                     
                     <!-- Dropdown de mercados -->
-                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                    <div id="markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-30 overflow-y-auto hidden">
                         <div id="dropdown-loading" class="p-3 text-center text-gray-500 hidden">
                             <i class="fas fa-spinner fa-spin mr-2"></i>
                             Cargando mercados...
@@ -685,7 +699,7 @@
                                autocomplete="off">
                         
                         <!-- Dropdown de mercados -->
-                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
+                        <div id="bulk-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary rounded-lg shadow-lg max-h-24 overflow-y-auto hidden">
                             <div id="bulk-dropdown-loading" class="p-2 text-center text-gray-500 hidden">
                                 <i class="fas fa-spinner fa-spin mr-1"></i>
                                 <span class="text-xs">Cargando...</span>
@@ -952,6 +966,316 @@
     </div>
 </div>
 
+<!-- Modal para Quitar Mercado Masivamente -->
+<div id="bulk-remove-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-trash mr-1"></i>
+                    Quitar Mercado Masivamente
+                </h3>
+                <button onclick="closeBulkRemoveModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <!-- Productos seleccionados -->
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+                <p class="text-xs text-primary font-medium mb-1">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Productos a quitar del mercado:
+                </p>
+                <p class="text-sm font-bold text-primary mb-1" id="bulk-remove-count">0 productos</p>
+                <div class="bg-white border border-primary rounded-lg p-1 max-h-16 overflow-y-auto">
+                    <div id="bulk-remove-products-list"></div>
+                </div>
+            </div>
+
+            <!-- Campo de nota obligatorio -->
+            <div class="mb-3">
+                <label for="bulk-remove-note" class="block text-xs font-medium text-gray-700 mb-1">
+                    <i class="fas fa-sticky-note text-primary mr-1"></i>
+                    Nota *
+                </label>
+                <textarea id="bulk-remove-note" 
+                          name="bulk_remove_note" 
+                          rows="2"
+                          class="w-full px-2 py-2 text-sm border-2 border-primary rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-primary-lighter focus:bg-white resize-none"
+                          placeholder="Nota obligatoria sobre por qué se quitan estos productos del mercado..."
+                          required></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Campo obligatorio. Se enviará por email.
+                </p>
+                <p class="text-xs text-primary mt-1 hidden" id="bulk-remove-note-error">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    La nota es obligatoria
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <button onclick="closeBulkRemoveModal()" 
+                        class="flex-1 px-2 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
+                <button id="bulk-remove-confirm-btn" onclick="showBulkRemoveConfirmationModal()" 
+                        class="flex-1 px-2 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-trash mr-1"></i>
+                        Quitar del Mercado
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Procesando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Quitar Mercado Masivamente -->
+<div id="bulk-remove-confirmation-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Confirmar Quitar del Mercado
+                </h3>
+                <button onclick="closeBulkRemoveConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <div class="bg-primary-300 border border-primary rounded-lg p-2 mb-3">
+                <p class="text-xs text-primary font-medium mb-1">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    ¿Estás seguro de que deseas quitar estos productos del mercado?
+                </p>
+                <p class="text-xs text-primary">
+                    Esta acción no se puede deshacer y se enviará una notificación por email.
+                </p>
+            </div>
+
+            <!-- Resumen de la acción -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3">
+                <p class="text-xs text-gray-700 mb-1">
+                    <strong>Productos a quitar:</strong> <span id="confirm-bulk-remove-count" class="font-semibold text-primary">0</span>
+                </p>
+                <p class="text-xs text-gray-700 mb-1">
+                    <strong>Nota:</strong> <span id="confirm-bulk-remove-note" class="font-medium text-gray-800">-</span>
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <button onclick="closeBulkRemoveConfirmationModal()" 
+                        class="flex-1 px-2 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
+                <button onclick="proceedWithBulkRemove()" 
+                        class="flex-1 px-2 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-1"></i>
+                        Confirmar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Procesando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cambiar Mercado Masivamente -->
+<div id="bulk-change-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-exchange-alt mr-1"></i>
+                    Cambiar Mercado Masivamente
+                </h3>
+                <button onclick="closeBulkChangeModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <!-- Productos seleccionados -->
+            <div class="bg-secondary-lighter border border-secondary-muted rounded-lg p-2 mb-3">
+                <p class="text-xs text-primary-700 font-medium mb-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Productos a cambiar de mercado:
+                </p>
+                <p class="text-sm font-bold text-primary-700 mb-1" id="bulk-change-count">0 productos</p>
+                <div class="bg-white border border-primary-200 rounded-lg p-1 max-h-16 overflow-y-auto">
+                    <div id="bulk-change-products-list"></div>
+                </div>
+            </div>
+
+            <!-- Selector de mercado -->
+            <div class="mb-3">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Mercado de destino:</label>
+                <div class="relative">
+                    <input type="text" 
+                           id="bulk-change-market-search" 
+                           class="w-full px-2 py-2 text-sm border-2 border-primary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-primary-light focus:bg-white"
+                           placeholder="Buscar mercado..."
+                           autocomplete="off">
+                    
+                    <!-- Dropdown de mercados -->
+                    <div id="bulk-change-markets-dropdown" class="absolute z-10 w-full mt-1 bg-white border border-primary-300 rounded-lg shadow-lg max-h-24 overflow-y-auto hidden">
+                        <div id="bulk-change-dropdown-loading" class="p-3 text-center text-gray-500 hidden">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Cargando mercados...
+                        </div>
+                        <div id="bulk-change-markets-list"></div>
+                        <div id="bulk-change-dropdown-no-results" class="p-3 text-center text-gray-500 hidden">
+                            No se encontraron mercados
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mercado seleccionado -->
+                <div id="bulk-change-selected-market" class="mt-2 p-2 bg-secondary-light border border-primary-200 rounded-lg hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-primary-700">Mercado seleccionado:</p>
+                            <p class="text-sm font-bold text-primary-700" id="bulk-change-selected-market-name">-</p>
+                        </div>
+                        <button onclick="clearBulkChangeSelectedMarket()" class="text-primary-600 hover:text-primary-800">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="bulk-change-selected-market-id" value="">
+            </div>
+
+            <!-- Campo de nota obligatorio -->
+            <div class="mb-3">
+                <label for="bulk-change-note" class="block text-xs font-medium text-gray-700 mb-1">
+                    <i class="fas fa-sticky-note text-secondary-600 mr-1"></i>
+                    Nota *
+                </label>
+                <textarea id="bulk-change-note" 
+                          name="bulk_change_note" 
+                          rows="2"
+                          class="w-full px-2 py-2 text-sm border-2 border-secondary-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-primary-500 bg-primary-light focus:bg-white resize-none"
+                          placeholder="Nota obligatoria sobre el cambio de mercado..."
+                          required></textarea>
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Campo obligatorio. Se enviará por email.
+                </p>
+                <p class="text-xs text-primary mt-1 hidden" id="bulk-change-note-error">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    La nota es obligatoria
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <button onclick="closeBulkChangeModal()" 
+                        class="flex-1 px-2 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
+                <button id="bulk-change-confirm-btn" onclick="showBulkChangeConfirmationModal()" 
+                        class="flex-1 px-2 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-exchange-alt mr-1"></i>
+                        Cambiar Mercado
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Procesando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Cambiar Mercado Masivamente -->
+<div id="bulk-change-confirmation-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <!-- Header -->
+        <div class="bg-primary p-2">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white flex items-center">
+                    <i class="fas fa-exchange-alt mr-1"></i>
+                    Confirmar Cambio de Mercado
+                </h3>
+                <button onclick="closeBulkChangeConfirmationModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-3">
+            <div class="bg-secondary-light border border-secondary-200 rounded-lg p-2 mb-3">
+                <p class="text-xs text-secondary-700 font-medium mb-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    ¿Estás seguro de que deseas cambiar el mercado de estos productos?
+                </p>
+                <p class="text-xs text-secondary-700">
+                    Esta acción no se puede deshacer y se enviará una notificación por email.
+                </p>
+            </div>
+
+            <!-- Resumen de la acción -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3">
+                <p class="text-xs text-gray-700 mb-1">
+                    <strong>Productos a cambiar:</strong> <span id="confirm-bulk-change-count" class="font-semibold text-secondary-600">0</span>
+                </p>
+                <p class="text-xs text-gray-700 mb-1">
+                    <strong>Mercado destino:</strong> <span id="confirm-bulk-change-market" class="font-medium text-secondary-600">-</span>
+                </p>
+                <p class="text-xs text-gray-700 mb-1">
+                    <strong>Nota:</strong> <span id="confirm-bulk-change-note" class="font-medium text-gray-800">-</span>
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex space-x-2">
+                <button onclick="closeBulkChangeConfirmationModal()" 
+                        class="flex-1 px-2 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium text-sm">
+                    Cancelar
+                </button>
+                <button onclick="proceedWithBulkChange()" 
+                        class="flex-1 px-2 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+                    <span class="btn-text flex items-center justify-center">
+                        <i class="fas fa-check mr-1"></i>
+                        Confirmar
+                    </span>
+                    <span class="btn-loading hidden flex items-center justify-center">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Procesando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript para toggle de filtros -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1000,6 +1324,7 @@ window.productosModule = true;
 <script src="<?php echo e(asset('js/productos.js')); ?>"></script>
 <script src="<?php echo e(asset('js/productos-actions.js')); ?>"></script>
 <script src="<?php echo e(asset('js/productos-bulk-assign.js')); ?>"></script>
+<script src="<?php echo e(asset('js/productos-bulk-actions.js')); ?>"></script>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startPush('styles'); ?>

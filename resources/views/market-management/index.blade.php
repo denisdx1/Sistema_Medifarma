@@ -34,6 +34,36 @@
                     
                     <!-- Campo de búsqueda -->
                     <div class="flex items-center space-x-3">
+                        <!-- Notificación tipo Facebook para Productos NUEVOS y SIN_ASIGNAR -->
+                        <div onclick="redirectToProductosNuevosYSinAsignar()" 
+                             class="relative cursor-pointer group">
+                            <!-- Icono de notificación -->
+                            <div class="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fa-solid fa-bell text-white text-sm"></i>
+                            </div>
+                            
+                            <!-- Badge con el número total -->
+                            <div class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                <span id="total-count-notification">0</span>
+                            </div>
+                            
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center space-x-1">
+                                        <span class="text-blue-300">NUEVOS:</span>
+                                        <span class="font-bold" id="tooltip-count-nuevos">0</span>
+                                    </div>
+                                    <div class="w-px h-3 bg-gray-600"></div>
+                                    <div class="flex items-center space-x-1">
+                                        <span class="text-orange-300">SIN ASIGNAR:</span>
+                                        <span class="font-bold" id="tooltip-count-sin-asignar">0</span>
+                                    </div>
+                                </div>
+                                <div class="text-center text-gray-300 mt-1">Click para ver productos</div>
+                            </div>
+                        </div>
+                        
                         <!-- Botón Crear Mercado -->
                         <button onclick="openCreateMarketModal()"
                                 class="inline-flex items-center px-4 py-2 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200 shadow-sm hover:shadow-md"
@@ -545,6 +575,280 @@
 
 
 @push('scripts')
-<script src="{{ asset('js/create-market.js') }}"></script>
+<script>
+    // Define routes for JavaScript  
+window.MarketManagementRoutes = {
+    index: '{{ route("market-management.index") }}',
+    update: '{{ route("market-management.update") }}',
+    search: '{{ route("market-management.search") }}',
+    allMarketsApi: '{{ route("market-management.all-markets.api") }}'
+};
+
+window.csrfToken = '{{ csrf_token() }}';
+
+// ===== FUNCIONES DE NOTIFICACIÓN =====
+
+// Función para mostrar notificaciones de éxito
+function showSuccessNotification(message) {
+    console.log('SUCCESS:', message);
+    showToast(message, 'success');
+}
+
+// Función para mostrar notificaciones de error
+function showErrorNotification(message) {
+    console.log('ERROR:', message);
+    showToast(message, 'error');
+}
+
+// Función para mostrar notificaciones de advertencia
+function showWarningNotification(message) {
+    console.log('WARNING:', message);
+    showToast(message, 'warning');
+}
+
+
+
+// Función para redirigir al módulo de productos con filtro de mercado
+function redirectToProductsWithMarket(marketName) {
+    // Guardar el mercado seleccionado en sessionStorage
+    sessionStorage.setItem('autoSelectMarket', marketName);
+    
+    // Redirigir a la página de productos sin parámetros en la URL
+    const productosUrl = '{{ route("productos.index") }}';
+    window.location.href = productosUrl;
+}
+
+// Función para redirigir al módulo de productos con filtro de marca
+function redirectToProductsWithBrand(brandName) {
+    // Guardar la marca seleccionada en sessionStorage
+    sessionStorage.setItem('autoSelectBrand', brandName);
+    
+    // Redirigir a la página de productos sin parámetros en la URL
+    const productosUrl = '{{ route("productos.index") }}';
+    window.location.href = productosUrl;
+}
+
+// Función para redirigir al módulo de productos con filtro de SIN_ASIGNAR y mercado pre-seleccionado
+function redirectToProductsWithRestoAndMarket(marketName) {
+    // Guardar el mercado seleccionado en sessionStorage
+    // Usar 'SIN_ASIGNAR' para el backend
+    sessionStorage.setItem('autoSelectMarket', 'SIN_ASIGNAR');
+    sessionStorage.setItem('preSelectedMarket', marketName);
+    
+    // Redirigir a la página de productos
+    const productosUrl = '{{ route("productos.index") }}';
+    window.location.href = productosUrl;
+}
+
+// ===== FUNCIONES PARA CREAR MERCADO =====
+
+// Abrir modal para crear mercado
+function openCreateMarketModal() {
+    // Limpiar formulario
+    document.getElementById('new-market-name').value = '';
+    document.getElementById('new-market-note').value = '';
+    
+    // Mostrar modal
+    document.getElementById('create-market-modal').classList.remove('hidden');
+    
+    // Agregar validación en tiempo real para la nota
+    const noteField = document.getElementById('new-market-note');
+    const createBtn = document.getElementById('create-market-btn');
+    const errorMsg = document.getElementById('create-note-error');
+    
+    // Validación inicial - deshabilitar botón hasta que se ingrese una nota
+    createBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    createBtn.disabled = true;
+    
+    // Validación en tiempo real
+    noteField.addEventListener('input', function() {
+        const note = this.value.trim();
+        
+        if (!note) {
+            this.classList.add('border-red-500');
+            this.classList.remove('border-primary');
+            createBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            createBtn.disabled = true;
+            errorMsg.classList.remove('hidden');
+        } else {
+            this.classList.remove('border-red-500');
+            this.classList.add('border-primary');
+            createBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            createBtn.disabled = false;
+            errorMsg.classList.add('hidden');
+        }
+    });
+}
+
+// Cerrar modal para crear mercado
+function closeCreateMarketModal() {
+    document.getElementById('create-market-modal').classList.add('hidden');
+}
+
+// Proceder con la creación del mercado
+function proceedWithMarketCreation() {
+    const marketName = document.getElementById('new-market-name').value.trim();
+    const marketNote = document.getElementById('new-market-note').value.trim();
+    
+    if (!marketName) {
+        showErrorNotification('Debe ingresar el nombre del mercado');
+        document.getElementById('new-market-name').focus();
+        return;
+    }
+    
+    if (!marketNote) {
+        showErrorNotification('La nota es obligatoria para crear un mercado');
+        document.getElementById('new-market-note').focus();
+        return;
+    }
+    
+    // Llenar modal de confirmación
+    document.getElementById('confirm-create-market-name').textContent = marketName;
+    document.getElementById('confirm-create-market-note').textContent = marketNote;
+    document.getElementById('confirm-create-market-note-container').style.display = 'block';
+    
+    // Cerrar modal de creación y mostrar modal de confirmación
+    closeCreateMarketModal();
+    document.getElementById('create-market-confirmation-modal').classList.remove('hidden');
+}
+
+// Cerrar modal de confirmación
+function closeCreateMarketConfirmationModal() {
+    document.getElementById('create-market-confirmation-modal').classList.add('hidden');
+}
+
+// Proceder con la creación del mercado después de confirmación
+function proceedWithMarketCreationAndAssignment() {
+    const marketName = document.getElementById('confirm-create-market-name').textContent;
+    const marketNote = document.getElementById('confirm-create-market-note').textContent;
+    
+    // Mostrar loading en el botón
+    const btn = document.getElementById('final-create-assign-btn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    btn.disabled = true;
+    
+    // Crear mercado
+    $.ajax({
+        url: '/productos/create-market',
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+            market_name: marketName,
+            market_note: marketNote
+        },
+        success: function(response) {
+            if (response.success) {
+                showSuccessNotification(`Mercado "${marketName}" creado exitosamente`);
+                
+                // Cerrar modal de confirmación
+                closeCreateMarketConfirmationModal();
+                
+                // Recargar la página para mostrar el nuevo mercado
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showErrorNotification(response.message || 'Error al crear mercado');
+            }
+        },
+        error: function(xhr) {
+            let errorMessage = 'Error al crear mercado';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showErrorNotification(errorMessage);
+        },
+        complete: function() {
+            // Restaurar botón
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            btn.disabled = false;
+        }
+    });
+}
+
+// Event listeners para cerrar modales al hacer clic fuera
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de crear mercado
+    document.getElementById('create-market-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCreateMarketModal();
+        }
+    });
+    
+    // Modal de confirmación de crear mercado
+    document.getElementById('create-market-confirmation-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCreateMarketConfirmationModal();
+        }
+    });
+    
+    // Cerrar modales con ESC
+    document.addEventListener('keyup', function(e) {
+        if (e.key === "Escape") {
+            closeCreateMarketModal();
+            closeCreateMarketConfirmationModal();
+        }
+    });
+    
+    // Cargar contadores de productos NUEVOS y SIN_ASIGNAR
+    loadProductosNuevosYSinAsignar();
+});
+
+// Función para cargar productos NUEVOS y SIN_ASIGNAR
+function loadProductosNuevosYSinAsignar() {
+    $.ajax({
+        url: '{{ route("market-management.productos-nuevos-sin-asignar") }}',
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response.success && response.data) {
+                const countNuevos = response.data.counts.nuevos;
+                const countSinAsignar = response.data.counts.sin_asignar;
+                const total = response.data.counts.total;
+                
+                // Actualizar contador total en el badge
+                document.getElementById('total-count-notification').textContent = total;
+                
+                // Actualizar tooltip
+                document.getElementById('tooltip-count-nuevos').textContent = countNuevos;
+                document.getElementById('tooltip-count-sin-asignar').textContent = countSinAsignar;
+                
+                // Cambiar color del badge según si hay productos
+                const badgeElement = document.getElementById('total-count-notification').parentElement;
+                if (total > 0) {
+                    badgeElement.classList.remove('bg-blue-600');
+                    badgeElement.classList.add('bg-red-600');
+                } else {
+                    badgeElement.classList.remove('bg-red-600');
+                    badgeElement.classList.add('bg-blue-600');
+                }
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.error('Error al cargar productos NUEVOS y SIN_ASIGNAR:', errorThrown);
+        }
+    });
+}
+
+// Función para redirigir al módulo de productos con filtros de NUEVOS y SIN_ASIGNAR
+function redirectToProductosNuevosYSinAsignar() {
+    // Guardar en sessionStorage para que el módulo de productos sepa qué filtros aplicar
+    sessionStorage.setItem('autoFilterMarkets', JSON.stringify(['NUEVOS', 'SIN_ASIGNAR']));
+    
+    // Redirigir al módulo de productos
+    const productosUrl = '{{ route("productos.index") }}';
+    window.location.href = productosUrl;
+}
+</script>
 <script src="{{ asset('js/market-management.js') }}"></script>
 @endpush

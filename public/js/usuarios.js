@@ -162,6 +162,15 @@ async function manejarEdicionUsuario(e) {
         
         limpiarErrores('editar');
         
+        // Validar que al menos una franquicia esté seleccionada
+        const franquiciasSeleccionadas = document.querySelectorAll('input[name="idFranquicias[]"]:checked');
+        if (franquiciasSeleccionadas.length === 0) {
+            mostrarToast('Debe seleccionar al menos una franquicia', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
+        
         const formData = new FormData(e.target);
         
         const response = await fetch(`/usuarios/${usuarioEditandoId}`, {
@@ -236,7 +245,22 @@ function cargarDatosEnFormularioEditar(usuario) {
     setValue('editar_email', usuario.email);
     setValue('editar_idRol', usuario.idRol);
     setValue('editar_idEstado', usuario.idEstado);
-    setValue('editar_idFranquicia', usuario.idFranquicia);
+    
+    // Limpiar todas las franquicias primero
+    const checkboxes = document.querySelectorAll('input[name="idFranquicias[]"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Marcar las franquicias del usuario
+    if (usuario.idFranquicias && Array.isArray(usuario.idFranquicias)) {
+        usuario.idFranquicias.forEach(idFranquicia => {
+            const checkbox = document.getElementById(`editar_franquicia_${idFranquicia}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+    }
 }
 
 // Limpiar errores de validación
@@ -249,9 +273,17 @@ function limpiarErrores(prefijo) {
             errorDiv.classList.add('hidden');
         }
         
-        const input = document.getElementById(`${prefijo}_${campo}`);
-        if (input) {
-            input.classList.remove('border-red-500');
+        // Para checkboxes múltiples, buscar todos los elementos con ese nombre
+        if (campo === 'idFranquicias') {
+            const checkboxes = document.querySelectorAll(`input[name="${campo}[]"]`);
+            checkboxes.forEach(checkbox => {
+                checkbox.classList.remove('border-red-500');
+            });
+        } else {
+            const input = document.getElementById(`${prefijo}_${campo}`);
+            if (input) {
+                input.classList.remove('border-red-500');
+            }
         }
     });
 }
@@ -260,12 +292,23 @@ function limpiarErrores(prefijo) {
 function mostrarErroresValidacion(errores, prefijo) {
     Object.keys(errores).forEach(campo => {
         const errorDiv = document.getElementById(`error_${prefijo}_${campo}`);
-        const input = document.getElementById(`${prefijo}_${campo}`);
         
-        if (errorDiv && input) {
+        if (errorDiv) {
             errorDiv.textContent = errores[campo][0];
             errorDiv.classList.remove('hidden');
-            input.classList.add('border-red-500');
+            
+            // Para checkboxes múltiples, aplicar estilo a todos los checkboxes
+            if (campo === 'idFranquicias') {
+                const checkboxes = document.querySelectorAll(`input[name="${campo}[]"]`);
+                checkboxes.forEach(checkbox => {
+                    checkbox.classList.add('border-red-500');
+                });
+            } else {
+                const input = document.getElementById(`${prefijo}_${campo}`);
+                if (input) {
+                    input.classList.add('border-red-500');
+                }
+            }
         }
     });
 }

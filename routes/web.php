@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/market-management/resto-products', [App\Http\Controllers\MarketManagementController::class, 'getRestoProducts'])->name('market-management.resto-products');
     Route::get('/market-management/resto-filter-options', [App\Http\Controllers\MarketManagementController::class, 'getRestoFilterOptions'])->name('market-management.resto-filter-options');
     Route::post('/market-management/assign-products', [App\Http\Controllers\MarketManagementController::class, 'assignProducts'])->name('market-management.assign-products');
+    Route::get('/market-management/productos-nuevos-sin-asignar', [App\Http\Controllers\MarketManagementController::class, 'getProductosNuevosYSinAsignar'])->name('market-management.productos-nuevos-sin-asignar');
     
     // Productos Module - Available for all authenticated users
     Route::prefix('productos')->name('productos.')->group(function () {
@@ -69,11 +70,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/markets/api', [App\Http\Controllers\ProductosController::class, 'getMarketsApi'])->name('markets.api');
         Route::post('/create-market', [App\Http\Controllers\ProductosController::class, 'createMarket'])->name('create-market');
         Route::post('/assign-products', [App\Http\Controllers\ProductosController::class, 'assignProducts'])->name('assign-products');
+        Route::post('/bulk-remove-market', [App\Http\Controllers\ProductosController::class, 'bulkRemoveMarket'])->name('bulk-remove-market');
+        Route::post('/bulk-change-market', [App\Http\Controllers\ProductosController::class, 'bulkChangeMarket'])->name('bulk-change-market');
     });
     
     // API routes for productos
     Route::prefix('api/productos')->name('api.productos.')->group(function () {
         Route::get('/filter-options', [App\Http\Controllers\ProductosController::class, 'getFilterOptions'])->name('filter-options');
+    });
+    
+    // API routes for markets
+    Route::prefix('api/markets')->name('api.markets.')->group(function () {
+        Route::get('/search', [App\Http\Controllers\MarketManagementController::class, 'searchMarketsApi'])->name('search');
     });
     
     // User Management Routes - Available for authenticated users

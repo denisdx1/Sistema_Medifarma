@@ -51,16 +51,20 @@ $(document).ready(function() {
     syncFilterButtonsState();
     
     // Check for auto-select market from sessionStorage and load products
-    // Si hay un mercado o marca para autoseleccionar, no cargar productos inicialmente
+    // Si hay un mercado, marca o filtros múltiples para autoseleccionar, no cargar productos inicialmente
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
     const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
+    const autoFilterMarkets = sessionStorage.getItem('autoFilterMarkets');
     
-    if (autoSelectMarket || autoSelectBrand) {
+    if (autoSelectMarket || autoSelectBrand || autoFilterMarkets) {
         // Mostrar loading inmediatamente con mensaje específico
         if (autoSelectMarket) {
             updateLoadingText(`Cargando productos del mercado "${autoSelectMarket}"...`);
         } else if (autoSelectBrand) {
             updateLoadingText(`Cargando productos de la marca "${autoSelectBrand}"...`);
+        } else if (autoFilterMarkets) {
+            const markets = JSON.parse(autoFilterMarkets);
+            updateLoadingText(`Cargando productos de los mercados: ${markets.join(', ')}...`);
         }
         $('#loading-subtext').text('Aplicando filtros y cargando datos...');
         showLoadingState();
@@ -145,11 +149,8 @@ $(document).ready(function() {
             input.on('input', function() {
                 const query = $(this).val().trim();
                 
-                // Para el filtro de mercado, convertir "SIN ASIGNAR" a "RESTO" para el backend
+                // Para el filtro de mercado, usar el valor tal como está
                 let backendValue = query;
-                if (filterKey === 'mercado' && query === 'SIN ASIGNAR') {
-                    backendValue = 'RESTO';
-                }
                 
                 // Actualizar currentFilters inmediatamente
                 currentFilters[filterKey] = backendValue;
@@ -391,11 +392,8 @@ $(document).ready(function() {
             const value = $(this).data('value');
             const filter = $(this).data('filter');
             
-            // Para el filtro de mercado, convertir "SIN ASIGNAR" a "RESTO" para el backend
+            // Para el filtro de mercado, usar el valor tal como está
             let backendValue = value;
-            if (filter === 'mercado' && value === 'SIN ASIGNAR') {
-                backendValue = 'RESTO';
-            }
             
             // Set the input value (mostrar el valor amigable al usuario)
             $(`#filter-${filter}`).val(value);
@@ -603,7 +601,7 @@ $(document).ready(function() {
         const titleFF3 = formatCodeDescriptionPlain(product['codigoFF3'], product['descripcionFF3']);
         const titleATC4 = formatCodeDescriptionPlain(product['codigoATC4'], product['descripcionATC4']);
         const mercado = product['mercado'] || '-';
-        const mercadoDisplay = mercado === 'RESTO' ? 'SIN ASIGNAR' : mercado;
+        const mercadoDisplay = mercado;
         const laboratorio = product['descripcionLaboratorio'] || '-';
         const corporacion = product['descripcionCorporacion'] || '-';
         
@@ -619,6 +617,7 @@ $(document).ready(function() {
                            data-product-code="${product['codigoPresentacion']}"
                            data-product-name="${escapeForJs(product['descripcionPresentacion'])}"
                            data-fuente="${product['fuente'] || 'Sin fuente'}"
+                           data-market="${mercado || 'Sin mercado'}"
                            onchange="updateSelectedProducts()">
                 </td>
                 <!-- Descripción 15% -->
@@ -746,7 +745,7 @@ $(document).ready(function() {
     }
 
     function getMarketClass(mercado) {
-        if (mercado === 'RESTO') {
+        if (mercado === 'SIN_ASIGNAR') {
             return 'bg-red-100 text-red-800';
         } else if (mercado && mercado !== '-') {
             return 'bg-green-100 text-green-800';
@@ -1105,6 +1104,11 @@ $(document).ready(function() {
             selectAllCheckbox.indeterminate = true;
             selectAllCheckbox.checked = false;
         }
+        
+        // Actualizar botones de acción masiva
+        if (typeof updateBulkActionButtons === 'function') {
+            updateBulkActionButtons();
+        }
     };
 
     // Función para seleccionar/deseleccionar todos
@@ -1131,6 +1135,11 @@ $(document).ready(function() {
         document.getElementById('bulk-assign-btn').classList.add('hidden');
         document.getElementById('select-all-products').checked = false;
         document.getElementById('select-all-products').indeterminate = false;
+        
+        // Ocultar todos los botones de acción masiva
+        if (typeof updateBulkActionButtons === 'function') {
+            updateBulkActionButtons();
+        }
     };
 
     // ===== FUNCIONES PARA MANEJO DE MERCADOS =====
@@ -1140,6 +1149,7 @@ $(document).ready(function() {
 function checkAutoSelectMarketAndLoadProducts() {
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
     const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
+    const autoFilterMarkets = sessionStorage.getItem('autoFilterMarkets');
     
     if (autoSelectMarket) {
         // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
@@ -1149,11 +1159,8 @@ function checkAutoSelectMarketAndLoadProducts() {
         function tryApplyMarketFilter(attempts = 0) {
             const mercadoInput = $('#filter-mercado');
             
-            // Para el filtro de mercado, convertir "RESTO" a "SIN ASIGNAR" para mostrar al usuario
+            // Para el filtro de mercado, usar el valor tal como está
             let displayValue = autoSelectMarket;
-            if (autoSelectMarket === 'RESTO') {
-                displayValue = 'SIN ASIGNAR';
-            }
             
             // Establecer el valor en el input de mercado
             mercadoInput.val(displayValue);
@@ -1178,6 +1185,43 @@ function checkAutoSelectMarketAndLoadProducts() {
         
         // Aplicar el filtro inmediatamente
         tryApplyMarketFilter();
+    } else if (autoFilterMarkets) {
+        // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+        sessionStorage.removeItem('autoFilterMarkets');
+        
+        // Función para verificar y aplicar el filtro múltiple de mercados
+        function tryApplyMultipleMarketsFilter(attempts = 0) {
+            const mercadoInput = $('#filter-mercado');
+            
+            // Parsear los mercados del JSON
+            const markets = JSON.parse(autoFilterMarkets);
+            
+            // Para el filtro múltiple, mostrar los mercados separados por comas
+            let displayValue = markets.join(', ');
+            
+            // Establecer el valor en el input de mercado
+            mercadoInput.val(displayValue);
+            
+            // Actualizar el filtro interno con el valor real para el backend (separado por comas)
+            currentFilters.mercado = markets.join(',');
+            
+            // Mostrar botón de limpiar
+            $('#clear-filter-mercado').removeClass('hidden');
+            
+            // Resaltar visualmente el campo de mercado para que el usuario vea que está filtrado
+            mercadoInput.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            
+            // Quitar el resaltado después de 3 segundos
+            setTimeout(() => {
+                mercadoInput.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            }, 3000);
+            
+            // Cargar productos directamente con el filtro aplicado
+            loadProducts(1);
+        }
+        
+        // Aplicar el filtro múltiple inmediatamente
+        tryApplyMultipleMarketsFilter();
     } else if (autoSelectBrand) {
         // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
         sessionStorage.removeItem('autoSelectBrand');

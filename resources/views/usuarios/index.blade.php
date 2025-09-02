@@ -641,22 +641,27 @@
                     <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idEstado"></div>
                 </div>
 
-                <!-- Franquicia -->
+                <!-- Franquicias -->
                 <div class="md:col-span-2">
-                    <label for="editar_idFranquicia" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-building text-blue-500 mr-1"></i>
-                        Franquicia *
+                        Franquicias *
                     </label>
-                    <select id="editar_idFranquicia" 
-                            name="idFranquicia" 
-                            required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                        <option value="">Seleccione una franquicia</option>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 bg-gray-50">
                         @foreach($franquicias as $idFranquicia => $nombreFranquicia)
-                            <option value="{{ $idFranquicia }}">{{ $nombreFranquicia }}</option>
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       id="editar_franquicia_{{ $idFranquicia }}" 
+                                       name="idFranquicias[]" 
+                                       value="{{ $idFranquicia }}"
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="editar_franquicia_{{ $idFranquicia }}" class="ml-2 text-sm text-gray-700">
+                                    {{ $nombreFranquicia }}
+                                </label>
+                            </div>
                         @endforeach
-                    </select>
-                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idFranquicia"></div>
+                    </div>
+                    <div class="text-red-500 text-sm mt-1 hidden" id="error_editar_idFranquicias"></div>
                 </div>
             </div>
 

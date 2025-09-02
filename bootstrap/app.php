@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register custom middleware aliases
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'password.change' => \App\Http\Middleware\VerificarCambioPasswordObligatorio::class,
+            'password.change' => \App\Http\Middleware\PasswordChangeMiddleware::class,
             'session.expired' => \App\Http\Middleware\HandleSessionExpired::class,
         ]);
         

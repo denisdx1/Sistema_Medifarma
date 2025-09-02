@@ -295,6 +295,10 @@ nav {
 
 /* Específicamente para las modales de productos con efecto borroso */
 #remove-product-modal,
+#bulk-remove-modal,
+#bulk-remove-confirmation-modal,
+#bulk-change-modal,
+#bulk-change-confirmation-modal,
 #change-market-modal,
 #final-confirmation-modal,
 #final-change-confirmation-modal,

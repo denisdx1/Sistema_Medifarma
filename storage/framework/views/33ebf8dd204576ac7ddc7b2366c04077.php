@@ -414,13 +414,10 @@
                                     </span>
                                 </td>
                                                                  <td class="px-3 py-2 text-gray-900">
-                                     <div class="log-detail log-detail-content break-words max-w-xs">
+                                     <div class="log-detail log-detail-content break-words max-w-96">
                                          <span class="text-xs text-gray-600 leading-relaxed">
-                                             <?php echo e(Str::limit($log->detalle, 80)); ?>
+                                             <?php echo e($log->detalle); ?>
 
-                                             <?php if(strlen($log->detalle) > 80): ?>
-                                                 <br><span class="text-gray-500"><?php echo e(Str::limit(substr($log->detalle, 80), 60)); ?></span>
-                                             <?php endif; ?>
                                          </span>
                                      </div>
                                  </td>
