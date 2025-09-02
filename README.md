@@ -117,17 +117,6 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 5. **Configurar Base de Datos**
-Editar `.env` con las credenciales de SQL Server:
-```env
-DB_CONNECTION=sqlsrv
-DB_HOST=tu-servidor-sql
-DB_PORT=1433
-DB_DATABASE=Medifarma
-DB_USERNAME=tu-usuario
-DB_PASSWORD=tu-password
-```
-
 ### 6. **Ejecutar Migraciones**
 ```bash
 php artisan migrate
@@ -140,13 +129,6 @@ chmod -R 775 storage bootstrap/cache
 
 ## ⚙️ Configuración
 
-### **Configuración de LDAP (Opcional)**
-```env
-LDAP_HOST=tu-servidor-ldap
-LDAP_USERNAME=tu-usuario-ldap
-LDAP_PASSWORD=tu-password-ldap
-LDAP_BASE_DN=DC=medifarma,DC=com
-```
 
 ### **Configuración de Correo**
 ```env
@@ -226,20 +208,6 @@ sistema-medifarma/
 - `PUT /usuarios/{id}` - Actualizar usuario
 - `POST /usuarios/{id}/toggle-estado` - Cambiar estado
 
-## 🗄️ Base de Datos
-
-### **Tablas Principales**
-- `ODS.TAB_USUARIO` - Usuarios del sistema
-- `ODS.TAB_MERCADO` - Configuración de mercados
-- `ODS.TAB_PRODUCTO` - Catálogo de productos
-- `ODS.TAB_FRANQUICIA` - Franquicias disponibles
-- `ODS.TAB_CONFIGURACION` - Parámetros del sistema
-
-### **Stored Procedures**
-- `ODS.SP_INSERT_USUARIO` - Crear usuario
-- `ODS.SP_UPDATE_USUARIO` - Actualizar usuario
-- `ODS.SP_DELETE_USUARIO` - Eliminar usuario
-- `ODS.SP_ASIGNAR_PRODUCTOS_MERCADO` - Asignar productos
 
 ## 🔒 Seguridad
 
@@ -260,86 +228,6 @@ sistema-medifarma/
 - Registro de cambios en configuraciones
 - Trazabilidad de operaciones masivas
 - Historial de accesos
-
-## 🧪 Testing
-
-### **Ejecutar Tests**
-```bash
-# Tests unitarios
-php artisan test
-
-# Tests con cobertura
-php artisan test --coverage
-
-# Tests específicos
-php artisan test --filter=UserTest
-```
-
-### **Entorno de Testing**
-```bash
-# Usar base de datos de testing
-php artisan test --env=testing
-
-# Ejecutar tests en paralelo
-php artisan test --parallel
-```
-
-## 🐳 Docker (Opcional)
-
-### **Usar Laravel Sail**
-```bash
-# Iniciar servicios
-./vendor/bin/sail up
-
-# Ejecutar comandos
-./vendor/bin/sail artisan migrate
-./vendor/bin/sail npm run dev
-
-# Detener servicios
-./vendor/bin/sail down
-```
-
-## 📝 Contribución
-
-1. **Fork** el proyecto
-2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. **Abre** un Pull Request
-
-### **Estándares de Código**
-- Seguir PSR-12 para PHP
-- Usar Laravel Pint para formateo
-- Documentar funciones y clases
-- Escribir tests para nuevas funcionalidades
-
-## 🚨 Solución de Problemas
-
-### **Problemas Comunes**
-
-#### **Error de Conexión a BD**
-```bash
-# Verificar configuración
-php artisan config:cache
-php artisan config:clear
-
-# Verificar drivers SQL Server
-php -m | grep sqlsrv
-```
-
-#### **Problemas de Permisos**
-```bash
-# Corregir permisos de storage
-chmod -R 775 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
-```
-
-#### **Problemas de Vite**
-```bash
-# Limpiar cache
-npm run build
-php artisan view:clear
-```
 
 ## 📞 Soporte
 
