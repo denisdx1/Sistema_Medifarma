@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cambio de Contraseña - Sistema Medifarma</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root{
@@ -244,38 +244,53 @@
 </head>
 <body>
 <div class="card-login">
-    <img src="{{ asset('images/logo-medifarma-Photoroom.png') }}" alt="Logo Medifarma" class="logo">
+    <img src="<?php echo e(asset('images/logo-medifarma-Photoroom.png')); ?>" alt="Logo Medifarma" class="logo">
 
     <h3 class="text-center">Cambio de Contraseña</h3>
     <p class="text-center text-muted">Debe cambiar su contraseña temporal para continuar</p>
 
-    @if(session('warning') || session('error') || session('success') || session('info'))
-        <div class="alert {{ session('warning') ? 'alert-warning' : (session('error') ? 'alert-danger' : 'alert-success') }}">
-            {{ session('warning') ?? session('error') ?? session('success') ?? session('info') }}
-        </div>
-    @endif
+    <?php if(session('warning') || session('error') || session('success') || session('info')): ?>
+        <div class="alert <?php echo e(session('warning') ? 'alert-warning' : (session('error') ? 'alert-danger' : 'alert-success')); ?>">
+            <?php echo e(session('warning') ?? session('error') ?? session('success') ?? session('info')); ?>
 
-    @if ($errors->any())
+        </div>
+    <?php endif; ?>
+
+    <?php if($errors->any()): ?>
         <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                {{ $error }}<br>
-            @endforeach
+            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php echo e($error); ?><br>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
-    @endif
+    <?php endif; ?>
 
-    <form method="POST" action="{{ route('usuarios.cambio-password.submit') }}" id="passwordForm">
-        @csrf
+    <form method="POST" action="<?php echo e(route('usuarios.cambio-password.submit')); ?>" id="passwordForm">
+        <?php echo csrf_field(); ?>
         
         <div class="mb-3">
             <label class="form-label">Contraseña Temporal</label>
             <input type="password" 
                    name="password_temporal" 
-                   class="form-control @error('password_temporal') is-invalid @enderror" 
+                   class="form-control <?php $__errorArgs = ['password_temporal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
                    placeholder="Ingrese su contraseña temporal" 
                    required>
-            @error('password_temporal')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
+            <?php $__errorArgs = ['password_temporal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <div class="invalid-feedback"><?php echo e($message); ?></div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
         </div>
 
         <div class="mb-3">
@@ -283,13 +298,27 @@
             <input type="password" 
                    name="password" 
                    id="password"
-                   class="form-control @error('password') is-invalid @enderror" 
+                   class="form-control <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
                    placeholder="Mínimo 6 caracteres" 
                    minlength="6"
                    required>
-            @error('password')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
+            <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                <div class="invalid-feedback"><?php echo e($message); ?></div>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
         </div>
 
         <div class="mb-3">
@@ -356,3 +385,4 @@
 
 </body>
 </html>
+<?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/usuarios/primer-cambio-password.blade.php ENDPATH**/ ?>

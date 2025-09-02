@@ -1,61 +1,258 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏥 Sistema de Gestión Medifarma
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC.svg)](https://tailwindcss.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## About Laravel
+Sistema integral de gestión empresarial desarrollado para Medifarma, que permite la administración de mercados, productos, usuarios y configuraciones del sistema de manera eficiente y segura.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Tabla de Contenidos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Características](#-características)
+- [Tecnologías](#-tecnologías)
+- [Requisitos del Sistema](#-requisitos-del-sistema)
+- [Instalación](#-instalación)
+- [Configuración](#-configuración)
+- [Uso](#-uso)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [API y Endpoints](#-api-y-endpoints)
+- [Base de Datos](#-base-de-datos)
+- [Seguridad](#-seguridad)
+- [Contribución](#-contribución)
+- [Licencia](#-licencia)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ✨ Características
 
-## Learning Laravel
+### 🎯 **Gestión de Mercados**
+- Creación y administración de mercados
+- Configuración de parámetros por mercado
+- Asignación masiva de productos a mercados
+- Gestión de estados y configuraciones
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 📦 **Base de Productos**
+- Catálogo completo de productos IQVIA
+- Búsqueda avanzada y filtros
+- Gestión de información de productos
+- Asignación masiva de productos
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 👥 **Gestión de Usuarios**
+- Sistema de autenticación seguro
+- Roles y permisos granulares
+- Gestión de franquicias por usuario
+- Cambio obligatorio de contraseña temporal
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🔧 **Administración del Sistema**
+- Configuraciones globales
+- Logs de auditoría
+- Gestión de parámetros del sistema
+- Monitoreo de actividades
 
-## Laravel Sponsors
+## 🛠️ Tecnologías
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### **Backend**
+- **Laravel 12.x** - Framework PHP moderno y robusto
+- **PHP 8.2+** - Versión más reciente de PHP
+- **SQL Server** - Base de datos principal
+- **Stored Procedures** - Lógica de negocio optimizada
 
-### Premium Partners
+### **Frontend**
+- **Tailwind CSS 3.x** - Framework CSS utilitario
+- **Alpine.js** - JavaScript reactivo ligero
+- **Bootstrap 5** - Componentes UI adicionales
+- **Font Awesome** - Iconografía profesional
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### **Herramientas de Desarrollo**
+- **Vite** - Bundler y servidor de desarrollo
+- **Laravel Sail** - Entorno Docker para desarrollo
+- **PHPUnit** - Testing automatizado
+- **Laravel Pint** - Formateo de código
 
-## Contributing
+## 💻 Requisitos del Sistema
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### **Servidor Web**
+- **PHP**: 8.2 o superior
+- **Extensiones PHP**: 
+  - BCMath PHP Extension
+  - Ctype PHP Extension
+  - JSON PHP Extension
+  - Mbstring PHP Extension
+  - OpenSSL PHP Extension
+  - PDO PHP Extension
+  - Tokenizer PHP Extension
+  - XML PHP Extension
+  - SQL Server drivers
 
-## Code of Conduct
+### **Base de Datos**
+- **SQL Server** 2016 o superior
+- **ODBC Driver 17** para SQL Server
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### **Servidor Web**
+- **Apache** 2.4+ o **Nginx** 1.18+
+- **Composer** 2.0+
+- **Node.js** 16+ y **npm** 8+
 
-## Security Vulnerabilities
+## 🚀 Instalación
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. **Clonar el Repositorio**
+```bash
+git clone https://github.com/tu-usuario/sistema-medifarma.git
+cd sistema-medifarma
+```
 
-## License
+### 2. **Instalar Dependencias PHP**
+```bash
+composer install --optimize-autoloader --no-dev
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 3. **Instalar Dependencias Node.js**
+```bash
+npm install
+npm run build
+```
+
+### 4. **Configurar Variables de Entorno**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 6. **Ejecutar Migraciones**
+```bash
+php artisan migrate
+```
+
+### 7. **Configurar Permisos**
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+## ⚙️ Configuración
+
+
+### **Configuración de Correo**
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=tu-servidor-smtp
+MAIL_PORT=587
+MAIL_USERNAME=tu-usuario
+MAIL_PASSWORD=tu-password
+MAIL_ENCRYPTION=tls
+```
+
+## 📖 Uso
+
+### **Acceso al Sistema**
+1. Navegar a la URL del sistema
+2. Ingresar credenciales de usuario
+3. Cambiar contraseña temporal (primer acceso)
+4. Acceder a las funcionalidades según el rol
+
+### **Roles de Usuario**
+- **Administrador**: Acceso completo al sistema
+- **Gerente de Producto**: Gestión de productos y mercados
+- **Usuario Estándar**: Acceso limitado según permisos
+
+### **Funcionalidades Principales**
+- **Dashboard**: Vista general del sistema
+- **Mercados**: Administración de mercados
+- **Productos**: Gestión de base de productos
+- **Usuarios**: Administración de usuarios
+- **Configuración**: Parámetros del sistema
+
+## 🏗️ Estructura del Proyecto
+
+```
+sistema-medifarma/
+├── app/
+│   ├── Http/Controllers/     # Controladores principales
+│   ├── Models/               # Modelos de datos
+│   ├── Services/             # Servicios de negocio
+│   └── Middleware/           # Middlewares personalizados
+├── database/
+│   ├── migrations/           # Migraciones de BD
+│   ├── seeders/              # Datos iniciales
+│   └── stored_procedures/    # Procedimientos almacenados
+├── resources/
+│   ├── views/                # Vistas Blade
+│   ├── css/                  # Estilos CSS
+│   └── js/                   # JavaScript del frontend
+├── routes/
+│   ├── web.php               # Rutas web
+│   └── api.php               # Rutas API
+└── public/                   # Archivos públicos
+```
+
+## 🔌 API y Endpoints
+
+### **Autenticación**
+- `POST /login` - Inicio de sesión
+- `POST /logout` - Cierre de sesión
+- `POST /cambio-password-obligatorio` - Cambio de contraseña
+
+### **Mercados**
+- `GET /market-management` - Lista de mercados
+- `POST /market-management` - Crear mercado
+- `PUT /market-management/{id}` - Actualizar mercado
+- `DELETE /market-management/{id}` - Eliminar mercado
+
+### **Productos**
+- `GET /productos` - Lista de productos
+- `POST /productos` - Crear producto
+- `PUT /productos/{id}` - Actualizar producto
+- `POST /productos/bulk-actions` - Acciones masivas
+
+### **Usuarios**
+- `GET /usuarios` - Lista de usuarios
+- `POST /usuarios` - Crear usuario
+- `PUT /usuarios/{id}` - Actualizar usuario
+- `POST /usuarios/{id}/toggle-estado` - Cambiar estado
+
+
+## 🔒 Seguridad
+
+### **Autenticación**
+- Sistema de login seguro
+- Contraseñas hasheadas con SHA-256
+- Cambio obligatorio de contraseña temporal
+- Sesiones seguras
+
+### **Autorización**
+- Control de acceso basado en roles
+- Permisos granulares por funcionalidad
+- Validación de datos en frontend y backend
+- Protección CSRF
+
+### **Auditoría**
+- Logs de todas las acciones críticas
+- Registro de cambios en configuraciones
+- Trazabilidad de operaciones masivas
+- Historial de accesos
+
+## 📞 Soporte
+
+- **Email**: soporte@medifarma.com
+- **Documentación**: [Wiki del Proyecto](link-al-wiki)
+- **Issues**: [GitHub Issues](link-a-issues)
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## �� Agradecimientos
+
+- **Laravel Team** por el framework excepcional
+- **Tailwind CSS** por el sistema de diseño
+- **Medifarma** por la confianza en el desarrollo
+- **Contribuidores** del proyecto
+
+---
+
+<div align="center">
+
+**Desarrollado con ❤️ para Medifarma**
+
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net)
+
+</div>
