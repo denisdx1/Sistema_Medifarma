@@ -6,7 +6,16 @@ export default {
     "./resources/**/*.vue",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: "var(--primary)",
+        secondary: "var(--secondary)",
+        secondaryLight: "var(--secondary-light)",
+        secondaryLighter: "var(--secondary-lighter)",
+        secondaryMuted: "var(--secondary-muted)",
+        secondaryPurple: "var(--secondary-purple)",
+      },
+    },
   },
   plugins: [],
 }

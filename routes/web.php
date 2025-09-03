@@ -56,6 +56,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/market-management/resto-filter-options', [App\Http\Controllers\MarketManagementController::class, 'getRestoFilterOptions'])->name('market-management.resto-filter-options');
     Route::post('/market-management/assign-products', [App\Http\Controllers\MarketManagementController::class, 'assignProducts'])->name('market-management.assign-products');
     Route::get('/market-management/productos-nuevos-sin-asignar', [App\Http\Controllers\MarketManagementController::class, 'getProductosNuevosYSinAsignar'])->name('market-management.productos-nuevos-sin-asignar');
+    Route::get('/market-management/atc4-count', [App\Http\Controllers\MarketManagementController::class, 'getAtc4Count'])->name('market-management.atc4-count');
+    Route::get('/market-management/atc4-list', [App\Http\Controllers\MarketManagementController::class, 'getAtc4List'])->name('market-management.atc4-list');
     
     // Productos Module - Available for all authenticated users
     Route::prefix('productos')->name('productos.')->group(function () {

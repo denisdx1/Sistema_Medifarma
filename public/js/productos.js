@@ -54,17 +54,20 @@ $(document).ready(function() {
     syncFilterButtonsState();
     
     // Check for auto-select market from sessionStorage and load products
-    // Si hay un mercado, marca o filtros múltiples para autoseleccionar, no cargar productos inicialmente
+    // Si hay un mercado, marca, ATC4 o filtros múltiples para autoseleccionar, no cargar productos inicialmente
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
     const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
+    const autoSelectAtc4 = sessionStorage.getItem('autoSelectAtc4');
     const autoFilterMarkets = sessionStorage.getItem('autoFilterMarkets');
     
-    if (autoSelectMarket || autoSelectBrand || autoFilterMarkets) {
+    if (autoSelectMarket || autoSelectBrand || autoSelectAtc4 || autoFilterMarkets) {
         // Mostrar loading inmediatamente con mensaje específico
         if (autoSelectMarket) {
             updateLoadingText(`Cargando productos del mercado "${autoSelectMarket}"...`);
         } else if (autoSelectBrand) {
             updateLoadingText(`Cargando productos de la marca "${autoSelectBrand}"...`);
+        } else if (autoSelectAtc4) {
+            updateLoadingText(`Cargando productos con ATC4 "${autoSelectAtc4}"...`);
         } else if (autoFilterMarkets) {
             const markets = JSON.parse(autoFilterMarkets);
             updateLoadingText(`Cargando productos de los mercados: ${markets.join(', ')}...`);
@@ -1160,13 +1163,48 @@ $(document).ready(function() {
     // ===== FUNCIONES PARA MANEJO DE MERCADOS =====
     // Implementadas en productos-actions.js
 
-    // Función para verificar si hay un mercado o marca para seleccionar automáticamente y cargar productos
+    // Función para verificar si hay un mercado, marca o ATC4 para seleccionar automáticamente y cargar productos
 function checkAutoSelectMarketAndLoadProducts() {
     const autoSelectMarket = sessionStorage.getItem('autoSelectMarket');
     const autoSelectBrand = sessionStorage.getItem('autoSelectBrand');
+    const autoSelectAtc4 = sessionStorage.getItem('autoSelectAtc4');
     const autoFilterMarkets = sessionStorage.getItem('autoFilterMarkets');
     
-    if (autoSelectMarket) {
+    if (autoSelectAtc4) {
+        // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
+        sessionStorage.removeItem('autoSelectAtc4');
+        
+        // Función para verificar y aplicar el filtro de ATC4
+        function tryApplyAtc4Filter(attempts = 0) {
+            const atc4Input = $('#filter-descripcionATC4');
+            
+            // Establecer el valor en el input de ATC4
+            atc4Input.val(autoSelectAtc4);
+            
+            // Actualizar el filtro interno
+            currentFilters.descripcionATC4 = autoSelectAtc4;
+            
+            // Mostrar botón de limpiar si existe
+            const clearButton = $('#clear-filter-descripcionATC4');
+            if (clearButton.length) {
+                clearButton.removeClass('hidden');
+            }
+            
+            // Resaltar visualmente el campo de ATC4 para que el usuario vea que está filtrado
+            atc4Input.addClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            
+            // Quitar el resaltado después de 3 segundos
+            setTimeout(() => {
+                atc4Input.removeClass('border-blue-500 ring-2 ring-blue-200 bg-blue-50');
+            }, 3000);
+            
+            // Cargar productos directamente con el filtro aplicado
+            loadProducts(1);
+        }
+        
+        // Aplicar el filtro inmediatamente
+        tryApplyAtc4Filter();
+    } else if (autoSelectMarket) {
         // Limpiar el sessionStorage inmediatamente para evitar que se aplique múltiples veces
         sessionStorage.removeItem('autoSelectMarket');
         

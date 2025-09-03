@@ -64,6 +64,30 @@
                             </div>
                         </div>
                         
+                        <!-- Contador de ATC4 para Gerentes de Producto -->
+                        @if(auth()->user()->idRol == 2)
+                        <div onclick="openAtc4ListModal()" class="relative cursor-pointer group">
+                            <!-- Icono de ATC4 -->
+                            <div class="w-10 h-10 bg-purple-500 hover:bg-purple-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl">
+                                <i class="fa-solid fa-layer-group text-white text-sm"></i>
+                            </div>
+                            
+                            <!-- Badge con el número de ATC4 -->
+                            <div class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                <span id="atc4-count-badge">0</span>
+                            </div>
+                            
+                            <!-- Tooltip -->
+                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                <div class="text-center">
+                                    <span class="text-purple-300">ATC4:</span>
+                                    <span class="font-bold text-white" id="tooltip-count-atc4">0</span>
+                                </div>
+                                <div class="text-center text-gray-300 mt-1">Click para ver ATC4 del gerente</div>
+                            </div>
+                        </div>
+                        @endif
+                        
                         <!-- Botón Crear Mercado -->
                         <button onclick="openCreateMarketModal()"
                                 class="inline-flex items-center px-4 py-2 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200 shadow-sm hover:shadow-md"
@@ -585,6 +609,84 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Mostrar Lista de ATC4 -->
+<div id="atc4-list-modal" class="fixed inset-0 flex items-center justify-center p-4 hidden z-50">
+    <!-- Overlay con animación -->
+    <div class="absolute inset-0 bg-opacity-50 transition-opacity duration-300 opacity-0" id="atc4-overlay"></div>
+    
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden transform transition-all duration-300 ease-out scale-95 opacity-0 relative z-10">
+        <!-- Header -->
+        <div class="bg-primary from-primary to-secondary p-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-layer-group mr-2"></i>
+                    Lista de ATC4 - <span id="atc4-modal-gerente">Gerente</span>
+                </h3>
+                <button onclick="closeAtc4ListModal()" class="text-white hover:text-secondary-purple transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="px-6 pt-4 pb-6 overflow-y-auto max-h-[calc(80vh-130px)]">
+            <!-- Loading State -->
+            <div id="atc4-loading" class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span class="ml-2 text-primary">Cargando ATC4...</span>
+            </div>
+            
+            <!-- Error State -->
+            <div id="atc4-error" class="hidden text-center py-8">
+                <i class="fas fa-exclamation-triangle text-danger text-4xl mb-4"></i>
+                <p class="text-danger font-medium" id="atc4-error-message">Error al cargar los datos</p>
+                <button onclick="loadAtc4List()" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                    Reintentar
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div id="atc4-content" class="hidden">
+                <!-- Summary -->
+                <div class="bg-primary  border border-primary rounded-lg p-3 mb-4 transform translate-y-4 opacity-0 transition-all duration-500" id="atc4-summary">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-white font-medium">Resumen</h4>
+                            <p class="text-white text-sm opacity-90">Categorías ATC4 del gerente con conteo total</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-center">
+                                <span class="text-2xl font-bold text-white" id="atc4-total-count">0</span>
+                                <p class="text-white text-xs opacity-90">categorías</p>
+                                                        
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ATC4 List -->
+                <div class="space-y-2" id="atc4-list-container">
+                    <!-- Los elementos ATC4 se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="px-6 py-3 border-t border-primary bg-primary">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-white">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Haga clic en una categoría para ver todos los productos con ese ATC4
+                </div>
+                <button onclick="closeAtc4ListModal()" 
+                        class="px-4 py-2 bg-white text-primary rounded-lg hover:bg-secondary-light transition-colors font-medium">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 
@@ -601,269 +703,20 @@ window.MarketManagementRoutes = {
 
 window.csrfToken = '{{ csrf_token() }}';
 
-// ===== FUNCIONES DE NOTIFICACIÓN =====
-
-// Función para mostrar notificaciones de éxito
-function showSuccessNotification(message) {
-    console.log('SUCCESS:', message);
-    showToast(message, 'success');
-}
-
-// Función para mostrar notificaciones de error
-function showErrorNotification(message) {
-    console.log('ERROR:', message);
-    showToast(message, 'error');
-}
-
-// Función para mostrar notificaciones de advertencia
-function showWarningNotification(message) {
-    console.log('WARNING:', message);
-    showToast(message, 'warning');
-}
 
 
 
-// Función para redirigir al módulo de productos con filtro de mercado
-function redirectToProductsWithMarket(marketName) {
-    // Guardar el mercado seleccionado en sessionStorage
-    sessionStorage.setItem('autoSelectMarket', marketName);
-    
-    // Redirigir a la página de productos sin parámetros en la URL
-    const productosUrl = '{{ route("productos.index") }}';
-    window.location.href = productosUrl;
-}
 
-// Función para redirigir al módulo de productos con filtro de marca
-function redirectToProductsWithBrand(brandName) {
-    // Guardar la marca seleccionada en sessionStorage
-    sessionStorage.setItem('autoSelectBrand', brandName);
-    
-    // Redirigir a la página de productos sin parámetros en la URL
-    const productosUrl = '{{ route("productos.index") }}';
-    window.location.href = productosUrl;
-}
-
-// Función para redirigir al módulo de productos con filtro de SIN_ASIGNAR y mercado pre-seleccionado
-function redirectToProductsWithRestoAndMarket(marketName) {
-    // Guardar el mercado seleccionado en sessionStorage
-    // Usar 'SIN_ASIGNAR' para el backend
-    sessionStorage.setItem('autoSelectMarket', 'SIN_ASIGNAR');
-    sessionStorage.setItem('preSelectedMarket', marketName);
-    
-    // Redirigir a la página de productos
-    const productosUrl = '{{ route("productos.index") }}';
-    window.location.href = productosUrl;
-}
-
-// ===== FUNCIONES PARA CREAR MERCADO =====
-
-// Abrir modal para crear mercado
-function openCreateMarketModal() {
-    // Limpiar formulario
-    document.getElementById('new-market-name').value = '';
-    document.getElementById('new-market-note').value = '';
-    
-    // Mostrar modal
-    document.getElementById('create-market-modal').classList.remove('hidden');
-    
-    // Agregar validación en tiempo real para la nota
-    const noteField = document.getElementById('new-market-note');
-    const createBtn = document.getElementById('create-market-btn');
-    const errorMsg = document.getElementById('create-note-error');
-    
-    // Validación inicial - deshabilitar botón hasta que se ingrese una nota
-    createBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    createBtn.disabled = true;
-    
-    // Validación en tiempo real
-    noteField.addEventListener('input', function() {
-        const note = this.value.trim();
-        
-        if (!note) {
-            this.classList.add('border-red-500');
-            this.classList.remove('border-primary');
-            createBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            createBtn.disabled = true;
-            errorMsg.classList.remove('hidden');
-        } else {
-            this.classList.remove('border-red-500');
-            this.classList.add('border-primary');
-            createBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            createBtn.disabled = false;
-            errorMsg.classList.add('hidden');
-        }
-    });
-}
-
-// Cerrar modal para crear mercado
-function closeCreateMarketModal() {
-    document.getElementById('create-market-modal').classList.add('hidden');
-}
-
-// Proceder con la creación del mercado
-function proceedWithMarketCreation() {
-    const marketName = document.getElementById('new-market-name').value.trim();
-    const marketNote = document.getElementById('new-market-note').value.trim();
-    
-    if (!marketName) {
-        showErrorNotification('Debe ingresar el nombre del mercado');
-        document.getElementById('new-market-name').focus();
-        return;
-    }
-    
-    if (!marketNote) {
-        showErrorNotification('La nota es obligatoria para crear un mercado');
-        document.getElementById('new-market-note').focus();
-        return;
-    }
-    
-    // Llenar modal de confirmación
-    document.getElementById('confirm-create-market-name').textContent = marketName;
-    document.getElementById('confirm-create-market-note').textContent = marketNote;
-    document.getElementById('confirm-create-market-note-container').style.display = 'block';
-    
-    // Cerrar modal de creación y mostrar modal de confirmación
-    closeCreateMarketModal();
-    document.getElementById('create-market-confirmation-modal').classList.remove('hidden');
-}
-
-// Cerrar modal de confirmación
-function closeCreateMarketConfirmationModal() {
-    document.getElementById('create-market-confirmation-modal').classList.add('hidden');
-}
-
-// Proceder con la creación del mercado después de confirmación
-function proceedWithMarketCreationAndAssignment() {
-    const marketName = document.getElementById('confirm-create-market-name').textContent;
-    const marketNote = document.getElementById('confirm-create-market-note').textContent;
-    
-    // Mostrar loading en el botón
-    const btn = document.getElementById('final-create-assign-btn');
-    const btnText = btn.querySelector('.btn-text');
-    const btnLoading = btn.querySelector('.btn-loading');
-    
-    btnText.classList.add('hidden');
-    btnLoading.classList.remove('hidden');
-    btn.disabled = true;
-    
-    // Crear mercado
-    $.ajax({
-        url: '/productos/create-market',
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        data: {
-            market_name: marketName,
-            market_note: marketNote
-        },
-        success: function(response) {
-            if (response.success) {
-                showSuccessNotification(`Mercado "${marketName}" creado exitosamente`);
-                
-                // Cerrar modal de confirmación
-                closeCreateMarketConfirmationModal();
-                
-                // Recargar la página para mostrar el nuevo mercado
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showErrorNotification(response.message || 'Error al crear mercado');
-            }
-        },
-        error: function(xhr) {
-            let errorMessage = 'Error al crear mercado';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
-            showErrorNotification(errorMessage);
-        },
-        complete: function() {
-            // Restaurar botón
-            btnText.classList.remove('hidden');
-            btnLoading.classList.add('hidden');
-            btn.disabled = false;
-        }
-    });
-}
-
-// Event listeners para cerrar modales al hacer clic fuera
-document.addEventListener('DOMContentLoaded', function() {
-    // Modal de crear mercado
-    document.getElementById('create-market-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCreateMarketModal();
-        }
-    });
-    
-    // Modal de confirmación de crear mercado
-    document.getElementById('create-market-confirmation-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeCreateMarketConfirmationModal();
-        }
-    });
-    
-    // Cerrar modales con ESC
-    document.addEventListener('keyup', function(e) {
-        if (e.key === "Escape") {
-            closeCreateMarketModal();
-            closeCreateMarketConfirmationModal();
-        }
-    });
-    
-    // Cargar contadores de productos NUEVOS y SIN_ASIGNAR
-    loadProductosNuevosYSinAsignar();
-});
-
-// Función para cargar productos NUEVOS y SIN_ASIGNAR
-function loadProductosNuevosYSinAsignar() {
-    $.ajax({
-        url: '{{ route("market-management.productos-nuevos-sin-asignar") }}',
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success && response.data) {
-                const countNuevos = response.data.counts.nuevos;
-                const countSinAsignar = response.data.counts.sin_asignar;
-                const total = response.data.counts.total;
-                
-                // Actualizar contador total en el badge
-                document.getElementById('total-count-notification').textContent = total;
-                
-                // Actualizar tooltip
-                document.getElementById('tooltip-count-nuevos').textContent = countNuevos;
-                document.getElementById('tooltip-count-sin-asignar').textContent = countSinAsignar;
-                
-                // Cambiar color del badge según si hay productos
-                const badgeElement = document.getElementById('total-count-notification').parentElement;
-                if (total > 0) {
-                    badgeElement.classList.remove('bg-blue-600');
-                    badgeElement.classList.add('bg-red-600');
-                } else {
-                    badgeElement.classList.remove('bg-red-600');
-                    badgeElement.classList.add('bg-blue-600');
-                }
-            }
-        },
-        error: function(xhr, textStatus, errorThrown) {
-            console.error('Error al cargar productos NUEVOS y SIN_ASIGNAR:', errorThrown);
-        }
-    });
-}
-
-// Función para redirigir al módulo de productos con filtros de NUEVOS y SIN_ASIGNAR
-function redirectToProductosNuevosYSinAsignar() {
-    // Guardar en sessionStorage para que el módulo de productos sepa qué filtros aplicar
-    sessionStorage.setItem('autoFilterMarkets', JSON.stringify(['NUEVOS', 'SIN_ASIGNAR']));
-    
-    // Redirigir al módulo de productos
-    const productosUrl = '{{ route("productos.index") }}';
-    window.location.href = productosUrl;
-}
+// Variables globales para JavaScript
+window.atc4ListRoute = '{{ route("market-management.atc4-list") }}';
+window.atc4CountRoute = '{{ route("market-management.atc4-count") }}';
+window.productosIndexRoute = '{{ route("productos.index") }}';
+window.productosNuevosSinAsignarRoute = '{{ route("market-management.productos-nuevos-sin-asignar") }}';
+window.createMarketRoute = '{{ route("productos.create-market") }}';
+window.currentUser = '{{ auth()->user()->usuario }}';
+window.isGerenteProducto = {{ auth()->user()->idRol == 2 ? 'true' : 'false' }};
 </script>
 <script src="{{ asset('js/market-management.js') }}"></script>
+<script src="{{ asset('js/market-management-main.js') }}"></script>
+<script src="{{ asset('js/atc4-modal.js') }}"></script>
 @endpush

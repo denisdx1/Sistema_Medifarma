@@ -1,7 +1,7 @@
 /* Global theme variables and overrides for Sistema Medifarma */
 :root {
     --primary: #6A5CBC;
-    --secondary: #9E88FD;
+    --secondary: rgb(158, 136, 253);
     --secondary-light: #D3E0E0;
     --secondary-lighter: #E7E7E7;
     --secondary-muted: #bfced6;
@@ -75,6 +75,12 @@ body {
 /* Utility helpers */
 .text-primary { color: var(--primary) !important; }
 .bg-primary   { background-color: var(--primary) !important; }
+.bg-secondary { background-color: var(--secondary) !important; }
+.bg-secondary-500 { background-color: var(--secondary-500) !important; }
+.bg-secondary-light { background-color: var(--secondary-light) !important; }
+.bg-secondary-lighter { background-color: var(--secondary-lighter) !important; }
+.bg-secondary-muted { background-color: var(--secondary-muted) !important; }
+.bg-secondary-purple { background-color: var(--secondary-purple) !important; }
 .border-primary { border-color: var(--primary) !important; }
 
 /* Global input focus states */

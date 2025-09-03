@@ -901,4 +901,120 @@ class MarketManagementController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtener conteo de ATC4 para el usuario autenticado con rol de Gerente_Producto
+     */
+    public function getAtc4Count(Request $request)
+    {
+        try {
+            // Obtener el usuario autenticado
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado'
+                ], 401);
+            }
+
+            // Verificar que el usuario tenga rol de Gerente_Producto
+            if ($user->idRol != 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado. Solo gerentes de producto pueden acceder a esta información.'
+                ], 403);
+            }
+
+            // Obtener ATC4 únicos para el gerente de producto
+            $atc4Count = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->where('v.Gerente_Producto', $user->usuario)
+                ->whereNotNull('v.codigoATC4')
+                ->where('v.codigoATC4', '!=', '')
+                ->distinct()
+                ->count('v.codigoATC4');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'atc4_count' => $atc4Count,
+                    'gerente_producto' => $user->usuario
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener conteo de ATC4: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener lista de ATC4 para el usuario autenticado con rol de Gerente_Producto
+     */
+    public function getAtc4List(Request $request)
+    {
+        try {
+            // Obtener el usuario autenticado
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado'
+                ], 401);
+            }
+
+            // Verificar que el usuario tenga rol de Gerente_Producto
+            if ($user->idRol != 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado. Solo gerentes de producto pueden acceder a esta información.'
+                ], 403);
+            }
+
+            // Obtener ATC4 únicos para el gerente de producto con información adicional
+            $atc4List = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->where('v.Gerente_Producto', $user->usuario)
+                ->whereNotNull('v.codigoATC4')
+                ->where('v.codigoATC4', '!=', '')
+                ->select(
+                    'v.codigoATC4',
+                    'v.descripcionATC4',
+                    DB::raw('COUNT(*) as cantidad_productos')
+                )
+                ->groupBy('v.codigoATC4', 'v.descripcionATC4')
+                ->orderBy('v.descripcionATC4')
+                ->get();
+
+            // Ahora obtener el conteo TOTAL de productos para cada ATC4 (sin filtrar por gerente)
+            foreach ($atc4List as $atc4) {
+                $totalProductos = DB::connection('sqlsrv')
+                    ->table('dbo.VMAE_PROD_IQVIA as v')
+                    ->where('v.codigoATC4', $atc4->codigoATC4)
+                    ->whereNotNull('v.codigoATC4')
+                    ->where('v.codigoATC4', '!=', '')
+                    ->count();
+                
+                $atc4->total_productos = $totalProductos;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'atc4_list' => $atc4List,
+                    'gerente_producto' => $user->usuario
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener lista de ATC4: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
