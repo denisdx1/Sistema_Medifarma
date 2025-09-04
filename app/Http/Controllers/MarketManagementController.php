@@ -577,18 +577,33 @@ class MarketManagementController extends Controller
     public function getRestoFilterOptions(Request $request)
     {
         try {
-            $fuentes = DB::connection('sqlsrv')
+            // Obtener fuentes de productos SIN_ASIGNAR (con configuración)
+            $fuentesSinAsignar = DB::connection('sqlsrv')
                 ->table('ODS.TAB_CONFIGURACION as c')
                 ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                 ->join('dbo.VMAE_PROD_IQVIA as v', 'c.codigo', '=', 'v.codigoPresentacion')
-                ->select(DB::raw("DISTINCT COALESCE(c.fuente, 'IQV') as fuente"))
-                ->whereIn('m.mercado', ['SIN_ASIGNAR', 'NUEVOS'])
+                ->select(DB::raw("DISTINCT COALESCE(c.fuente, 'IQVIA') as fuente"))
+                ->where('m.mercado', 'SIN_ASIGNAR')
                 ->whereNotNull('v.codigoPresentacion')
                 ->where('v.codigoPresentacion', '!=', '')
-                ->whereNotNull(DB::raw("COALESCE(c.fuente, 'IQV')"))
+                ->whereNotNull(DB::raw("COALESCE(c.fuente, 'IQVIA')"));
+
+            // Obtener fuentes de productos NUEVOS (sin configuración, mercado NULL en VMAE)
+            $fuentesNuevos = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->select(DB::raw("DISTINCT COALESCE(c.fuente, 'IQVIA') as fuente"))
+                ->whereNull('c.codigo') // Productos sin configuración
+                ->whereNotNull('v.codigoPresentacion')
+                ->where('v.codigoPresentacion', '!=', '')
+                ->whereNotNull(DB::raw("COALESCE(c.fuente, 'IQVIA')"));
+
+            // Combinar ambas consultas y obtener fuentes únicas
+            $fuentes = $fuentesSinAsignar->union($fuentesNuevos)
                 ->orderBy('fuente')
                 ->pluck('fuente')
                 ->filter()
+                ->unique()
                 ->values();
 
             return response()->json([
@@ -616,33 +631,56 @@ class MarketManagementController extends Controller
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 20);
 
-            // Usar la misma lógica corregida que funciona en bulkChangeMarket
-            $query = DB::connection('sqlsrv')
+            // Obtener productos SIN_ASIGNAR (con configuración)
+            $productosSinAsignar = DB::connection('sqlsrv')
                 ->table('ODS.TAB_CONFIGURACION as c')
                 ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                 ->join('dbo.VMAE_PROD_IQVIA as v', 'c.codigo', '=', 'v.codigoPresentacion')
                 ->select(
                     'v.codigoPresentacion',
                     'v.descripcionPresentacion',
-                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente")
+                    DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"),
+                    DB::raw("'SIN_ASIGNAR' as tipo_mercado")
                 )
-                ->whereIn('m.mercado', ['SIN_ASIGNAR', 'NUEVOS'])
+                ->where('m.mercado', 'SIN_ASIGNAR')
+                ->whereNotNull('v.codigoPresentacion')
+                ->where('v.codigoPresentacion', '!=', '');
+
+            // Obtener productos NUEVOS (sin configuración, mercado NULL en VMAE)
+            $productosNuevos = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->select(
+                    'v.codigoPresentacion',
+                    'v.descripcionPresentacion',
+                    DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"),
+                    DB::raw("'NUEVOS' as tipo_mercado")
+                )
+                ->whereNull('c.codigo') // Productos sin configuración
                 ->whereNotNull('v.codigoPresentacion')
                 ->where('v.codigoPresentacion', '!=', '');
 
             // Aplicar búsqueda si se proporciona
             if (!empty($search)) {
-                $query->where(function($subQuery) use ($search) {
+                $productosSinAsignar->where(function($subQuery) use ($search) {
+                    $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
+                             ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%");
+                });
+                
+                $productosNuevos->where(function($subQuery) use ($search) {
                     $subQuery->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
                              ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%");
                 });
             }
 
+            // Combinar ambas consultas
+            $query = $productosSinAsignar->union($productosNuevos);
+
             // Obtener total de registros
             $totalCount = $query->count();
 
             // Obtener productos paginados
-            $products = $query->orderBy('v.descripcionPresentacion')
+            $products = $query->orderBy('descripcionPresentacion')
                              ->offset(($page - 1) * $perPage)
                              ->limit($perPage)
                              ->get();
@@ -707,14 +745,26 @@ class MarketManagementController extends Controller
             foreach ($validated['products'] as $product) {
                 try {
                     // Verificar que el producto existe en VMAE_PROD_IQVIA con mercado SIN_ASIGNAR o NUEVOS
+                    // Primero verificar si está en SIN_ASIGNAR (con configuración)
                     $productoInfo = DB::connection('sqlsrv')
                         ->table('dbo.VMAE_PROD_IQVIA as v')
                         ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
                         ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                         ->where('v.codigoPresentacion', $product['code'])
-                        ->whereIn('m.mercado', ['SIN_ASIGNAR', 'NUEVOS'])
+                        ->where('m.mercado', 'SIN_ASIGNAR')
                         ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
                         ->first();
+                    
+                    // Si no está en SIN_ASIGNAR, verificar si está en NUEVOS (sin configuración)
+                    if (!$productoInfo) {
+                        $productoInfo = DB::connection('sqlsrv')
+                            ->table('dbo.VMAE_PROD_IQVIA as v')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                            ->where('v.codigoPresentacion', $product['code'])
+                            ->whereNull('c.codigo') // Productos sin configuración
+                            ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
+                            ->first();
+                    }
                         
                     if (!$productoInfo) {
                         $errors[] = "Producto {$product['code']} no encontrado en SIN_ASIGNAR o NUEVOS";
@@ -865,18 +915,27 @@ class MarketManagementController extends Controller
                 ], 401);
             }
 
-            // Obtener productos de NUEVOS y SIN_ASIGNAR filtrados por gerente de producto
-            // Ahora necesitamos hacer JOIN con la tabla de configuración para obtener el mercado real
-            $productos = DB::connection('sqlsrv')
+            // Obtener productos SIN_ASIGNAR (con configuración)
+            $productosSinAsignar = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
                 ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                ->whereIn('m.mercado', ['NUEVOS', 'SIN_ASIGNAR'])
+                ->where('m.mercado', 'SIN_ASIGNAR')
                 ->where('v.Gerente_Producto', $user->usuario)
-                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', 'm.mercado as MERCADO')
-                ->orderBy('m.mercado')
-                ->orderBy('v.descripcionPresentacion')
-                ->get();
+                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("'SIN_ASIGNAR' as MERCADO"))
+                ->orderBy('v.descripcionPresentacion');
+
+            // Obtener productos NUEVOS (sin configuración, mercado NULL en VMAE)
+            $productosNuevos = DB::connection('sqlsrv')
+                ->table('dbo.VMAE_PROD_IQVIA as v')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->whereNull('c.codigo') // Productos sin configuración
+                ->where('v.Gerente_Producto', $user->usuario)
+                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("git i as MERCADO"))
+                ->orderBy('v.descripcionPresentacion');
+
+            // Combinar ambas consultas
+            $productos = $productosSinAsignar->union($productosNuevos)->orderBy('descripcionPresentacion')->get();
 
             // Contar por tipo de mercado
             $countNuevos = $productos->where('MERCADO', 'NUEVOS')->count();

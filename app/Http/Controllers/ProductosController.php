@@ -54,6 +54,7 @@ class ProductosController extends Controller
             $sortDirection = $request->get('sort_direction', 'asc');
 
             // Query base con JOIN para obtener la fuente y mercado real de configuración
+            // Incluir productos con y sin configuración
             $baseQuery = DB::connection('sqlsrv')
                 ->table('dbo.VMAE_PROD_IQVIA as v')
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
@@ -65,7 +66,7 @@ class ProductosController extends Controller
                     'v.marcaGenerico',
                     'v.eticoPopular',
                     'v.molecula',
-                    DB::raw("COALESCE(c.fuente, 'IQV') as fuente"),
+                    DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"),
                     'v.codigoFF3',
                     'v.descripcionFF3',
                     'v.codigoATC4',
@@ -76,8 +77,8 @@ class ProductosController extends Controller
                     'v.stghVal',
                     // Campo concatenado de concentración
                     DB::raw("CONCAT(COALESCE(CAST(v.sizePack AS VARCHAR(10)), ''), ' ', COALESCE(CAST(v.stghVal AS VARCHAR(20)), '')) as concentracion"),
-                    // Usar solo el mercado de la configuración (ya no hay COALESCE con NUEVOS por defecto)
-                    DB::raw("m.mercado as mercado")
+                    // Usar el mercado real de la configuración, si no hay configuración usar "NUEVOS"
+                    DB::raw("COALESCE(m.mercado, 'NUEVOS') as mercado")
                 ]);
 
             // Aplicar búsqueda global
@@ -87,7 +88,8 @@ class ProductosController extends Controller
                           ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
                           ->orWhere('v.descripcionProducto', 'LIKE', "%{$search}%")
                           ->orWhere('v.molecula', 'LIKE', "%{$search}%")
-                          ->orWhere('m.mercado', 'LIKE', "%{$search}%");
+                          ->orWhere('m.mercado', 'LIKE', "%{$search}%")
+                          ->orWhereRaw("COALESCE(m.mercado, 'NUEVOS') LIKE ?", ["%{$search}%"]);
                 });
             }
 
@@ -96,7 +98,15 @@ class ProductosController extends Controller
                 if (!empty($value)) {
                     switch ($field) {
                         case 'fuente':
-                            $baseQuery->where('c.fuente', '=', $value);
+                            // Para fuente, usar la configuración si existe, sino usar IQVIA por defecto
+                            if ($value === 'IQVIA') {
+                                $baseQuery->where(function($query) use ($value) {
+                                    $query->where('c.fuente', '=', $value)
+                                          ->orWhereNull('c.fuente');
+                                });
+                            } else {
+                                $baseQuery->where('c.fuente', '=', $value);
+                            }
                             break;
                         case 'mercado':
                             // Verificar si hay múltiples mercados separados por comas
@@ -115,7 +125,12 @@ class ProductosController extends Controller
                                     }
                                 }
                             } else {
-                                $baseQuery->where('m.mercado', '=', $value);
+                                // Si el filtro es "NUEVOS", buscar productos sin configuración
+                                if ($value === 'NUEVOS') {
+                                    $baseQuery->whereNull('m.mercado');
+                                } else {
+                                    $baseQuery->where('m.mercado', '=', $value);
+                                }
                             }
                             break;
                         case 'descripcionProducto':
@@ -199,7 +214,7 @@ class ProductosController extends Controller
                     'descripcionLaboratorio' => 'v.descripcionLaboratorio',
                     'descripcionCorporacion' => 'v.descripcionCorporacion',
                     'concentracion' => 'concentracion', // Campo calculado
-                    'mercado' => 'mercado', // Campo calculado
+                    'mercado' => 'COALESCE(m.mercado, \'NUEVOS\')', // Campo calculado con COALESCE
                     'fuente' => 'fuente' // Campo calculado
                 ];
 
@@ -427,25 +442,36 @@ class ProductosController extends Controller
                     break;
 
                 case 'mercado':
-                    // Para mercado, necesitamos hacer JOIN con la tabla de configuración
-                    $query = DB::connection('sqlsrv')
-                        ->table('dbo.VMAE_PROD_IQVIA as v')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                        ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                        ->whereNotNull('m.mercado')
-                        ->where('m.mercado', '<>', '');
-                    
-                    if ($search) {
-                        $query->where('m.mercado', 'LIKE', "{$search}%");
+                    // Para mercado, incluir tanto los de configuración como "NUEVOS"
+                    if ($search && strtolower($search) === 'nuevos') {
+                        // Si buscan específicamente "NUEVOS", buscar productos sin configuración
+                        $query = DB::connection('sqlsrv')
+                            ->table('dbo.VMAE_PROD_IQVIA as v')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                            ->whereNull('c.codigo') // Productos sin configuración
+                            ->select(DB::raw("'NUEVOS' as mercado"));
+                    } else {
+                        // Para otros mercados, usar la configuración normal
+                        $query = DB::connection('sqlsrv')
+                            ->table('dbo.VMAE_PROD_IQVIA as v')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                            ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                            ->whereNotNull('m.mercado')
+                            ->where('m.mercado', '<>', '')
+                            ->select('m.mercado as mercado');
+                        
+                        if ($search) {
+                            $query->where('m.mercado', 'LIKE', "{$search}%");
+                        }
                     }
                     
                     // Para mercado, usar un límite mucho mayor para asegurar que se carguen todos
                     $mercadoLimit = $search ? $limit : 2000; // Sin búsqueda: 2000, con búsqueda: límite normal
                     
                     $results = $query->distinct()
-                        ->orderBy('m.mercado')
+                        ->orderBy('mercado')
                         ->limit($mercadoLimit)
-                        ->pluck('m.mercado')
+                        ->pluck('mercado')
                         ->filter(function($mercado) {
                             return !empty(trim($mercado));
                         })
@@ -457,17 +483,23 @@ class ProductosController extends Controller
                         })
                         ->toArray();
                     
+                    // Si no hay búsqueda, agregar "NUEVOS" a las opciones
+                    if (!$search) {
+                        $results[] = 'NUEVOS';
+                        $results = array_unique($results);
+                        sort($results);
+                    }
+                    
                     break;
 
                 case 'fuente':
                     $fuenteQuery = DB::connection('sqlsrv')
                         ->table('dbo.VMAE_PROD_IQVIA as v')
                         ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                        ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                        ->select(DB::raw("COALESCE(c.fuente, 'IQV') as fuente"));
+                        ->select(DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"));
                     
                     if ($search) {
-                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQV') LIKE ?", ["{$search}%"]);
+                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQVIA') LIKE ?", ["{$search}%"]);
                     }
                     
                     $results = $fuenteQuery->distinct()
@@ -485,7 +517,7 @@ class ProductosController extends Controller
                     $results = [
                         'marcaGenerico' => (clone $baseQuery)->whereNotNull('marcaGenerico')->where('marcaGenerico', '<>', '')->distinct()->orderBy('marcaGenerico')->limit(20)->pluck('marcaGenerico')->toArray(),
                         'eticoPopular' => (clone $baseQuery)->whereNotNull('eticoPopular')->where('eticoPopular', '<>', '')->distinct()->orderBy('eticoPopular')->limit(20)->pluck('eticoPopular')->toArray(),
-                        'fuente' => ['IQV', 'IQVIA', 'OTRO'] // Opciones fijas pequeñas
+                        'fuente' => ['IQVIA', 'OTRO'] // Opciones fijas pequeñas
                     ];
                     
                     return response()->json([
@@ -654,10 +686,11 @@ class ProductosController extends Controller
                 ->value('descripcionPresentacion');
 
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
+            // Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
             $userId = Auth::user()->idUsuario;
             $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
-                $configuracion->fuente,           // @fuente (obtenida de la configuración actual)
+                'IQVIA',                          // @fuente - Siempre 'IQVIA'
                 $validated['nuevoMercadoId'],     // @idMercado
                 $userId,                          // @idUsuario
                 $validated['note'] ?? null        // @nota
@@ -875,12 +908,26 @@ class ProductosController extends Controller
             foreach ($validated['products'] as $product) {
                 try {
                     // Verificar que el producto existe en VMAE_PROD_IQVIA con mercado SIN_ASIGNAR o NUEVOS y obtener su información
+                    // Primero verificar si está en SIN_ASIGNAR (con configuración)
                     $productoInfo = DB::connection('sqlsrv')
-                        ->table('dbo.VMAE_PROD_IQVIA')
-                        ->where('codigoPresentacion', $product['code'])
-                        ->whereIn('MERCADO', ['SIN_ASIGNAR', 'NUEVOS'])
-                        ->select('codigoPresentacion', 'descripcionPresentacion')
+                        ->table('dbo.VMAE_PROD_IQVIA as v')
+                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                        ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                        ->where('v.codigoPresentacion', $product['code'])
+                        ->where('m.mercado', 'SIN_ASIGNAR')
+                        ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
                         ->first();
+                    
+                    // Si no está en SIN_ASIGNAR, verificar si está en NUEVOS (sin configuración)
+                    if (!$productoInfo) {
+                        $productoInfo = DB::connection('sqlsrv')
+                            ->table('dbo.VMAE_PROD_IQVIA as v')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                            ->where('v.codigoPresentacion', $product['code'])
+                            ->whereNull('c.codigo') // Productos sin configuración
+                            ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
+                            ->first();
+                    }
                         
                     if (!$productoInfo) {
                         $errors[] = "Producto {$product['code']} no encontrado en SIN_ASIGNAR o NUEVOS";
@@ -909,10 +956,13 @@ class ProductosController extends Controller
                     // Obtener el ID del usuario autenticado
                     $userId = Auth::user()->idUsuario;
                     
+                    // Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
+                    $fuente = 'IQVIA';
+                    
                     DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
-                        $product['fuente'],       // @fuente
+                        $fuente,                  // @fuente - Siempre 'IQVIA'
                         $userId,                  // @idUsuario
                         $validated['note']        // @nota
                     ]);
@@ -1253,13 +1303,8 @@ class ProductosController extends Controller
 
                     $previousMarket = $productoInfo->MERCADO;
 
-                    // PASO 1: Obtener la fuente del producto (si existe configuración previa)
-                    $existingConfig = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_CONFIGURACION')
-                        ->where('codigo', $productCode)
-                        ->first();
-
-                    $fuente = $existingConfig ? $existingConfig->fuente : 'IQV';
+                    // PASO 1: Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
+                    $fuente = 'IQVIA';
 
                     // PASO 2: Ejecutar SP_UPDATE_CONFIGURACION para cambiar mercado
                     \Log::info('Ejecutando SP_UPDATE_CONFIGURACION para cambiar mercado:', [
