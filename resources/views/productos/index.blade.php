@@ -8,7 +8,7 @@
         <!-- Products Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
-                <div class="flex flex-col space-y-4">
+                <div class="flex flex-col space-y-0">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
                         <h2 class="text-lg font-medium text-gray-900">
                             <i class="fas fa-pills mr-2"></i>
@@ -190,10 +190,37 @@
                             <!-- Concentración Filter -->
                             <div class="space-y-1">
                                 <label class="text-[10px] font-medium text-gray-700">Concentración</label>
-                                <input type="text" 
-                                       id="filter-concentracion" 
-                                       class="block w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                                       placeholder="Buscar por concentración...">
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="filter-Concentracion" 
+                                           class="block w-full px-3 py-2 pr-8 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                                           placeholder="Buscar por concentración..."
+                                           autocomplete="off">
+                                    <button type="button" 
+                                            id="clear-filter-Concentracion" 
+                                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                    <div id="Concentracion-results" class="filter-dropdown"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Volumen Filter -->
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-medium text-gray-700">Volumen</label>
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="filter-Volumen" 
+                                           class="block w-full px-3 py-2 pr-8 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                                           placeholder="Buscar por volumen..."
+                                           autocomplete="off">
+                                    <button type="button" 
+                                            id="clear-filter-Volumen" 
+                                            class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 hidden">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                    <div id="Volumen-results" class="filter-dropdown"></div>
+                                </div>
                             </div>
                         </div>
                         
@@ -238,108 +265,133 @@
                 
                 <!-- Tabla con texto más pequeño para mostrar todo completo -->
                 <div class="max-h-[calc(100vh-12rem)] overflow-y-auto relative">
-                    <table class="min-w-full divide-y divide-gray-200 products-table">
+                    <!-- Indicador visual de redimensionamiento -->
+                    <div id="resize-indicator" class="resize-indicator"></div>
+                    <table class="min-w-full divide-y divide-gray-200 products-table resizable-table">
                         <thead class="bg-gray-50 sticky top-0 z-20">
                             <tr class="divide-x divide-gray-200">
                                 <!-- Checkbox: 3% -->
-                                <th class="w-[3%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
+                                <th class="w-[3%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight resizable-column" data-column="checkbox">
                                     <input type="checkbox" id="select-all-products" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <div class="resize-handle" data-column="checkbox"></div>
                                 </th>
                                 <!-- Descripción: 15% -->
-                                <th class="w-[15%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionPresentacion">
+                                <th class="w-[15%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionPresentacion" data-column="descripcion">
                                     <div class="flex items-center justify-between">
                                         <span>Presentacion</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="descripcion"></div>
                                 </th>
                                 <!-- Marca: 14% -->
-                                <th class="w-[7%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionProducto">
+                                <th class="w-[7%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionProducto" data-column="marca">
                                     <div class="flex items-center justify-between">
                                         <span>Marca</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="marca"></div>
                                 </th>
                                 <!-- Marca/Genérico: 9% -->
-                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="marcaGenerico">
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-l-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="marcaGenerico" data-column="marcaGenerico">
                                     <div class="flex items-center justify-center">
                                         <span>Marca/Genérico</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="marcaGenerico"></div>
                                 </th>
                                 <!-- Ético/Popular: 9% -->  
-                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="eticoPopular">
+                                <th class="w-[7%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight border-r-2 border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="eticoPopular" data-column="eticoPopular">
                                     <div class="flex items-center justify-center">
                                         <span>Ético/Popular</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="eticoPopular"></div>
                                 </th>
                                 <!-- Molécula: 14% -->
-                                <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="molecula">
+                                <th class="w-[14%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="molecula" data-column="molecula">
                                     <div class="flex items-center justify-between">
                                         <span>Molécula</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="molecula"></div>
                                 </th>
                                 <!-- FF3: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionFF3">
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionFF3" data-column="ff3">
                                     <div class="flex items-center justify-between">
                                         <span>FF3</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="ff3"></div>
                                 </th>
                                 <!-- ATC4: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionATC4">
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionATC4" data-column="atc4">
                                     <div class="flex items-center justify-between">
                                         <span>ATC4</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="atc4"></div>
                                 </th>
                                 <!-- Laboratorio: 11% -->
                                 
                                 <!-- Corporación: 9% -->
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionCorporacion">
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionCorporacion" data-column="corporacion">
                                     <div class="flex items-center justify-between">
                                         <span>Corporación</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="corporacion"></div>
                                 </th>
-                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="descripcionLaboratorio">
+                                <th class="w-[9%] px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="descripcionLaboratorio" data-column="laboratorio">
                                     <div class="flex items-center justify-between">
                                         <span>Laboratorio</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
-                                </th>
-                                <!-- Concentración: 5% -->
-                                <th class="w-[5%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="concentracion">
-                                    <div class="flex items-center justify-center">
-                                        <span>Concentración</span>
-                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
-                                    </div>
+                                    <div class="resize-handle" data-column="laboratorio"></div>
                                 </th>
                                 <!-- Mercado: 8% -->
-                                <th class="w-[8%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
+                                <th class="w-[8%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="mercado" data-column="mercado">
                                     <div class="flex items-center justify-center">
                                         <span>Mercado</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="mercado"></div>
                                 </th>
-                                <!-- SizePack: 8% -->
-                                <th class="w-[4%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="mercado">
+                                <!-- SizePack: 4% -->
+                                <th class="w-[4%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="sizePack" data-column="sizePack">
                                     <div class="flex items-center justify-center">
                                         <span>SizePack</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="sizePack"></div>
+                                </th>
+                                <!-- Concentración: 6% -->
+                                <th class="w-[6%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="Concentracion" data-column="concentracion">
+                                    <div class="flex items-center justify-center">
+                                        <span>Concentración</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
+                                    <div class="resize-handle" data-column="concentracion"></div>
+                                </th>
+                                <!-- Volumen: 6% -->
+                                <th class="w-[6%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="Volumen" data-column="volumen">
+                                    <div class="flex items-center justify-center">
+                                        <span>Volumen</span>
+                                        <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
+                                    </div>
+                                    <div class="resize-handle" data-column="volumen"></div>
                                 </th>
                                 <!-- Fuente: 5% -->
-                                <th class="w-[5%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header" data-sort="fuente">
+                                <th class="w-[5%] px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight cursor-pointer hover:bg-gray-100 transition-colors sortable-header resizable-column" data-sort="fuente" data-column="fuente">
                                     <div class="flex items-center justify-center">
                                         <span>Fuente</span>
                                         <i class="fas fa-sort text-gray-400 ml-1 sort-icon"></i>
                                     </div>
+                                    <div class="resize-handle" data-column="fuente"></div>
                                 </th>
                                 <!-- Acciones: 4% -->
-                                <th class="w-[4%] px-1 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight">
+                                <th class="w-[4%] px-1 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase tracking-tight resizable-column" data-column="acciones">
                                     Acciones
+                                    <div class="resize-handle" data-column="acciones"></div>
                                 </th>
                             </tr>
                         </thead>
@@ -1354,4 +1406,58 @@ window.productosModule = true;
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/market-products.css') }}">
+<style>
+/* Estilos para redimensionamiento de columnas */
+.resizable-table {
+    table-layout: fixed;
+}
+
+.resizable-column {
+    position: relative;
+    min-width: 50px;
+}
+
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background: #3b82f6;
+}
+
+.resize-handle.active {
+    background: #1d4ed8;
+}
+
+/* Cursor de redimensionamiento */
+.resizing {
+    cursor: col-resize !important;
+    user-select: none;
+}
+
+/* Evitar selección de texto durante redimensionamiento */
+.resizing * {
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Estilo para el indicador visual de redimensionamiento */
+.resize-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #3b82f6;
+    z-index: 1000;
+    pointer-events: none;
+    display: none;
+}
+</style>
 @endpush

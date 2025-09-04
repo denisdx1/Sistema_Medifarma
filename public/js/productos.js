@@ -29,7 +29,7 @@ $(document).ready(function() {
         descripcionATC4: '',
         descripcionLaboratorio: '',
         descripcionCorporacion: '',
-        concentracion: ''
+        Volumen: ''
     };
     let filterTimeout = null;
 
@@ -141,7 +141,7 @@ $(document).ready(function() {
 
     // Initialize searchable filters (for large datasets)
     function initializeSearchableFilters() {
-        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion', 'mercado', 'concentracion'];
+        const searchableFilters = ['descripcionProducto', 'molecula', 'descripcionFF3', 'descripcionATC4', 'descripcionLaboratorio', 'descripcionCorporacion', 'mercado', 'Concentracion', 'Volumen'];
         
         searchableFilters.forEach(filterKey => {
             const input = $(`#filter-${filterKey}`);
@@ -618,7 +618,7 @@ $(document).ready(function() {
         return `
             <tr class="${rowClass}" data-product-code="${product['codigoPresentacion']}">
                 <!-- Checkbox 3% -->
-                <td class="w-[3%] px-2 py-1 text-center">
+                <td class="w-[3%] px-2 py-1 text-center" data-column="checkbox">
                     <input type="checkbox" class="product-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
                            data-product-code="${product['codigoPresentacion']}"
                            data-product-name="${escapeForJs(product['descripcionPresentacion'])}"
@@ -627,68 +627,63 @@ $(document).ready(function() {
                            onchange="updateSelectedProducts()">
                 </td>
                 <!-- Descripción 15% -->
-                <td class="w-[15%] px-2 py-1 text-[10px] text-gray-900 description-cell">
+                <td class="w-[15%] px-2 py-1 text-[10px] text-gray-900 description-cell" data-column="descripcion">
                     <div class="leading-tight font-medium whitespace-normal break-words text-left">
                         ${descripcionCompleta}
                     </div>
                 </td>
                 <!-- Producto 14% -->
-                <td class="w-[7%] px-2 py-1 text-[10px] text-gray-500 product-cell">
+                <td class="w-[7%] px-2 py-1 text-[10px] text-gray-500 product-cell" data-column="marca">
                     <div class="leading-tight whitespace-normal break-words text-left">
                         ${descripcionProducto}
                     </div>
                 </td>
                 <!-- Marca/Genérico 9% -->
-                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500 border-l-2 border-gray-300">
+                <td class="w-[7%] px-2 py-1 text-center text-[6px] text-gray-500 border-l-2 border-gray-300" data-column="marcaGenerico">
                     <span class="text-[10px] font-medium ${getBrandClass(marcaGenerico)}">
                         ${marcaGenerico}
                     </span>
                 </td>
                 <!-- Ético/Popular 9% -->
-                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300">
+                <td class="w-[7%] px-2 py-1 text-center text-[10px] text-gray-500 border-r-2 border-gray-300" data-column="eticoPopular">
                     <span class="text-[10px] font-medium ${getEthicClass(eticoPopular)}">
                         ${eticoPopular}
                     </span>
                 </td>
                 <!-- Molécula 14% -->
-                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell">
+                <td class="w-[14%] px-2 py-1 text-[10px] text-gray-500 molecule-cell" data-column="molecula">
                     <div class="text-[10px] leading-tight whitespace-normal break-words">
                         ${molecula}
                     </div>
                 </td>
                 <!-- FF3 9% -->
-                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500">
+                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500" data-column="ff3">
                     <div class="whitespace-normal break-words">
                         ${descripcionFF3}
                     </div>
                 </td>
                 <!-- ATC4 9% -->
-                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500">
+                <td class="w-[12%] px-2 py-1 text-[10px] text-gray-500" data-column="atc4">
                     <div class="whitespace-normal break-words">
                         ${descripcionATC4}
                     </div>
                 </td>
                 
                 <!-- Corporación 9% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] ${getCorporacionClass(product['descripcionCorporacion'])}">
+                <td class="w-[9%] px-2 py-1 text-[10px] ${getCorporacionClass(product['descripcionCorporacion'])}" data-column="corporacion">
                     <div class="whitespace-normal break-words">
                         ${product['descripcionCorporacion'] || '-'}
                     </div>
                 </td>
                 <!-- Laboratorio 11% -->
-                <td class="w-[9%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}">
+                <td class="w-[9%] px-2 py-1 text-[10px] ${getLaboratorioClass(laboratorio)}" data-column="laboratorio">
                     <div class="whitespace-normal break-words">
                         ${laboratorio}
                     </div>
                 </td>
-                <!-- Concentración 8% -->
-                <td class="w-[5%] px-2 py-1 text-center text-[10px] text-gray-600">
-                    <span class="text-[10px] font-medium">
-                        -
-                    </span>
-                </td>
+                
                 <!-- Mercado 6% -->
-                <td class="w-[6%] px-2 py-1 text-center text-[9px] text-gray-600 market-cell">
+                <td class="w-[6%] px-2 py-1 text-center text-[9px] text-gray-600 market-cell" data-column="mercado">
                     <div class="flex flex-col items-center justify-center">
                         <span class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[9px] font-medium ${getMarketClass(mercado)} w-full">
                             <span class="text-center">
@@ -698,19 +693,31 @@ $(document).ready(function() {
                     </div>
                 </td>
                 <!-- Size Pack 4% -->
-                <td class="w-[4%] px-2 py-1 text-center text-[10px] text-gray-600">
+                <td class="w-[4%] px-2 py-1 text-center text-[10px] text-gray-600" data-column="sizePack">
                     <span class="text-[10px] font-medium">
                         ${product['sizePack'] || '-'}
                     </span>
                 </td>
+                <!-- Concentración 6% -->
+                <td class="w-[6%] px-2 py-1 text-center text-[10px] text-gray-600" data-column="concentracion">
+                    <span class="text-[10px] font-medium">
+                        ${product['Concentracion'] || '-'}
+                    </span>
+                </td>
+                <!-- Volumen 6% -->
+                <td class="w-[6%] px-2 py-1 text-center text-[10px] text-gray-600" data-column="volumen">
+                    <span class="text-[10px] font-medium">
+                        ${product['Volumen'] || '-'}
+                    </span>
+                </td>
                 <!-- Fuente 5% -->
-                <td class="w-[5%] px-2 py-1 text-center text-[10px] text-gray-500">
+                <td class="w-[5%] px-2 py-1 text-center text-[10px] text-gray-500" data-column="fuente">
                     <span class="inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[10px] font-medium ${getFuenteClass(fuente)}">
                         ${fuente}
                     </span>
                 </td>
                 <!-- Acciones 4% -->
-                <td class="w-[4%] px-0 py-1 text-center actions-cell">
+                <td class="w-[4%] px-0 py-1 text-center actions-cell" data-column="acciones">
                     <div class="flex flex-col items-center justify-center space-y-0.5">
                         <button onclick="window.openRemoveProductModal('${product['codigoPresentacion']}', '${escapeForJs(product['descripcionPresentacion'])}')" 
                                 class="action-button text-red-600 hover:text-red-900 transition-colors rounded hover:bg-red-50">
@@ -924,7 +931,7 @@ $(document).ready(function() {
         // Show error in the table
         $('#products-table-body').html(`
             <tr>
-                <td colspan="15" class="px-6 py-8 text-center text-red-600">
+                <td colspan="17" class="px-6 py-8 text-center text-red-600">
                     <i class="fas fa-exclamation-triangle text-4xl mb-4 block"></i>
                     <p class="text-lg font-medium mb-2">Error al cargar productos</p>
                     <p class="text-sm">${message}</p>
@@ -1395,7 +1402,8 @@ function checkAutoSelectMarketAndLoadProducts() {
                 'descripcionATC4': 'ATC4',
                 'descripcionLaboratorio': 'Laboratorio',
                 'descripcionCorporacion': 'Corporación',
-                'concentracion': 'Concentración',
+                'Concentracion': 'Concentración',
+                'Volumen': 'Volumen',
                 'mercado': 'Mercado',
                 'fuente': 'Fuente'
             };
@@ -1425,4 +1433,224 @@ function checkAutoSelectMarketAndLoadProducts() {
         
         return result || '-';
     }
+
+    // ========================================
+    // FUNCIONALIDAD DE REDIMENSIONAMIENTO DE COLUMNAS
+    // ========================================
+    
+    // Variables para el redimensionamiento
+    let isResizing = false;
+    let currentColumn = null;
+    let startX = 0;
+    let startWidth = 0;
+    let resizeIndicator = null;
+    
+    // Inicializar redimensionamiento de columnas
+    function initializeColumnResizing() {
+        // Crear indicador visual si no existe
+        if (!resizeIndicator) {
+            resizeIndicator = document.getElementById('resize-indicator');
+        }
+        
+        // Agregar event listeners a todos los handles de redimensionamiento
+        document.querySelectorAll('.resize-handle').forEach(handle => {
+            handle.addEventListener('mousedown', startResize);
+        });
+        
+        // Event listeners globales
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+        
+        // Cargar anchos guardados
+        loadColumnWidths();
+    }
+    
+    // Iniciar redimensionamiento
+    function startResize(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isResizing = true;
+        currentColumn = e.target.getAttribute('data-column');
+        startX = e.clientX;
+        
+        // Obtener el ancho actual de la columna
+        const column = document.querySelector(`th[data-column="${currentColumn}"]`);
+        if (column) {
+            startWidth = column.offsetWidth;
+        }
+        
+        // Agregar clase de redimensionamiento
+        document.body.classList.add('resizing');
+        
+        // Mostrar indicador visual
+        if (resizeIndicator) {
+            resizeIndicator.style.display = 'block';
+            updateResizeIndicator(e.clientX);
+        }
+        
+        // Cambiar cursor
+        document.body.style.cursor = 'col-resize';
+    }
+    
+    // Manejar redimensionamiento
+    function handleResize(e) {
+        if (!isResizing || !currentColumn) return;
+        
+        e.preventDefault();
+        
+        // Calcular nuevo ancho
+        const deltaX = e.clientX - startX;
+        const newWidth = Math.max(50, startWidth + deltaX); // Mínimo 50px
+        
+        // Actualizar indicador visual
+        if (resizeIndicator) {
+            updateResizeIndicator(e.clientX);
+        }
+        
+        // Actualizar ancho de la columna
+        updateColumnWidth(currentColumn, newWidth);
+    }
+    
+    // Detener redimensionamiento
+    function stopResize(e) {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        currentColumn = null;
+        
+        // Remover clase de redimensionamiento
+        document.body.classList.remove('resizing');
+        document.body.style.cursor = '';
+        
+        // Ocultar indicador visual
+        if (resizeIndicator) {
+            resizeIndicator.style.display = 'none';
+        }
+        
+        // Guardar anchos
+        saveColumnWidths();
+    }
+    
+    // Actualizar ancho de columna
+    function updateColumnWidth(columnName, width) {
+        const column = document.querySelector(`th[data-column="${columnName}"]`);
+        if (column) {
+            column.style.width = width + 'px';
+            column.style.minWidth = width + 'px';
+            column.style.maxWidth = width + 'px';
+        }
+        
+        // Actualizar también las celdas del cuerpo de la tabla
+        const tableBody = document.getElementById('products-table-body');
+        if (tableBody) {
+            const cells = tableBody.querySelectorAll(`td[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.width = width + 'px';
+                cell.style.minWidth = width + 'px';
+                cell.style.maxWidth = width + 'px';
+            });
+        }
+    }
+    
+    // Actualizar indicador visual
+    function updateResizeIndicator(x) {
+        if (!resizeIndicator) return;
+        
+        const tableContainer = document.querySelector('.max-h-\\[calc\\(100vh-12rem\\)\\]');
+        if (tableContainer) {
+            const rect = tableContainer.getBoundingClientRect();
+            const relativeX = x - rect.left;
+            
+            resizeIndicator.style.left = relativeX + 'px';
+            resizeIndicator.style.top = '0px';
+            resizeIndicator.style.height = rect.height + 'px';
+        }
+    }
+    
+    // Guardar anchos de columnas en localStorage
+    function saveColumnWidths() {
+        const columnWidths = {};
+        
+        document.querySelectorAll('.resizable-column').forEach(column => {
+            const columnName = column.getAttribute('data-column');
+            const width = column.offsetWidth;
+            columnWidths[columnName] = width;
+        });
+        
+        localStorage.setItem('productos_column_widths', JSON.stringify(columnWidths));
+    }
+    
+    // Cargar anchos de columnas desde localStorage
+    function loadColumnWidths() {
+        const savedWidths = localStorage.getItem('productos_column_widths');
+        if (!savedWidths) return;
+        
+        try {
+            const columnWidths = JSON.parse(savedWidths);
+            
+            Object.keys(columnWidths).forEach(columnName => {
+                const width = columnWidths[columnName];
+                if (width && width > 50) { // Validar ancho mínimo
+                    updateColumnWidth(columnName, width);
+                }
+            });
+        } catch (e) {
+            console.warn('Error loading column widths:', e);
+        }
+    }
+    
+    // Resetear anchos de columnas a valores por defecto
+    function resetColumnWidths() {
+        const defaultWidths = {
+            'checkbox': 60,
+            'descripcion': 200,
+            'marca': 120,
+            'marcaGenerico': 120,
+            'eticoPopular': 120,
+            'molecula': 180,
+            'ff3': 140,
+            'atc4': 140,
+            'corporacion': 140,
+            'laboratorio': 140,
+            'mercado': 120,
+            'sizePack': 80,
+            'concentracion': 100,
+            'volumen': 100,
+            'fuente': 80,
+            'acciones': 100
+        };
+        
+        Object.keys(defaultWidths).forEach(columnName => {
+            updateColumnWidth(columnName, defaultWidths[columnName]);
+        });
+        
+        // Guardar los nuevos anchos
+        saveColumnWidths();
+    }
+    
+    // Función para exportar anchos actuales (útil para debugging)
+    function exportColumnWidths() {
+        const columnWidths = {};
+        document.querySelectorAll('.resizable-column').forEach(column => {
+            const columnName = column.getAttribute('data-column');
+            const width = column.offsetWidth;
+            columnWidths[columnName] = width;
+        });
+        
+        console.log('Current column widths:', columnWidths);
+        return columnWidths;
+    }
+    
+    // Inicializar redimensionamiento cuando el DOM esté listo
+    $(document).ready(function() {
+        // Esperar un poco para que la tabla se renderice completamente
+        setTimeout(() => {
+            initializeColumnResizing();
+        }, 500);
+    });
+    
+    // Hacer funciones disponibles globalmente para debugging
+    window.resetColumnWidths = resetColumnWidths;
+    window.exportColumnWidths = exportColumnWidths;
 });

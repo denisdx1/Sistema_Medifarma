@@ -46,7 +46,8 @@ class ProductosController extends Controller
                 'marcaGenerico' => trim($request->get('filter_marcaGenerico', '')),
                 'eticoPopular' => trim($request->get('filter_eticoPopular', '')),
                 'mercado' => trim($request->get('filter_mercado', '')),
-                'concentracion' => trim($request->get('filter_concentracion', ''))
+                'Concentracion' => trim($request->get('filter_Concentracion', '')),
+                'Volumen' => trim($request->get('filter_Volumen', ''))
             ]);
 
             // Obtener parámetros de ordenamiento
@@ -75,8 +76,8 @@ class ProductosController extends Controller
                     'v.descripcionCorporacion',
                     'v.sizePack',
                     'v.stghVal',
-                    // Campo concatenado de concentración
-                    DB::raw("CONCAT(COALESCE(CAST(v.sizePack AS VARCHAR(10)), ''), ' ', COALESCE(CAST(v.stghVal AS VARCHAR(20)), '')) as concentracion"),
+                    'v.Concentracion',
+                    'v.Volumen',
                     // Usar el mercado real de la configuración, si no hay configuración usar "NUEVOS"
                     DB::raw("COALESCE(m.mercado, 'NUEVOS') as mercado")
                 ]);
@@ -188,11 +189,13 @@ class ProductosController extends Controller
                         case 'eticoPopular':
                             $baseQuery->where('v.eticoPopular', '=', $value);
                             break;
-                        case 'concentracion':
-                            // Buscar en el campo concatenado de concentración
-                            $baseQuery->where(function($query) use ($value) {
-                                $query->whereRaw("CONCAT(COALESCE(CAST(v.sizePack AS VARCHAR(10)), ''), ' ', COALESCE(CAST(v.stghVal AS VARCHAR(20)), '')) LIKE ?", ["%{$value}%"]);
-                            });
+                        case 'Concentracion':
+                            // Buscar en el campo de concentración directamente
+                            $baseQuery->where('v.Concentracion', 'LIKE', "%{$value}%");
+                            break;
+                        case 'Volumen':
+                            // Buscar en el campo de volumen directamente
+                            $baseQuery->where('v.Volumen', 'LIKE', "%{$value}%");
                             break;
                     }
                 }
@@ -213,7 +216,9 @@ class ProductosController extends Controller
                     'descripcionATC4' => 'v.descripcionATC4',
                     'descripcionLaboratorio' => 'v.descripcionLaboratorio',
                     'descripcionCorporacion' => 'v.descripcionCorporacion',
-                    'concentracion' => 'concentracion', // Campo calculado
+                    'sizePack' => 'v.sizePack',
+                    'Concentracion' => 'v.Concentracion',
+                    'Volumen' => 'v.Volumen',
                     'mercado' => 'COALESCE(m.mercado, \'NUEVOS\')', // Campo calculado con COALESCE
                     'fuente' => 'fuente' // Campo calculado
                 ];
@@ -509,6 +514,38 @@ class ProductosController extends Controller
                         ->filter(function($fuente) {
                             return $fuente !== null && $fuente !== '';
                         })
+                        ->toArray();
+                    break;
+
+                case 'Concentracion':
+                    $query = (clone $baseQuery)
+                        ->whereNotNull('Concentracion')
+                        ->where('Concentracion', '<>', '');
+                    
+                    if ($search) {
+                        $query->where('Concentracion', 'LIKE', "{$search}%");
+                    }
+                    
+                    $results = $query->distinct()
+                        ->orderBy('Concentracion')
+                        ->limit($limit)
+                        ->pluck('Concentracion')
+                        ->toArray();
+                    break;
+
+                case 'Volumen':
+                    $query = (clone $baseQuery)
+                        ->whereNotNull('Volumen')
+                        ->where('Volumen', '<>', '');
+                    
+                    if ($search) {
+                        $query->where('Volumen', 'LIKE', "{$search}%");
+                    }
+                    
+                    $results = $query->distinct()
+                        ->orderBy('Volumen')
+                        ->limit($limit)
+                        ->pluck('Volumen')
                         ->toArray();
                     break;
 

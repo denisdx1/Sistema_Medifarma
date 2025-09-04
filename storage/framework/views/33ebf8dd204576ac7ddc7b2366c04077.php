@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'Logs de Mercados'); ?>
 
 <?php $__env->startSection('content'); ?>
