@@ -130,11 +130,11 @@ function displayAtc4List(atc4List) {
                     </div>
                     <div class="text-right">
                         <div class="text-center">
-                            <div class="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium mb-1">
-                                ${atc4.cantidad_productos} del gerente
+                            <div class="bg-primary text-white px-2 py-1 rounded-full text-sm font-medium mb-1">
+                                ${atc4.cantidad_productos} PRODUCTOS MEDIFARMA
                             </div>
                             <div class="bg-secondary text-white px-3 py-1 rounded-full text-xs font-medium">
-                                ${atc4.total_productos} total
+                                ${atc4.total_productos} PRODUCTOS MERCADO
                             </div>
                         </div>
                         <div class="mt-2 text-primary text-xs flex items-center justify-center">

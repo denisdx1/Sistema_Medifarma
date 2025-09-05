@@ -38,7 +38,7 @@
                         <div onclick="redirectToProductosNuevosYSinAsignar()" 
                              class="relative cursor-pointer group">
                             <!-- Icono de notificación -->
-                            <div class="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl">
+                            <div class="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl">
                                 <i class="fa-solid fa-bell text-white text-sm"></i>
                             </div>
                             
