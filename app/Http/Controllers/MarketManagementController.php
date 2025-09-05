@@ -922,8 +922,7 @@ class MarketManagementController extends Controller
                 ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                 ->where('m.mercado', 'SIN_ASIGNAR')
                 ->where('v.Gerente_Producto', $user->usuario)
-                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("'SIN_ASIGNAR' as MERCADO"))
-                ->orderBy('v.descripcionPresentacion');
+                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("'SIN_ASIGNAR' as MERCADO"));
 
             // Obtener productos NUEVOS (sin configuración, mercado NULL en VMAE)
             $productosNuevos = DB::connection('sqlsrv')
@@ -931,8 +930,7 @@ class MarketManagementController extends Controller
                 ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
                 ->whereNull('c.codigo') // Productos sin configuración
                 ->where('v.Gerente_Producto', $user->usuario)
-                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("git i as MERCADO"))
-                ->orderBy('v.descripcionPresentacion');
+                ->select('v.codigoPresentacion', 'v.descripcionPresentacion', DB::raw("'NUEVOS' as MERCADO"));
 
             // Combinar ambas consultas
             $productos = $productosSinAsignar->union($productosNuevos)->orderBy('descripcionPresentacion')->get();
