@@ -168,10 +168,11 @@ class ProductosController extends Controller
                                           ->whereRaw('UPPER(LTRIM(RTRIM(v.descripcionATC4))) = ?', [strtoupper($descripcion)]);
                                 });
                             } else {
-                                // Buscar tanto por código como por descripción individual
+                                // Buscar por código (para productos sin descripción como CLOSEUP)
+                                // o por descripción si existe
                                 $baseQuery->where(function($query) use ($value) {
-                                    $query->where('v.descripcionATC4', '=', $value)
-                                          ->orWhere('v.codigoATC4', '=', $value);
+                                    $query->where('v.codigoATC4', '=', $value)
+                                          ->orWhere('v.descripcionATC4', '=', $value);
                                 });
                             }
                             break;
@@ -379,8 +380,6 @@ class ProductosController extends Controller
 
                 case 'descripcionATC4':
                     $query = (clone $baseQuery)
-                        ->whereNotNull('descripcionATC4')
-                        ->where('descripcionATC4', '<>', '')
                         ->whereNotNull('codigoATC4')
                         ->where('codigoATC4', '<>', '');
                     
@@ -397,6 +396,11 @@ class ProductosController extends Controller
                         ->limit($limit)
                         ->get()
                         ->map(function($item) {
+                            // Si no hay descripción, solo mostrar el código
+                            if (empty($item->descripcionATC4) || $item->descripcionATC4 === '') {
+                                return $item->codigoATC4;
+                            }
+                            // Si hay descripción, mostrar código - descripción
                             return $item->codigoATC4 . ' - ' . $item->descripcionATC4;
                         })
                         ->toArray();
