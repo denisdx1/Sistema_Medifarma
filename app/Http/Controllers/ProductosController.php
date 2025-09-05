@@ -148,7 +148,8 @@ class ProductosController extends Controller
                                           ->whereRaw('UPPER(LTRIM(RTRIM(v.descripcionFF3))) = ?', [strtoupper(trim($descripcion))]);
                                 });
                             } else {
-                                // Buscar tanto por código como por descripción individual
+                                // Buscar por descripción (para productos sin código como CLOSEUP)
+                                // o por código si existe
                                 $baseQuery->where(function($query) use ($value) {
                                     $query->where('v.descripcionFF3', '=', $value)
                                           ->orWhere('v.codigoFF3', '=', $value);
@@ -351,9 +352,7 @@ class ProductosController extends Controller
                 case 'descripcionFF3':
                     $query = (clone $baseQuery)
                         ->whereNotNull('descripcionFF3')
-                        ->where('descripcionFF3', '<>', '')
-                        ->whereNotNull('codigoFF3')
-                        ->where('codigoFF3', '<>', '');
+                        ->where('descripcionFF3', '<>', '');
                     
                     if ($search) {
                         $query->where(function($q) use ($search) {
@@ -368,6 +367,11 @@ class ProductosController extends Controller
                         ->limit($limit)
                         ->get()
                         ->map(function($item) {
+                            // Si no hay código, solo mostrar la descripción
+                            if (empty($item->codigoFF3) || $item->codigoFF3 === '') {
+                                return $item->descripcionFF3;
+                            }
+                            // Si hay código, mostrar código - descripción
                             return $item->codigoFF3 . ' - ' . $item->descripcionFF3;
                         })
                         ->toArray();
@@ -723,11 +727,12 @@ class ProductosController extends Controller
                 ->value('descripcionPresentacion');
 
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
-            // Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
+            // Mantener la fuente original del producto
             $userId = Auth::user()->idUsuario;
+            $fuenteOriginal = $configuracion->fuente ?? 'IQVIA'; // Usar la fuente original o IQVIA por defecto
             $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
                 $validated['codigoPresentacion'],  // @codigo
-                'IQVIA',                          // @fuente - Siempre 'IQVIA'
+                $fuenteOriginal,                   // @fuente - Mantener la fuente original del producto
                 $validated['nuevoMercadoId'],     // @idMercado
                 $userId,                          // @idUsuario
                 $validated['note'] ?? null        // @nota
@@ -993,13 +998,13 @@ class ProductosController extends Controller
                     // Obtener el ID del usuario autenticado
                     $userId = Auth::user()->idUsuario;
                     
-                    // Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
-                    $fuente = 'IQVIA';
+                    // Usar la fuente original del producto (IQVIA, CLOSEUP, etc.)
+                    $fuente = $product['fuente'];
                     
                     DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_CONFIGURACION ?, ?, ?, ?, ?', [
                         $validated['idMercado'],  // @idMercado
                         $product['code'],         // @codigo
-                        $fuente,                  // @fuente - Siempre 'IQVIA'
+                        $fuente,                  // @fuente - Mantener la fuente original del producto
                         $userId,                  // @idUsuario
                         $validated['note']        // @nota
                     ]);
@@ -1340,15 +1345,15 @@ class ProductosController extends Controller
 
                     $previousMarket = $productoInfo->MERCADO;
 
-                    // PASO 1: Forzar que la fuente sea siempre 'IQVIA' para que coincida con la vista VMAE_PROD_IQVIA
-                    $fuente = 'IQVIA';
+                    // PASO 1: Obtener la fuente original del producto desde la configuración
+                    $fuenteOriginal = $configuracionProducto->fuente ?? 'IQVIA'; // Usar la fuente original o IQVIA por defecto
 
                     // PASO 2: Ejecutar SP_UPDATE_CONFIGURACION para cambiar mercado
                     \Log::info('Ejecutando SP_UPDATE_CONFIGURACION para cambiar mercado:', [
                         'codigo' => $productCode,
                         'mercado_actual' => $previousMarket,
                         'mercado_destino' => $mercado->mercado,
-                        'fuente' => $fuente,
+                        'fuente' => $fuenteOriginal,
                         'idMercado' => $marketId,
                         'idUsuario' => $userId,
                         'nota' => $note
@@ -1356,7 +1361,7 @@ class ProductosController extends Controller
                     
                     $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
                         $productCode,        // @codigo
-                        $fuente,             // @fuente
+                        $fuenteOriginal,     // @fuente - Mantener la fuente original del producto
                         $marketId,           // @idMercado
                         $userId,             // @idUsuario
                         $note                // @nota
