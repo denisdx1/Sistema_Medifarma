@@ -294,7 +294,7 @@ class ProductosController extends Controller
             $search = trim($request->get('search', '')); // Término de búsqueda
             $limit = min(max((int) $request->get('limit', 100), 20), 500); // Límite de resultados
             
-            // Base query
+            // Base query - solo agregar JOIN cuando sea necesario
             $baseQuery = DB::connection('sqlsrv')
                 ->table('ODS.TAB_PRODUCTO as p');
 
@@ -526,33 +526,35 @@ class ProductosController extends Controller
 
                 case 'Concentracion':
                     $query = (clone $baseQuery)
-                        ->whereNotNull('Concentracion')
-                        ->where('Concentracion', '<>', '');
+                        ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
+                        ->whereNotNull('v.Concentracion')
+                        ->where('v.Concentracion', '<>', '');
                     
                     if ($search) {
-                        $query->where('Concentracion', 'LIKE', "{$search}%");
+                        $query->where('v.Concentracion', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
-                        ->orderBy('Concentracion')
+                        ->orderBy('v.Concentracion')
                         ->limit($limit)
-                        ->pluck('Concentracion')
+                        ->pluck('v.Concentracion')
                         ->toArray();
                     break;
 
                 case 'Volumen':
                     $query = (clone $baseQuery)
-                        ->whereNotNull('Volumen')
-                        ->where('Volumen', '<>', '');
+                        ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
+                        ->whereNotNull('v.Volumen')
+                        ->where('v.Volumen', '<>', '');
                     
                     if ($search) {
-                        $query->where('Volumen', 'LIKE', "{$search}%");
+                        $query->where('v.Volumen', 'LIKE', "{$search}%");
                     }
                     
                     $results = $query->distinct()
-                        ->orderBy('Volumen')
+                        ->orderBy('v.Volumen')
                         ->limit($limit)
-                        ->pluck('Volumen')
+                        ->pluck('v.Volumen')
                         ->toArray();
                     break;
 
