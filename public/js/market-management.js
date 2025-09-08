@@ -173,7 +173,7 @@ function updateTableWithResults(markets) {
                         ${market.mercado ? 
                             `<!-- Editar Nombre del Mercado -->
                             <button onclick="openEditModal(${market.idMercado}, '${escapeForJs(market.mercado)}')"
-                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-lighter text-primary hover:bg-secondary-muted transition-colors duration-200"
                                     title="Editar nombre del mercado">
                                 <i class="fas fa-edit mr-1"></i>
                                 Editar Mercado

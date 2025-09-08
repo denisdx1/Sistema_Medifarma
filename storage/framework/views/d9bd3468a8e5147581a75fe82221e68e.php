@@ -147,7 +147,7 @@
                             <!-- Marca (Descripción Producto) -->
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-secondary-light rounded-full flex items-center justify-center mr-3">
+                                    <div class="flex-shrink-0 w-8 h-8 bg-secondary-purple rounded-full flex items-center justify-center mr-3">
                                         <i class="fas fa-tags text-primary text-xs"></i>
                                     </div>
                                     <div>
@@ -197,7 +197,7 @@
                                     <?php if($market->mercado): ?>
                                         <!-- Editar Nombre del Mercado -->
                                         <button onclick="openEditModal(<?php echo e($market->idMercado); ?>, '<?php echo e(addslashes($market->mercado)); ?>')"
-                                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-light text-primary hover:bg-secondary-muted transition-colors duration-200"
+                                                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-lighter text-primary hover:bg-secondary-muted transition-colors duration-200"
                                                 title="Editar nombre del mercado">
                                             <i class="fas fa-edit mr-1"></i>
                                             Editar Mercado
