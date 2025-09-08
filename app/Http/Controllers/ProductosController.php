@@ -55,27 +55,29 @@ class ProductosController extends Controller
             $sortDirection = $request->get('sort_direction', 'asc');
 
             // Query base con JOIN para obtener la fuente y mercado real de configuración
-            // Incluir productos con y sin configuración
+            // Incluir productos con y sin configuración de todas las fuentes
+            // Usar TAB_PRODUCTO como base pero hacer JOIN con VMAE_PROD_IQVIA para campos específicos
             $baseQuery = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA as v')
-                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                ->table('ODS.TAB_PRODUCTO as p')
+                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
                 ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
                 ->select([
-                    'v.codigoPresentacion',
-                    'v.descripcionPresentacion',
-                    'v.descripcionProducto',
-                    'v.marcaGenerico',
-                    'v.eticoPopular',
-                    'v.molecula',
-                    DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"),
-                    'v.codigoFF3',
-                    'v.descripcionFF3',
-                    'v.codigoATC4',
-                    'v.descripcionATC4',
-                    'v.descripcionLaboratorio',
-                    'v.descripcionCorporacion',
-                    'v.sizePack',
-                    'v.stghVal',
+                    'p.codigoPresentacion',
+                    'p.descripcionPresentacion',
+                    'p.descripcionProducto',
+                    'p.marcaGenerico',
+                    'p.eticoPopular',
+                    'p.molecula',
+                    DB::raw("COALESCE(c.fuente, p.fuente) as fuente"),
+                    'p.codigoFF3',
+                    'p.descripcionFF3',
+                    'p.codigoATC4',
+                    'p.descripcionATC4',
+                    'p.descripcionLaboratorio',
+                    'p.descripcionCorporacion',
+                    'p.sizePack',
+                    'p.stghVal',
                     'v.Concentracion',
                     'v.Volumen',
                     // Usar el mercado real de la configuración, si no hay configuración usar "NUEVOS"
@@ -85,10 +87,10 @@ class ProductosController extends Controller
             // Aplicar búsqueda global
             if (!empty($search)) {
                 $baseQuery->where(function($query) use ($search) {
-                    $query->where('v.codigoPresentacion', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionPresentacion', 'LIKE', "%{$search}%")
-                          ->orWhere('v.descripcionProducto', 'LIKE', "%{$search}%")
-                          ->orWhere('v.molecula', 'LIKE', "%{$search}%")
+                    $query->where('p.codigoPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('p.descripcionPresentacion', 'LIKE', "%{$search}%")
+                          ->orWhere('p.descripcionProducto', 'LIKE', "%{$search}%")
+                          ->orWhere('p.molecula', 'LIKE', "%{$search}%")
                           ->orWhere('m.mercado', 'LIKE', "%{$search}%")
                           ->orWhereRaw("COALESCE(m.mercado, 'NUEVOS') LIKE ?", ["%{$search}%"]);
                 });
@@ -136,23 +138,23 @@ class ProductosController extends Controller
                             break;
                         case 'descripcionProducto':
                             // Solo este campo mantiene búsqueda parcial
-                            // $baseQuery->where('v.descripcionProducto', 'LIKE', "%{$value}%");
-                            $baseQuery->where('v.descripcionProducto', '=', $value);
+                            // $baseQuery->where('p.descripcionProducto', 'LIKE', "%{$value}%");
+                            $baseQuery->where('p.descripcionProducto', '=', $value);
                             break;
                         case 'descripcionFF3':
                             // Verificar si el valor contiene un guión (formato código - descripción)
                             if (strpos($value, ' - ') !== false) {
                                 list($codigo, $descripcion) = explode(' - ', $value, 2);
                                 $baseQuery->where(function($query) use ($codigo, $descripcion) {
-                                    $query->whereRaw('UPPER(LTRIM(RTRIM(v.codigoFF3))) = ?', [strtoupper(trim($codigo))])
-                                          ->whereRaw('UPPER(LTRIM(RTRIM(v.descripcionFF3))) = ?', [strtoupper(trim($descripcion))]);
+                                    $query->whereRaw('UPPER(LTRIM(RTRIM(p.codigoFF3))) = ?', [strtoupper(trim($codigo))])
+                                          ->whereRaw('UPPER(LTRIM(RTRIM(p.descripcionFF3))) = ?', [strtoupper(trim($descripcion))]);
                                 });
                             } else {
                                 // Buscar por descripción (para productos sin código como CLOSEUP)
                                 // o por código si existe
                                 $baseQuery->where(function($query) use ($value) {
-                                    $query->where('v.descripcionFF3', '=', $value)
-                                          ->orWhere('v.codigoFF3', '=', $value);
+                                    $query->where('p.descripcionFF3', '=', $value)
+                                          ->orWhere('p.codigoFF3', '=', $value);
                                 });
                             }
                             break;
@@ -164,32 +166,29 @@ class ProductosController extends Controller
                                 $descripcion = trim($descripcion);
                                 
                                 $baseQuery->where(function($query) use ($codigo, $descripcion) {
-                                    $query->whereRaw('UPPER(LTRIM(RTRIM(v.codigoATC4))) = ?', [strtoupper($codigo)])
-                                          ->whereRaw('UPPER(LTRIM(RTRIM(v.descripcionATC4))) = ?', [strtoupper($descripcion)]);
+                                    $query->whereRaw('UPPER(LTRIM(RTRIM(p.codigoATC4))) = ?', [strtoupper($codigo)])
+                                          ->whereRaw('UPPER(LTRIM(RTRIM(p.descripcionATC4))) = ?', [strtoupper($descripcion)]);
                                 });
                             } else {
-                                // Buscar por código (para productos sin descripción como CLOSEUP)
-                                // o por descripción si existe
-                                $baseQuery->where(function($query) use ($value) {
-                                    $query->where('v.codigoATC4', '=', $value)
-                                          ->orWhere('v.descripcionATC4', '=', $value);
-                                });
+                                // Buscar SOLO por código ATC4 para incluir productos de todas las fuentes
+                                // Esto es especialmente importante para productos CLOSEUP que no tienen descripción
+                                $baseQuery->where('p.codigoATC4', '=', $value);
                             }
                             break;
                         case 'descripcionLaboratorio':
-                            $baseQuery->where('v.descripcionLaboratorio', '=', $value);
+                            $baseQuery->where('p.descripcionLaboratorio', '=', $value);
                             break;
                         case 'molecula':
-                            $baseQuery->where('v.molecula', '=', $value);
+                            $baseQuery->where('p.molecula', '=', $value);
                             break;
                         case 'descripcionCorporacion':
-                            $baseQuery->where('v.descripcionCorporacion', '=', $value);
+                            $baseQuery->where('p.descripcionCorporacion', '=', $value);
                             break;
                         case 'marcaGenerico':
-                            $baseQuery->where('v.marcaGenerico', '=', $value);
+                            $baseQuery->where('p.marcaGenerico', '=', $value);
                             break;
                         case 'eticoPopular':
-                            $baseQuery->where('v.eticoPopular', '=', $value);
+                            $baseQuery->where('p.eticoPopular', '=', $value);
                             break;
                         case 'Concentracion':
                             // Buscar en el campo de concentración directamente
@@ -209,16 +208,16 @@ class ProductosController extends Controller
             if ($sortField) {
                 // Mapear campos de ordenamiento a las columnas correctas
                 $sortMapping = [
-                    'descripcionPresentacion' => 'v.descripcionPresentacion',
-                    'descripcionProducto' => 'v.descripcionProducto',
-                    'marcaGenerico' => 'v.marcaGenerico',
-                    'eticoPopular' => 'v.eticoPopular',
-                    'molecula' => 'v.molecula',
-                    'descripcionFF3' => 'v.descripcionFF3',
-                    'descripcionATC4' => 'v.descripcionATC4',
-                    'descripcionLaboratorio' => 'v.descripcionLaboratorio',
-                    'descripcionCorporacion' => 'v.descripcionCorporacion',
-                    'sizePack' => 'v.sizePack',
+                    'descripcionPresentacion' => 'p.descripcionPresentacion',
+                    'descripcionProducto' => 'p.descripcionProducto',
+                    'marcaGenerico' => 'p.marcaGenerico',
+                    'eticoPopular' => 'p.eticoPopular',
+                    'molecula' => 'p.molecula',
+                    'descripcionFF3' => 'p.descripcionFF3',
+                    'descripcionATC4' => 'p.descripcionATC4',
+                    'descripcionLaboratorio' => 'p.descripcionLaboratorio',
+                    'descripcionCorporacion' => 'p.descripcionCorporacion',
+                    'sizePack' => 'p.sizePack',
                     'Concentracion' => 'v.Concentracion',
                     'Volumen' => 'v.Volumen',
                     'mercado' => 'COALESCE(m.mercado, \'NUEVOS\')', // Campo calculado con COALESCE
@@ -229,11 +228,11 @@ class ProductosController extends Controller
                     $baseQuery->orderBy($sortMapping[$sortField], $sortDirection);
                 } else {
                     // Ordenamiento por defecto si el campo no es válido
-                    $baseQuery->orderBy('v.codigoPresentacion', 'asc');
+                    $baseQuery->orderBy('p.codigoPresentacion', 'asc');
                 }
             } else {
                 // Ordenamiento por defecto
-                $baseQuery->orderBy('v.codigoPresentacion', 'asc');
+                $baseQuery->orderBy('p.codigoPresentacion', 'asc');
             }
 
             // Obtener el total de registros para la paginación
@@ -297,7 +296,7 @@ class ProductosController extends Controller
             
             // Base query
             $baseQuery = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA as v');
+                ->table('ODS.TAB_PRODUCTO as p');
 
             $results = [];
 
@@ -458,16 +457,16 @@ class ProductosController extends Controller
                     // Para mercado, incluir tanto los de configuración como "NUEVOS"
                     if ($search && strtolower($search) === 'nuevos') {
                         // Si buscan específicamente "NUEVOS", buscar productos sin configuración
-                        $query = DB::connection('sqlsrv')
-                            ->table('dbo.VMAE_PROD_IQVIA as v')
-                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                            ->whereNull('c.codigo') // Productos sin configuración
-                            ->select(DB::raw("'NUEVOS' as mercado"));
+                    $query = DB::connection('sqlsrv')
+                        ->table('ODS.TAB_PRODUCTO as p')
+                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+                        ->whereNull('c.codigo') // Productos sin configuración
+                        ->select(DB::raw("'NUEVOS' as mercado"));
                     } else {
                         // Para otros mercados, usar la configuración normal
                         $query = DB::connection('sqlsrv')
-                            ->table('dbo.VMAE_PROD_IQVIA as v')
-                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                            ->table('ODS.TAB_PRODUCTO as p')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
                             ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
                             ->whereNotNull('m.mercado')
                             ->where('m.mercado', '<>', '')
@@ -507,12 +506,12 @@ class ProductosController extends Controller
 
                 case 'fuente':
                     $fuenteQuery = DB::connection('sqlsrv')
-                        ->table('dbo.VMAE_PROD_IQVIA as v')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                        ->select(DB::raw("COALESCE(c.fuente, 'IQVIA') as fuente"));
+                        ->table('ODS.TAB_PRODUCTO as p')
+                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+                        ->select(DB::raw("COALESCE(c.fuente, p.fuente) as fuente"));
                     
                     if ($search) {
-                        $fuenteQuery->havingRaw("COALESCE(c.fuente, 'IQVIA') LIKE ?", ["{$search}%"]);
+                        $fuenteQuery->havingRaw("COALESCE(c.fuente, p.fuente) LIKE ?", ["{$search}%"]);
                     }
                     
                     $results = $fuenteQuery->distinct()
@@ -620,7 +619,7 @@ class ProductosController extends Controller
 
             // Obtener el nombre del producto ANTES del SP para evitar consultas post-SP
             $nombreProducto = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
+                ->table('ODS.TAB_PRODUCTO')
                 ->where('codigoPresentacion', $validated['codigoPresentacion'])
                 ->value('descripcionPresentacion');
 
@@ -726,7 +725,7 @@ class ProductosController extends Controller
 
             // Obtener el nombre del producto
             $nombreProducto = DB::connection('sqlsrv')
-                ->table('dbo.VMAE_PROD_IQVIA')
+                ->table('ODS.TAB_PRODUCTO')
                 ->where('codigoPresentacion', $validated['codigoPresentacion'])
                 ->value('descripcionPresentacion');
 
@@ -953,25 +952,25 @@ class ProductosController extends Controller
             // Procesar cada producto
             foreach ($validated['products'] as $product) {
                 try {
-                    // Verificar que el producto existe en VMAE_PROD_IQVIA con mercado SIN_ASIGNAR o NUEVOS y obtener su información
+                    // Verificar que el producto existe en TAB_PRODUCTO con mercado SIN_ASIGNAR o NUEVOS y obtener su información
                     // Primero verificar si está en SIN_ASIGNAR (con configuración)
                     $productoInfo = DB::connection('sqlsrv')
-                        ->table('dbo.VMAE_PROD_IQVIA as v')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
+                        ->table('ODS.TAB_PRODUCTO as p')
+                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
                         ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                        ->where('v.codigoPresentacion', $product['code'])
+                        ->where('p.codigoPresentacion', $product['code'])
                         ->where('m.mercado', 'SIN_ASIGNAR')
-                        ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
+                        ->select('p.codigoPresentacion', 'p.descripcionPresentacion')
                         ->first();
                     
                     // Si no está en SIN_ASIGNAR, verificar si está en NUEVOS (sin configuración)
                     if (!$productoInfo) {
                         $productoInfo = DB::connection('sqlsrv')
-                            ->table('dbo.VMAE_PROD_IQVIA as v')
-                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'v.codigoPresentacion', '=', 'c.codigo')
-                            ->where('v.codigoPresentacion', $product['code'])
+                            ->table('ODS.TAB_PRODUCTO as p')
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+                            ->where('p.codigoPresentacion', $product['code'])
                             ->whereNull('c.codigo') // Productos sin configuración
-                            ->select('v.codigoPresentacion', 'v.descripcionPresentacion')
+                            ->select('p.codigoPresentacion', 'p.descripcionPresentacion')
                             ->first();
                     }
                         
@@ -1135,15 +1134,15 @@ class ProductosController extends Controller
                     continue;
                 }
 
-                // Obtener información del producto desde VMAE
+                // Obtener información del producto desde TAB_PRODUCTO
                 $productoInfo = DB::connection('sqlsrv')
-                    ->table('dbo.VMAE_PROD_IQVIA')
+                    ->table('ODS.TAB_PRODUCTO')
                     ->where('codigoPresentacion', $productCode)
                     ->select('codigoPresentacion', 'descripcionPresentacion')
                     ->first();
 
                 if (!$productoInfo) {
-                    $errors[] = "Producto con código {$productCode} no encontrado en VMAE_PROD_IQVIA";
+                    $errors[] = "Producto con código {$productCode} no encontrado en TAB_PRODUCTO";
                     continue;
                 }
 
@@ -1292,17 +1291,17 @@ class ProductosController extends Controller
                     ->first();
 
                 if ($configuracionProducto) {
-                    // Si tiene configuración, obtener info de VMAE
-                    $productoVMAE = DB::connection('sqlsrv')
-                        ->table('dbo.VMAE_PROD_IQVIA')
+                    // Si tiene configuración, obtener info de TAB_PRODUCTO
+                    $productoTAB = DB::connection('sqlsrv')
+                        ->table('ODS.TAB_PRODUCTO')
                         ->where('codigoPresentacion', $productCode)
-                        ->select('codigoPresentacion', 'descripcionPresentacion', 'MERCADO')
+                        ->select('codigoPresentacion', 'descripcionPresentacion')
                         ->first();
                     
-                    if ($productoVMAE) {
+                    if ($productoTAB) {
                         $productoInfo = (object) [
-                            'codigoPresentacion' => $productoVMAE->codigoPresentacion,
-                            'descripcionPresentacion' => $productoVMAE->descripcionPresentacion,
+                            'codigoPresentacion' => $productoTAB->codigoPresentacion,
+                            'descripcionPresentacion' => $productoTAB->descripcionPresentacion,
                             'MERCADO' => $configuracionProducto->mercado // Usar el mercado real de la configuración
                         ];
                     }

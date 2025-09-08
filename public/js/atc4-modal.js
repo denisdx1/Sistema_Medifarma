@@ -182,8 +182,8 @@ function showAtc4Details(atc4) {
     closeAtc4ListModal();
     
     // Guardar en sessionStorage para que el módulo de productos sepa que debe filtrar por ATC4
-    // Formato: "CÓDIGO - DESCRIPCIÓN" (como está en el módulo de productos)
-    const atc4FilterValue = `${atc4.codigoATC4} - ${atc4.descripcionATC4 || 'Sin descripción'}`;
+    // Usar solo el código ATC4 para incluir productos de todas las fuentes (IQVIA, CLOSEUP, etc.)
+    const atc4FilterValue = atc4.codigoATC4;
     sessionStorage.setItem('autoSelectAtc4', atc4FilterValue);
     
     // Redirigir inmediatamente al módulo de productos (igual que con mercados)
