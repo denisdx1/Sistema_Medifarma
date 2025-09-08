@@ -317,7 +317,7 @@
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Fecha y hora:</span>
-                    <span class="detail-value"><?php echo e(date('d/m/Y H:i:s', strtotime($performedAt))); ?></span>
+                    <span class="detail-value"><?php echo e(\Carbon\Carbon::parse($performedAt)->setTimezone('America/Lima')->format('d/m/Y H:i:s')); ?></span>
                 </div>
             </div>
 
@@ -333,7 +333,7 @@
         <!-- Footer -->
         <div class="footer">
             <p>Esta es una notificación automática del <span class="brand">Sistema Medifarma</span></p>
-            <p>Gestión de Mercados • Generado el <?php echo e(date('d/m/Y H:i:s')); ?></p>
+            <p>Gestión de Mercados • Generado el <?php echo e(now()->setTimezone('America/Lima')->format('d/m/Y H:i:s')); ?></p>
         </div>
     </div>
 </body>

@@ -81,7 +81,7 @@ class NotificationService
     {
         try {
             $userFranquicia = $this->getUserFranquicia($user);
-            $performedAt = now()->format('Y-m-d H:i:s');
+            $performedAt = now()->setTimezone('America/Lima')->format('Y-m-d H:i:s');
             
             // Obtener todos los correos de usuarios activos
             $allUserEmails = $this->getAllUserEmails();
