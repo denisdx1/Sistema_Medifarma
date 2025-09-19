@@ -11,6 +11,26 @@ use App\Services\NotificationService;
 class ProductosController extends Controller
 {
     /**
+     * ========================================
+     * CONSTANTES PARA VALIDACIONES
+     * ========================================
+     */
+    
+    private const VALIDATION_RULES = [
+        'codigo_presentacion' => 'required|string',
+        'note_required' => 'required|string|max:1000',
+        'market_id' => 'required|integer',
+        'products_array' => 'required|array|min:1',
+        'product_code' => 'required|string',
+        'product_fuente' => 'required|string|min:1',
+        'market_name' => 'required|string|max:255',
+        'market_note' => 'required|string|max:1000',
+        'product_ids' => 'required|array|min:1',
+        'product_ids_item' => 'required|string',
+        'note_min' => 'required|string|min:3'
+    ];
+
+    /**
      * Display the main productos view
      */
     public function index(Request $request)
@@ -57,11 +77,7 @@ class ProductosController extends Controller
             // Query base con JOIN para obtener la fuente y mercado real de configuración
             // Incluir productos con y sin configuración de todas las fuentes
             // Usar TAB_PRODUCTO como base pero hacer JOIN con VMAE_PROD_IQVIA para campos específicos
-            $baseQuery = DB::connection('sqlsrv')
-                ->table('ODS.TAB_PRODUCTO as p')
-                ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
-                ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
+            $baseQuery = $this->getBaseProductQuery()
                 ->select([
                     'p.codigoPresentacion',
                     'p.descripcionPresentacion',
@@ -295,8 +311,7 @@ class ProductosController extends Controller
             $limit = min(max((int) $request->get('limit', 100), 20), 500); // Límite de resultados
             
             // Base query - solo agregar JOIN cuando sea necesario
-            $baseQuery = DB::connection('sqlsrv')
-                ->table('ODS.TAB_PRODUCTO as p');
+            $baseQuery = $this->getSimpleProductQuery();
 
             $results = [];
 
@@ -457,17 +472,13 @@ class ProductosController extends Controller
                     // Para mercado, incluir tanto los de configuración como "NUEVOS"
                     if ($search && strtolower($search) === 'nuevos') {
                         // Si buscan específicamente "NUEVOS", buscar productos sin configuración
-                    $query = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_PRODUCTO as p')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
-                        ->whereNull('c.codigo') // Productos sin configuración
-                        ->select(DB::raw("'NUEVOS' as mercado"));
+                        $query = $this->getSimpleProductQuery()
+                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+                            ->whereNull('c.codigo') // Productos sin configuración
+                            ->select(DB::raw("'NUEVOS' as mercado"));
                     } else {
                         // Para otros mercados, usar la configuración normal
-                        $query = DB::connection('sqlsrv')
-                            ->table('ODS.TAB_PRODUCTO as p')
-                            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
-                            ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                        $query = $this->getBaseProductQuery()
                             ->whereNotNull('m.mercado')
                             ->where('m.mercado', '<>', '')
                             ->select('m.mercado as mercado');
@@ -505,9 +516,7 @@ class ProductosController extends Controller
                     break;
 
                 case 'fuente':
-                    $fuenteQuery = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_PRODUCTO as p')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+                    $fuenteQuery = $this->getBaseProductQuery()
                         ->select(DB::raw("COALESCE(c.fuente, p.fuente) as fuente"));
                     
                     if ($search) {
@@ -525,8 +534,7 @@ class ProductosController extends Controller
                     break;
 
                 case 'Concentracion':
-                    $query = (clone $baseQuery)
-                        ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
+                    $query = $this->getBaseProductQuery()
                         ->whereNotNull('v.Concentracion')
                         ->where('v.Concentracion', '<>', '');
                     
@@ -542,8 +550,7 @@ class ProductosController extends Controller
                     break;
 
                 case 'Volumen':
-                    $query = (clone $baseQuery)
-                        ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion')
+                    $query = $this->getBaseProductQuery()
                         ->whereNotNull('v.Volumen')
                         ->where('v.Volumen', '<>', '');
                     
@@ -593,24 +600,18 @@ class ProductosController extends Controller
      */
     public function removeProduct(Request $request)
     {
-        $validated =         $request->validate([
-            'codigoPresentacion' => 'required|string',
-            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
+        $validated = $request->validate([
+            'codigoPresentacion' => self::VALIDATION_RULES['codigo_presentacion'],
+            'note' => self::VALIDATION_RULES['note_required']
         ]);
 
         try {
             // Aumentar el timeout para esta operación específica
             set_time_limit(60);
             
-            DB::beginTransaction();
-            
+            return $this->executeWithTransaction(function() use ($validated) {
             // Verificar que el producto existe en la configuración actual y obtener sus datos
-            $configuracionProducto = DB::connection('sqlsrv')
-                ->table('ODS.TAB_CONFIGURACION as c')
-                ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                ->select('c.*', 'm.mercado')
-                ->where('c.codigo', $validated['codigoPresentacion'])
-                ->first();
+                $configuracionProducto = $this->getProductConfiguration($validated['codigoPresentacion']);
                 
             if (!$configuracionProducto) {
                 return response()->json([
@@ -620,10 +621,7 @@ class ProductosController extends Controller
             }
 
             // Obtener el nombre del producto ANTES del SP para evitar consultas post-SP
-            $nombreProducto = DB::connection('sqlsrv')
-                ->table('ODS.TAB_PRODUCTO')
-                ->where('codigoPresentacion', $validated['codigoPresentacion'])
-                ->value('descripcionPresentacion');
+                $nombreProducto = $this->getProductInfo($validated['codigoPresentacion']);
 
             // Ejecutar el stored procedure SP_ASIGNAR_RESTO
             $userId = Auth::user()->idUsuario;
@@ -633,21 +631,16 @@ class ProductosController extends Controller
                 $validated['note']                // @nota
             ]);
 
-            DB::commit();
-
             // Enviar notificación por email DESPUÉS del commit para no afectar la transacción
-            try {
-                $notificationService = new NotificationService();
+                $this->sendNotification(function($notificationService) use ($validated, $nombreProducto, $configuracionProducto) {
                 $notificationService->notifyProductRemoved(
                     $validated['codigoPresentacion'],
-                    $nombreProducto ?? 'Producto no encontrado',
+                        $nombreProducto->descripcionPresentacion ?? 'Producto no encontrado',
                     $configuracionProducto->mercado,
                     Auth::user(),
                     $validated['note'] ?? null
                 );
-            } catch (\Exception $e) {
-                // Error en notificación pero no interrumpir el flujo
-            }
+                });
 
             return response()->json([
                 'success' => true,
@@ -655,10 +648,9 @@ class ProductosController extends Controller
                 'codigoPresentacion' => $validated['codigoPresentacion'],
                 'refresh_page' => true // Indicar que se debe refrescar la página
             ]);
+            });
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al remover el producto: ' . $e->getMessage()
@@ -672,14 +664,13 @@ class ProductosController extends Controller
     public function changeProductMarket(Request $request)
     {
         $validated = $request->validate([
-            'codigoPresentacion' => 'required|string',
-            'nuevoMercadoId' => 'required|integer',
-            'note' => 'required|string|max:1000'  // Nota ahora es obligatoria
+            'codigoPresentacion' => self::VALIDATION_RULES['codigo_presentacion'],
+            'nuevoMercadoId' => self::VALIDATION_RULES['market_id'],
+            'note' => self::VALIDATION_RULES['note_required']
         ]);
 
         try {
-            DB::beginTransaction();
-            
+            return $this->executeWithTransaction(function() use ($validated) {
             $user = Auth::user(); // Usuario autenticado
             
             // Buscar la configuración actual del producto para obtener la fuente
@@ -696,13 +687,7 @@ class ProductosController extends Controller
             }
             
             // Verificar que el mercado destino existe y está activo
-            $mercadoDestino = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
-                ->select('m.idMercado', 'm.mercado', 'e.estado')
-                ->where('m.idMercado', $validated['nuevoMercadoId'])
-                ->where('e.estado', 'ACTIVO')
-                ->first();
+                $mercadoDestino = $this->getMarketValidationQuery($validated['nuevoMercadoId'])->first();
                 
             if (!$mercadoDestino) {
                 return response()->json([
@@ -726,10 +711,7 @@ class ProductosController extends Controller
                 ->value('mercado');
 
             // Obtener el nombre del producto
-            $nombreProducto = DB::connection('sqlsrv')
-                ->table('ODS.TAB_PRODUCTO')
-                ->where('codigoPresentacion', $validated['codigoPresentacion'])
-                ->value('descripcionPresentacion');
+                $nombreProducto = $this->getProductInfo($validated['codigoPresentacion']);
 
             // Ejecutar el stored procedure ODS.SP_UPDATE_CONFIGURACION
             // Mantener la fuente original del producto
@@ -744,21 +726,16 @@ class ProductosController extends Controller
             ]);
 
             // Enviar notificación por email
-            try {
-                $notificationService = new NotificationService();
+                $this->sendNotification(function($notificationService) use ($validated, $nombreProducto, $mercadoAnterior, $mercadoDestino) {
                 $notificationService->notifyProductMoved(
                     $validated['codigoPresentacion'],
-                    $nombreProducto ?? 'Producto no encontrado',
+                        $nombreProducto->descripcionPresentacion ?? 'Producto no encontrado',
                     $mercadoAnterior,
                     $mercadoDestino->mercado,
                     Auth::user(),
                     $validated['note'] ?? null
                 );
-            } catch (\Exception $e) {
-                // Error en notificación pero no interrumpir el flujo
-            }
-
-            DB::commit();
+                });
 
             return response()->json([
                 'success' => true,
@@ -769,10 +746,9 @@ class ProductosController extends Controller
                 'nombreMercadoNuevo' => $mercadoDestino->mercado,
                 'refresh_page' => true // Indicar que se debe refrescar la página
             ]);
+            });
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar el mercado del producto: ' . $e->getMessage()
@@ -788,17 +764,14 @@ class ProductosController extends Controller
         try {
             $search = $request->get('search', '');
             
-            // Query para obtener TODOS los mercados activos
-            $marketsQuery = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+            // Query para obtener TODOS los mercados activos usando el método privado
+            $marketsQuery = $this->getActiveMarketsQuery()
                 ->select(
                     'm.idMercado',
                     'm.mercado',
                     'm.fechaRegistro',
                     'e.estado'
-                )
-                ->where('e.estado', 'ACTIVO'); // Solo mercados activos
+                );
 
             // Aplicar búsqueda si se proporciona
             if (!empty($search)) {
@@ -830,15 +803,13 @@ class ProductosController extends Controller
      */
     public function createMarket(Request $request)
     {
-
         $request->validate([
-            'market_name' => 'required|string|max:255',
-            'market_note' => 'required|string|max:1000'  // Nota ahora es obligatoria
+            'market_name' => self::VALIDATION_RULES['market_name'],
+            'market_note' => self::VALIDATION_RULES['market_note']
         ]);
 
         try {
-            DB::beginTransaction();
-            
+            return $this->executeWithTransaction(function() use ($request) {
             $marketName = trim($request->market_name);
             $marketNote = $request->market_note ? trim($request->market_note) : null;
             
@@ -856,11 +827,8 @@ class ProductosController extends Controller
             
             // Verificar si ya existe un mercado con el mismo nombre (solo mercados activos)
             // Usar UPPER para comparación case-insensitive y LTRIM/RTRIM para eliminar espacios
-            $existingMarket = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+                $existingMarket = $this->getActiveMarketsQuery()
                 ->whereRaw('UPPER(LTRIM(RTRIM(m.mercado))) = UPPER(?)', [trim($marketName)])
-                ->where('e.estado', 'ACTIVO')
                 ->select('m.idMercado', 'm.mercado', 'e.estado')
                 ->first();
 
@@ -875,20 +843,12 @@ class ProductosController extends Controller
             DB::connection('sqlsrv')->statement('EXEC ODS.SP_INSERT_MERCADO ?, ?, ?', [$marketName, (int)$userId, $marketNote]);
 
             // Enviar notificación por correo (con nota si existe)
-            try {
-                $notificationService = new NotificationService();
+                $this->sendNotification(function($notificationService) use ($marketName, $user, $marketNote) {
                 $notificationService->notifyNewMarket($marketName, $user, $marketNote);
-            } catch (\Exception $emailException) {
-                // Error en notificación pero no fallar la creación del mercado
-            }
-
-            DB::commit();
+                });
             
             // Calcular la página donde aparecerá el nuevo mercado
-            $totalMarkets = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
-                ->where('e.estado', '!=', 'INACTIVO') // Excluir mercados inactivos del conteo
+                $totalMarkets = $this->getActiveMarketsQuery()
                 ->count() + 1; // +1 por el que acabamos de crear
             
             $itemsPerPage = 10;
@@ -902,8 +862,8 @@ class ProductosController extends Controller
                 'timestamp' => now()->format('H:i:s'),
                 'redirect_to_page' => $lastPage
             ]);
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear mercado: ' . $e->getMessage()
@@ -917,28 +877,18 @@ class ProductosController extends Controller
      */
     public function assignProducts(Request $request)
     {
-
         $validated = $request->validate([
-            'idMercado' => 'required|integer',
-            'products' => 'required|array|min:1',
-            'products.*.code' => 'required|string',
-            'products.*.fuente' => 'required|string|min:1', // Asegurar que fuente no esté vacía
-            'note' => 'required|string|max:1000' // Nota ahora es obligatoria
+            'idMercado' => self::VALIDATION_RULES['market_id'],
+            'products' => self::VALIDATION_RULES['products_array'],
+            'products.*.code' => self::VALIDATION_RULES['product_code'],
+            'products.*.fuente' => self::VALIDATION_RULES['product_fuente'],
+            'note' => self::VALIDATION_RULES['note_required']
         ]);
 
-
-
         try {
-            DB::beginTransaction();
-            
+            return $this->executeWithTransaction(function() use ($validated) {
             // Verificar que el mercado existe y está activo
-            $mercado = DB::connection('sqlsrv')
-                ->table('ODS.TAB_MERCADO as m')
-                ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
-                ->select('m.idMercado', 'm.mercado', 'e.estado')
-                ->where('m.idMercado', $validated['idMercado'])
-                ->where('e.estado', 'ACTIVO')
-                ->first();
+                $mercado = $this->getMarketValidationQuery($validated['idMercado'])->first();
 
             if (!$mercado) {
                 return response()->json([
@@ -956,10 +906,7 @@ class ProductosController extends Controller
                 try {
                     // Verificar que el producto existe en TAB_PRODUCTO con mercado SIN_ASIGNAR o NUEVOS y obtener su información
                     // Primero verificar si está en SIN_ASIGNAR (con configuración)
-                    $productoInfo = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_PRODUCTO as p')
-                        ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
-                        ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+                        $productoInfo = $this->getBaseProductQuery()
                         ->where('p.codigoPresentacion', $product['code'])
                         ->where('m.mercado', 'SIN_ASIGNAR')
                         ->select('p.codigoPresentacion', 'p.descripcionPresentacion')
@@ -967,8 +914,7 @@ class ProductosController extends Controller
                     
                     // Si no está en SIN_ASIGNAR, verificar si está en NUEVOS (sin configuración)
                     if (!$productoInfo) {
-                        $productoInfo = DB::connection('sqlsrv')
-                            ->table('ODS.TAB_PRODUCTO as p')
+                            $productoInfo = $this->getSimpleProductQuery()
                             ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
                             ->where('p.codigoPresentacion', $product['code'])
                             ->whereNull('c.codigo') // Productos sin configuración
@@ -1034,16 +980,6 @@ class ProductosController extends Controller
                         }
                     }
 
-                    // PASO 4: Verificar que la asignación fue exitosa
-                    $verificacion = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_CONFIGURACION as c')
-                        ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                        ->where('c.codigo', $product['code'])
-                        ->select('c.codigo', 'm.mercado', 'c.idMercado')
-                        ->first();
-                    
-
-
                     $assignedCount++;
                     // Guardar tanto el código como el nombre del producto
                     $assignedProducts[] = [
@@ -1058,20 +994,15 @@ class ProductosController extends Controller
 
             // Enviar notificación por email si se asignaron productos exitosamente
             if ($assignedCount > 0) {
-                try {
-                    $notificationService = new NotificationService();
+                    $this->sendNotification(function($notificationService) use ($assignedProducts, $mercado, $assignedCount, $validated) {
                     // Usar el método genérico para múltiples productos
                     $notificationService->notifyMarketAction('assign_product', [
                         'assigned_products' => $assignedProducts,
                         'market_name' => $mercado->mercado,
                         'assigned_count' => $assignedCount
                     ], Auth::user(), $validated['note'] ?? null);
-                } catch (\Exception $e) {
-                    // Error en notificación pero no interrumpir el flujo
-                }
+                    });
             }
-
-            DB::commit();
 
             $response = [
                 'success' => true,
@@ -1088,10 +1019,9 @@ class ProductosController extends Controller
             }
 
             return response()->json($response);
+            });
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al asignar productos: ' . $e->getMessage()
@@ -1106,17 +1036,16 @@ class ProductosController extends Controller
     {
         try {
             $validated = $request->validate([
-                'product_ids' => 'required|array|min:1',
-                'product_ids.*' => 'required|string',
-                'note' => 'required|string|min:3'
+                'product_ids' => self::VALIDATION_RULES['product_ids'],
+                'product_ids.*' => self::VALIDATION_RULES['product_ids_item'],
+                'note' => self::VALIDATION_RULES['note_min']
             ]);
 
             $productIds = $validated['product_ids'];
             $note = $validated['note'];
             $userId = Auth::user()->idUsuario;
 
-            DB::beginTransaction();
-
+            return $this->executeWithTransaction(function() use ($productIds, $note, $userId) {
             $removedCount = 0;
             $errors = [];
             $removedProducts = [];
@@ -1124,12 +1053,7 @@ class ProductosController extends Controller
             foreach ($productIds as $productCode) {
                 try {
                                     // Verificar que el producto tenga configuración (esté asignado a algún mercado)
-                $configuracionProducto = DB::connection('sqlsrv')
-                    ->table('ODS.TAB_CONFIGURACION as c')
-                    ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                    ->where('c.codigo', $productCode)
-                    ->select('c.codigo', 'm.mercado')
-                    ->first();
+                        $configuracionProducto = $this->getProductConfiguration($productCode);
 
                 if (!$configuracionProducto) {
                     $errors[] = "Producto con código {$productCode} no tiene configuración de mercado asignada";
@@ -1137,11 +1061,7 @@ class ProductosController extends Controller
                 }
 
                 // Obtener información del producto desde TAB_PRODUCTO
-                $productoInfo = DB::connection('sqlsrv')
-                    ->table('ODS.TAB_PRODUCTO')
-                    ->where('codigoPresentacion', $productCode)
-                    ->select('codigoPresentacion', 'descripcionPresentacion')
-                    ->first();
+                        $productoInfo = $this->getProductInfo($productCode);
 
                 if (!$productoInfo) {
                     $errors[] = "Producto con código {$productCode} no encontrado en TAB_PRODUCTO";
@@ -1170,15 +1090,8 @@ class ProductosController extends Controller
                         continue;
                     }
 
-                    // PASO 2: Registrar en logs
-                    DB::connection('sqlsrv')->table('ODS.TAB_MERCADO_LOG')->insert([
-                        'usuario' => Auth::user()->usuario,
-                        'accion' => 'DELETE',
-                        'fecha' => now(),
-                        'tabla' => 'ODS.TAB_CONFIGURACION',
-                        'detalle' => "Producto {$productCode} quitado del mercado {$mercadoActual}",
-                        'nota' => $note
-                    ]);
+                        // PASO 2: Registrar en logs usando el método privado
+                        $this->logMarketAction('DELETE', "Producto {$productCode} quitado del mercado {$mercadoActual}", $note);
 
                     $removedCount++;
                     $removedProducts[] = [
@@ -1194,18 +1107,13 @@ class ProductosController extends Controller
 
             // Enviar notificación por email si se quitaron productos exitosamente
             if ($removedCount > 0) {
-                try {
-                    $notificationService = new NotificationService();
+                    $this->sendNotification(function($notificationService) use ($removedProducts, $removedCount, $note) {
                     $notificationService->notifyMarketAction('remove_product', [
                         'removed_products' => $removedProducts,
                         'removed_count' => $removedCount
                     ], Auth::user(), $note);
-                } catch (\Exception $e) {
-                    // Error en notificación pero no interrumpir el flujo
-                }
+                    });
             }
-
-            DB::commit();
 
             $response = [
                 'success' => true,
@@ -1219,10 +1127,9 @@ class ProductosController extends Controller
             }
 
             return response()->json($response);
+            });
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al quitar productos del mercado: ' . $e->getMessage()
@@ -1237,10 +1144,10 @@ class ProductosController extends Controller
     {
         try {
             $validated = $request->validate([
-                'product_ids' => 'required|array|min:1',
-                'product_ids.*' => 'required|string',
-                'market_id' => 'required|integer',
-                'note' => 'required|string|min:3'
+                'product_ids' => self::VALIDATION_RULES['product_ids'],
+                'product_ids.*' => self::VALIDATION_RULES['product_ids_item'],
+                'market_id' => self::VALIDATION_RULES['market_id'],
+                'note' => self::VALIDATION_RULES['note_min']
             ]);
 
             $productIds = $validated['product_ids'];
@@ -1271,210 +1178,246 @@ class ProductosController extends Controller
                 ], 404);
             }
 
-            DB::beginTransaction();
+            return $this->executeWithTransaction(function() use ($productIds, $marketId, $note, $userId, $mercado) {
 
-            $changedCount = 0;
-            $errors = [];
-            $changedProducts = [];
+                $changedCount = 0;
+                $errors = [];
+                $changedProducts = [];
 
-            foreach ($productIds as $productCode) {
-                try {
-                                    // Nota: Ya no verificamos VMAE_PROD_IQVIA sin filtro porque usamos configuración directa
+                foreach ($productIds as $productCode) {
+                    try {
+                        // Verificar que el producto tenga configuración y obtener información
+                        $configuracionProducto = $this->getProductConfiguration($productCode);
+                        $productoInfo = $this->getProductInfo($productCode);
 
-                // Verificar que el producto tenga configuración y obtener información
-                $productoInfo = null;
-                
-                // Buscar en TAB_CONFIGURACION para obtener el mercado real
-                $configuracionProducto = DB::connection('sqlsrv')
-                    ->table('ODS.TAB_CONFIGURACION as c')
-                    ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
-                    ->where('c.codigo', $productCode)
-                    ->select('c.codigo', 'm.mercado')
-                    ->first();
+                        if (!$productoInfo || !$configuracionProducto) {
+                            $errors[] = "Producto con código {$productCode} no encontrado o no tiene configuración de mercado";
+                            continue;
+                        }
 
-                if ($configuracionProducto) {
-                    // Si tiene configuración, obtener info de TAB_PRODUCTO
-                    $productoTAB = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_PRODUCTO')
-                        ->where('codigoPresentacion', $productCode)
-                        ->select('codigoPresentacion', 'descripcionPresentacion')
-                        ->first();
-                    
-                    if ($productoTAB) {
-                        $productoInfo = (object) [
-                            'codigoPresentacion' => $productoTAB->codigoPresentacion,
-                            'descripcionPresentacion' => $productoTAB->descripcionPresentacion,
-                            'MERCADO' => $configuracionProducto->mercado // Usar el mercado real de la configuración
+                        $previousMarket = $configuracionProducto->mercado;
+
+                        // PASO 1: Obtener la fuente original del producto desde la configuración
+                        $fuenteOriginal = $configuracionProducto->fuente ?? 'IQVIA'; // Usar la fuente original o IQVIA por defecto
+
+                        // PASO 2: Ejecutar SP_UPDATE_CONFIGURACION para cambiar mercado
+                        \Log::info('Ejecutando SP_UPDATE_CONFIGURACION para cambiar mercado:', [
+                            'codigo' => $productCode,
+                            'mercado_actual' => $previousMarket,
+                            'mercado_destino' => $mercado->mercado,
+                            'fuente' => $fuenteOriginal,
+                            'idMercado' => $marketId,
+                            'idUsuario' => $userId,
+                            'nota' => $note
+                        ]);
+                        
+                        $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
+                            $productCode,        // @codigo
+                            $fuenteOriginal,     // @fuente - Mantener la fuente original del producto
+                            $marketId,           // @idMercado
+                            $userId,             // @idUsuario
+                            $note                // @nota
+                        ]);
+
+                        if (!$executed) {
+                            $errors[] = "Error ejecutando SP_UPDATE_CONFIGURACION para producto {$productCode}";
+                            continue;
+                        }
+
+                        // PASO 3: Registrar en logs usando el método privado
+                        $this->logMarketAction('UPDATE', "Producto {$productCode} cambiado de mercado {$previousMarket} a {$mercado->mercado}", $note);
+
+                        $changedCount++;
+                        $changedProducts[] = [
+                            'code' => $productoInfo->codigoPresentacion,
+                            'name' => $productoInfo->descripcionPresentacion,
+                            'previous_market' => $previousMarket,
+                            'new_market' => $mercado->mercado
                         ];
+
+                    } catch (\Exception $e) {
+                        $errors[] = "Error cambiando mercado del producto {$productCode}: " . $e->getMessage();
+                        
+                        // Log detallado del error
+                        \Log::error('Error detallado en bulkChangeMarket:', [
+                            'codigo' => $productCode,
+                            'error_message' => $e->getMessage(),
+                            'error_file' => $e->getFile(),
+                            'error_line' => $e->getLine(),
+                            'error_trace' => $e->getTraceAsString()
+                        ]);
                     }
                 }
 
-                // Log para debugging - verificar con la nueva lógica
-                \Log::info('Verificando producto en bulkChangeMarket:', [
-                    'codigo' => $productCode,
-                    'encontrado' => $productoInfo ? 'SI' : 'NO',
-                    'mercado_detectado' => $productoInfo ? $productoInfo->MERCADO : 'NO_ENCONTRADO',
-                    'mercado_configuracion' => $configuracionProducto ? $configuracionProducto->mercado : 'NO_ENCONTRADO',
-                    'puede_cambiar' => $productoInfo ? 'SI' : 'NO'
+                // Log para debugging - resumen final
+                \Log::info('Resumen de bulkChangeMarket:', [
+                    'total_solicitados' => count($productIds),
+                    'total_cambiados' => $changedCount,
+                    'total_errores' => count($errors),
+                    'productos_cambiados' => $changedProducts
                 ]);
 
-                // Verificar si el producto está en TAB_CONFIGURACION
-                $productoEnConfiguracion = DB::connection('sqlsrv')
-                    ->table('ODS.TAB_CONFIGURACION')
-                    ->where('codigo', $productCode)
-                    ->select('codigo', 'idMercado')
-                    ->first();
-
-                // Verificar el mercado en TAB_MERCADO si existe configuración
-                $mercadoEnConfiguracion = null;
-                if ($productoEnConfiguracion) {
-                    $mercadoEnConfiguracion = DB::connection('sqlsrv')
-                        ->table('ODS.TAB_MERCADO')
-                        ->where('idMercado', $productoEnConfiguracion->idMercado)
-                        ->select('idMercado', 'mercado')
-                        ->first();
+                // Enviar notificación por email si se cambiaron productos exitosamente
+                if ($changedCount > 0) {
+                    $this->sendNotification(function($notificationService) use ($changedProducts, $mercado, $changedCount, $note) {
+                        $notificationService->notifyMarketAction('change_market', [
+                            'changed_products' => $changedProducts,
+                            'new_market_name' => $mercado->mercado,
+                            'changed_count' => $changedCount
+                        ], Auth::user(), $note);
+                    });
                 }
 
-                // Log para debugging - verificar configuración
-                \Log::info('Verificando configuración del producto:', [
-                    'codigo' => $productCode,
-                    'en_configuracion' => $productoEnConfiguracion ? 'SI' : 'NO',
-                    'id_mercado_config' => $productoEnConfiguracion ? $productoEnConfiguracion->idMercado : 'NO',
-                    'mercado_config' => $mercadoEnConfiguracion ? $mercadoEnConfiguracion->mercado : 'NO_ENCONTRADO'
-                ]);
+                $response = [
+                    'success' => true,
+                    'changed_count' => $changedCount,
+                    'total_requested' => count($productIds),
+                    'new_market' => $mercado->mercado,
+                    'message' => "Se cambiaron {$changedCount} productos al mercado {$mercado->mercado} correctamente"
+                ];
 
-                if (!$productoInfo) {
-                    $errors[] = "Producto con código {$productCode} no encontrado o no tiene configuración de mercado";
-                    continue;
+                if (!empty($errors)) {
+                    $response['warnings'] = $errors;
                 }
 
-                    $previousMarket = $productoInfo->MERCADO;
-
-                    // PASO 1: Obtener la fuente original del producto desde la configuración
-                    $fuenteOriginal = $configuracionProducto->fuente ?? 'IQVIA'; // Usar la fuente original o IQVIA por defecto
-
-                    // PASO 2: Ejecutar SP_UPDATE_CONFIGURACION para cambiar mercado
-                    \Log::info('Ejecutando SP_UPDATE_CONFIGURACION para cambiar mercado:', [
-                        'codigo' => $productCode,
-                        'mercado_actual' => $previousMarket,
-                        'mercado_destino' => $mercado->mercado,
-                        'fuente' => $fuenteOriginal,
-                        'idMercado' => $marketId,
-                        'idUsuario' => $userId,
-                        'nota' => $note
-                    ]);
-                    
-                    $executed = DB::connection('sqlsrv')->statement('EXEC ODS.SP_UPDATE_CONFIGURACION ?, ?, ?, ?, ?', [
-                        $productCode,        // @codigo
-                        $fuenteOriginal,     // @fuente - Mantener la fuente original del producto
-                        $marketId,           // @idMercado
-                        $userId,             // @idUsuario
-                        $note                // @nota
-                    ]);
-
-                    // Log para debugging - verificar ejecución del SP
-                    \Log::info('Resultado de SP_UPDATE_CONFIGURACION:', [
-                        'codigo' => $productCode,
-                        'executed' => $executed ? 'SI' : 'NO',
-                        'executed_type' => gettype($executed),
-                        'executed_value' => $executed
-                    ]);
-
-                    if (!$executed) {
-                        $errors[] = "Error ejecutando SP_UPDATE_CONFIGURACION para producto {$productCode}";
-                        continue;
-                    }
-
-                    // PASO 3: Registrar en logs
-                    DB::connection('sqlsrv')->table('ODS.TAB_MERCADO_LOG')->insert([
-                        'usuario' => Auth::user()->usuario,
-                        'accion' => 'UPDATE',
-                        'fecha' => now(),
-                        'tabla' => 'ODS.TAB_CONFIGURACION',
-                        'detalle' => "Producto {$productCode} cambiado de mercado {$previousMarket} a {$mercado->mercado}",
-                        'nota' => $note
-                    ]);
-
-                    $changedCount++;
-                    $changedProducts[] = [
-                        'code' => $productoInfo->codigoPresentacion,
-                        'name' => $productoInfo->descripcionPresentacion,
-                        'previous_market' => $previousMarket,
-                        'new_market' => $mercado->mercado
-                    ];
-
-                    // Log para debugging - verificar incremento del contador
-                    \Log::info('Producto procesado exitosamente:', [
-                        'codigo' => $productCode,
-                        'changedCount_actual' => $changedCount,
-                        'total_products' => count($productIds)
-                    ]);
-
-                    // Log para verificar que llegamos hasta aquí sin errores
-                    \Log::info('Producto completado sin errores:', [
-                        'codigo' => $productCode,
-                        'status' => 'COMPLETADO'
-                    ]);
-
-                } catch (\Exception $e) {
-                    $errors[] = "Error cambiando mercado del producto {$productCode}: " . $e->getMessage();
-                    
-                    // Log detallado del error
-                    \Log::error('Error detallado en bulkChangeMarket:', [
-                        'codigo' => $productCode,
-                        'error_message' => $e->getMessage(),
-                        'error_file' => $e->getFile(),
-                        'error_line' => $e->getLine(),
-                        'error_trace' => $e->getTraceAsString()
-                    ]);
-                }
-            }
-
-            // Log para debugging - resumen final
-            \Log::info('Resumen de bulkChangeMarket:', [
-                'total_solicitados' => count($productIds),
-                'total_cambiados' => $changedCount,
-                'total_errores' => count($errors),
-                'productos_cambiados' => $changedProducts
-            ]);
-
-            // Enviar notificación por email si se cambiaron productos exitosamente
-            if ($changedCount > 0) {
-                try {
-                    $notificationService = new NotificationService();
-                    $notificationService->notifyMarketAction('change_market', [
-                        'changed_products' => $changedProducts,
-                        'new_market_name' => $mercado->mercado,
-                        'changed_count' => $changedCount
-                    ], Auth::user(), $note);
-                } catch (\Exception $e) {
-                    // Error en notificación pero no interrumpir el flujo
-                }
-            }
-
-            DB::commit();
-
-            $response = [
-                'success' => true,
-                'changed_count' => $changedCount,
-                'total_requested' => count($productIds),
-                'new_market' => $mercado->mercado,
-                'message' => "Se cambiaron {$changedCount} productos al mercado {$mercado->mercado} correctamente"
-            ];
-
-            if (!empty($errors)) {
-                $response['warnings'] = $errors;
-            }
-
-            return response()->json($response);
+                return response()->json($response);
+            });
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar mercado de productos: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * ========================================
+     * MÉTODOS PRIVADOS PARA REFACTORIZACIÓN
+     * ========================================
+     */
+
+    /**
+     * Obtiene la consulta base para productos con todos los JOINs necesarios
+     */
+    private function getBaseProductQuery()
+    {
+        return DB::connection('sqlsrv')
+            ->table('ODS.TAB_PRODUCTO as p')
+            ->leftJoin('ODS.TAB_CONFIGURACION as c', 'p.codigoPresentacion', '=', 'c.codigo')
+            ->leftJoin('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+            ->leftJoin('dbo.VMAE_PROD_IQVIA as v', 'p.codigoPresentacion', '=', 'v.codigoPresentacion');
+    }
+
+    /**
+     * Obtiene la consulta base para productos sin JOINs adicionales
+     */
+    private function getSimpleProductQuery()
+    {
+        return DB::connection('sqlsrv')
+            ->table('ODS.TAB_PRODUCTO as p');
+    }
+
+    /**
+     * Obtiene la consulta para mercados activos
+     */
+    private function getActiveMarketsQuery()
+    {
+        return DB::connection('sqlsrv')
+            ->table('ODS.TAB_MERCADO as m')
+            ->join('ODS.TAB_ESTADO as e', 'm.idEstado', '=', 'e.idEstado')
+            ->where('e.estado', 'ACTIVO');
+    }
+
+    /**
+     * Obtiene la consulta para verificar si un mercado existe y está activo
+     */
+    private function getMarketValidationQuery($marketId)
+    {
+        return $this->getActiveMarketsQuery()
+            ->select('m.idMercado', 'm.mercado', 'e.estado')
+            ->where('m.idMercado', $marketId);
+    }
+
+    /**
+     * Obtiene información de un producto específico
+     */
+    private function getProductInfo($codigoPresentacion)
+    {
+        return DB::connection('sqlsrv')
+            ->table('ODS.TAB_PRODUCTO')
+            ->where('codigoPresentacion', $codigoPresentacion)
+            ->select('codigoPresentacion', 'descripcionPresentacion')
+            ->first();
+    }
+
+    /**
+     * Obtiene la configuración de un producto
+     */
+    private function getProductConfiguration($codigoPresentacion)
+    {
+        return DB::connection('sqlsrv')
+            ->table('ODS.TAB_CONFIGURACION as c')
+            ->join('ODS.TAB_MERCADO as m', 'c.idMercado', '=', 'm.idMercado')
+            ->select('c.*', 'm.mercado')
+            ->where('c.codigo', $codigoPresentacion)
+            ->first();
+    }
+
+    /**
+     * Ejecuta una operación dentro de una transacción de base de datos
+     * 
+     * @param callable $callback Función a ejecutar dentro de la transacción
+     * @return mixed Resultado de la función callback
+     * @throws \Exception Si ocurre algún error durante la transacción
+     */
+    private function executeWithTransaction(callable $callback)
+    {
+        DB::beginTransaction();
+        try {
+            $result = $callback();
+            DB::commit();
+            return $result;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Registra una acción en el log de auditoría del mercado
+     * 
+     * @param string $action Acción realizada (INSERT, UPDATE, DELETE)
+     * @param string $detail Detalle de la acción
+     * @param string|null $note Nota adicional
+     * @return void
+     */
+    private function logMarketAction(string $action, string $detail, string $note = null)
+    {
+        DB::connection('sqlsrv')->table('ODS.TAB_MERCADO_LOG')->insert([
+            'usuario' => Auth::user()->usuario,
+            'accion' => $action,
+            'fecha' => now(),
+            'tabla' => 'ODS.TAB_CONFIGURACION',
+            'detalle' => $detail,
+            'nota' => $note
+        ]);
+    }
+
+    /**
+     * Envía una notificación de manera segura sin interrumpir el flujo principal
+     * 
+     * @param callable $notificationCallback Función que recibe el NotificationService
+     * @return void
+     */
+    private function sendNotification(callable $notificationCallback)
+    {
+        try {
+            $notificationService = new NotificationService();
+            $notificationCallback($notificationService);
+        } catch (\Exception $e) {
+            // Error en notificación pero no interrumpir el flujo
+            \Log::warning('Error enviando notificación: ' . $e->getMessage());
         }
     }
 }
