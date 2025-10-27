@@ -310,9 +310,10 @@ function resetToOriginalView() {
     window.location.href = window.MarketManagementRoutes.index;
 }
 
-// Function to clear search
+// Function to clear search (desktop and mobile)
 window.clearSearch = function() {
     $('#search-input').val('');
+    $('#search-input-mobile').val('');
     resetToOriginalView();
 }
 
@@ -523,11 +524,15 @@ window.showToast = function(message, type = 'info') {
 
 // Document ready functions
 $(document).ready(function() {
-    // Search input functionality
-    $('#search-input').on('input', function() {
+    // Search input functionality (desktop and mobile)
+    $('#search-input, #search-input-mobile').on('input', function() {
         clearTimeout(searchTimeout);
         const searchTerm = $(this).val().trim();
         currentSearch = searchTerm;
+        
+        // Sincronizar ambos inputs
+        $('#search-input').val(searchTerm);
+        $('#search-input-mobile').val(searchTerm);
         
         searchTimeout = setTimeout(() => {
             if (searchTerm === '') {
@@ -539,8 +544,8 @@ $(document).ready(function() {
         }, 500); // Debounce search for 500ms
     });
     
-    // Search on Enter key
-    $('#search-input').on('keypress', function(e) {
+    // Search on Enter key (desktop and mobile)
+    $('#search-input, #search-input-mobile').on('keypress', function(e) {
         if (e.key === 'Enter') {
             clearTimeout(searchTimeout);
             const searchTerm = $(this).val().trim();

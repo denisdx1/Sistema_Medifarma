@@ -9,7 +9,8 @@
         <!-- Markets Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+                <!-- Desktop Layout -->
+                <div class="hidden lg:flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
                     <div>
                         <h2 class="text-lg font-medium text-gray-900">
                             <i class="fas fa-list mr-2"></i>
@@ -30,7 +31,7 @@
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Campo de búsqueda -->
+                    <!-- Desktop Actions -->
                     <div class="flex items-center space-x-3">
                         <!-- Notificación tipo Facebook para Productos NUEVOS y SIN_ASIGNAR -->
                         <div onclick="redirectToProductosNuevosYSinAsignar()" 
@@ -94,6 +95,7 @@
                             Crear Mercado
                         </button>
                         
+                        <!-- Campo de búsqueda -->
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-gray-400"></i>
@@ -116,8 +118,105 @@
                             </div>
                             <?php endif; ?>
                         </div>
-                        
+                    </div>
+                </div>
 
+                <!-- Mobile/Tablet Layout -->
+                <div class="lg:hidden">
+                    <!-- Title Section -->
+                    <div class="mb-4">
+                        <h2 class="text-lg font-medium text-gray-900">
+                            <i class="fas fa-list mr-2"></i>
+                            Listado de Marcas
+                        </h2>
+                        <?php if(auth()->guard()->check()): ?>
+                            <?php if(auth()->user()->idRol == 1): ?>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <i class="fas fa-crown text-yellow-500 mr-1"></i>
+                                    Vista de administrador - Todas las marcas del sistema
+                                </p>
+                            <?php elseif(auth()->user()->idRol == 2): ?>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <i class="fas fa-user text-blue-500 mr-1"></i>
+                                    Vista de gerente - Solo sus marcas asignadas
+                                </p>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="mb-4">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" 
+                                   id="search-input-mobile"
+                                   name="search"
+                                   value="<?php echo e(request('search')); ?>"
+                                   class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                                   placeholder="Buscar por marca o mercado..."
+                                   autocomplete="off">
+                            <?php if(request('search')): ?>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <button type="button" 
+                                        onclick="clearSearch()"
+                                        class="text-gray-400 hover:text-gray-600"
+                                        title="Limpiar búsqueda">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="space-y-3">
+                        <!-- Primary Action -->
+                        <button onclick="openCreateMarketModal()"
+                                class="w-full inline-flex items-center justify-center px-4 py-3 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200 shadow-sm hover:shadow-md"
+                                title="Crear nuevo mercado">
+                            <i class="fas fa-plus mr-2"></i>
+                            Crear Mercado
+                        </button>
+
+                        <!-- Secondary Actions -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <!-- Notificación -->
+                            <div onclick="redirectToProductosNuevosYSinAsignar()" 
+                                 class="relative cursor-pointer group">
+                                <div class="w-full h-12 bg-red-500 hover:bg-red-600 rounded-md flex items-center justify-center transition-colors duration-200 shadow-sm hover:shadow-md">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fa-solid fa-bell text-white text-sm"></i>
+                                        <span class="text-white text-sm font-medium">Notificaciones</span>
+                                    </div>
+                                </div>
+                                <!-- Badge con el número total -->
+                                <div class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                    <span id="total-count-notification-mobile">0</span>
+                                </div>
+                            </div>
+                            
+                            <!-- ATC4 (solo para gerentes) -->
+                            <?php if(auth()->user()->idRol == 2): ?>
+                            <div onclick="openAtc4ListModal()" class="relative cursor-pointer group">
+                                <div class="w-full h-12 bg-purple-500 hover:bg-purple-600 rounded-md flex items-center justify-center transition-colors duration-200 shadow-sm hover:shadow-md">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fa-solid fa-layer-group text-white text-sm"></i>
+                                        <span class="text-white text-sm font-medium">ATC4</span>
+                                    </div>
+                                </div>
+                                <!-- Badge con el número de ATC4 -->
+                                <div class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                    <span id="atc4-count-badge-mobile">0</span>
+                                </div>
+                            </div>
+                            <?php else: ?>
+                            <div class="w-full h-12 bg-gray-300 rounded-md flex items-center justify-center">
+                                <span class="text-gray-500 text-sm">-</span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -722,4 +821,4 @@ window.isGerenteProducto = <?php echo e(auth()->user()->idRol == 2 ? 'true' : 'f
 <script src="<?php echo e(asset('js/atc4-modal.js')); ?>"></script>
 <?php $__env->stopPush(); ?>
 
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/market-management/index.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Desktop\Sistema_Medifarma\resources\views/market-management/index.blade.php ENDPATH**/ ?>

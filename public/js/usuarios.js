@@ -926,3 +926,87 @@ async function eliminarConfiguracionNotificaciones() {
         btn.innerHTML = originalText;
     }
 }
+
+// ========================================
+// FUNCIONES PARA CONFIGURACIÓN AUTOMÁTICA
+// ========================================
+
+// Función para cargar información de configuración automática
+function cargarInfoAutoConfig() {
+    fetch('/usuarios/info-auto-config')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const info = data.data;
+                
+                // Actualizar fechas
+                const nextCloseElement = document.getElementById('nextCloseDate');
+                const nextOpenElement = document.getElementById('nextOpenDate');
+                const currentDayElement = document.getElementById('currentDayInfo');
+                
+                if (nextCloseElement) nextCloseElement.textContent = info.next_close_date;
+                if (nextOpenElement) nextOpenElement.textContent = info.next_open_date;
+                
+                // Actualizar información del día actual
+                let dayInfo = `Día ${info.current_day} de ${info.last_day_of_month}`;
+                if (info.is_close_day) {
+                    dayInfo += ' - 🔒 HOY SE CIERRA AUTOMÁTICAMENTE';
+                } else if (info.is_open_day) {
+                    dayInfo += ' - 🔓 HOY SE HABILITA AUTOMÁTICAMENTE';
+                }
+                
+                if (currentDayElement) currentDayElement.textContent = dayInfo;
+                
+                console.log('✅ Información de configuración automática cargada:', info);
+            } else {
+                console.error('Error al cargar información automática:', data.message);
+                mostrarToast('Error al cargar información de configuración automática', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar información automática:', error);
+            mostrarToast('Error al cargar información de configuración automática', 'error');
+        });
+}
+
+// Función para procesar configuración automática
+function procesarAutoConfig() {
+    if (confirm('¿Estás seguro de que quieres ejecutar la configuración automática ahora? Esto puede cambiar el estado del sistema.')) {
+        fetch('/usuarios/procesar-auto-config', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const result = data.data;
+                
+                if (result.processed) {
+                    if (result.action === 'closed') {
+                        mostrarToast('🔒 ' + result.message, 'warning');
+                    } else if (result.action === 'opened') {
+                        mostrarToast('🔓 ' + result.message, 'success');
+                    }
+                } else {
+                    mostrarToast('ℹ️ ' + result.message, 'info');
+                }
+                
+                // Recargar estado y información
+                if (typeof cargarEstadoControlAcceso === 'function') {
+                    cargarEstadoControlAcceso();
+                }
+                cargarInfoAutoConfig();
+                
+            } else {
+                mostrarToast('Error al procesar configuración automática: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error al procesar configuración automática:', error);
+            mostrarToast('Error al procesar configuración automática', 'error');
+        });
+    }
+}

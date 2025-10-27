@@ -3,7 +3,8 @@
     <!-- Header Section -->
     <div class="bg-white border-b border-gray-200 shadow-sm">
         <div class="w-full px-4 py-6">
-            <div class="flex items-center justify-between">
+            <!-- Desktop Layout -->
+            <div class="hidden lg:flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
                         <i class="fas fa-users text-primary mr-2"></i>
@@ -20,11 +21,60 @@
                     </button>
                     
                     <button type="button" 
+                            onclick="abrirModalControlAcceso()"
+                            class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                        <i class="fas fa-clock mr-2"></i>
+                        Control de Acceso
+                    </button>
+                    
+                    <button type="button" 
                             onclick="abrirModalConfiguracionNotificaciones()"
                             class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
                         <i class="fas fa-bell mr-2"></i>
                         Configurar Notificaciones
                     </button>
+                </div>
+            </div>
+
+            <!-- Mobile/Tablet Layout -->
+            <div class="lg:hidden">
+                <!-- Title Section -->
+                <div class="mb-4">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900">
+                        <i class="fas fa-users text-primary mr-2"></i>
+                        Gestión de Usuarios
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Administra usuarios del sistema y sus permisos</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <!-- Primary Action -->
+                    <button type="button" 
+                            onclick="abrirModalCrear()"
+                            class="w-full inline-flex items-center justify-center px-4 py-3 bg-primary border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:from-secondary hover:to-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
+                        <i class="fas fa-plus mr-2"></i>
+                        Nuevo Usuario
+                    </button>
+
+                    <!-- Secondary Actions Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" 
+                                onclick="abrirModalControlAcceso()"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span class="hidden sm:inline">Control de Acceso</span>
+                            <span class="sm:hidden">Acceso</span>
+                        </button>
+                        
+                        <button type="button" 
+                                onclick="abrirModalConfiguracionNotificaciones()"
+                                class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg shadow-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                            <i class="fas fa-bell mr-2"></i>
+                            <span class="hidden sm:inline">Configurar Notificaciones</span>
+                            <span class="sm:hidden">Notificaciones</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -366,7 +416,7 @@
 <!-- MODALES FUERA DEL CONTENEDOR PRINCIPAL PARA Z-INDEX CORRECTO -->
 
 <!-- Modal Crear Usuario -->
-<div id="modalCrearUsuario" class="fixed inset-0 overflow-y-auto h-full w-full hidden flex items-center justify-center p-2" style="z-index: 999999 !important;">
+<div id="modalCrearUsuario" class="fixed inset-0 overflow-y-auto  bg-opacity-10 backdrop-blur-md h-full w-full hidden flex items-center justify-center p-2" style="z-index: 999999 !important;">
     <div class="relative mx-auto border w-full max-w-4xl shadow-2xl rounded-lg bg-white" style="z-index: 9999999 !important;">
         <!-- Modal Header -->
         <div class="flex items-center justify-between p-3 border-b border-gray-200">
@@ -918,6 +968,163 @@
             </div>
         </div>
         
+        <!-- Modal Control de Acceso -->
+        <div id="modalControlAcceso" class="fixed inset-0 bg-opacity-10 backdrop-blur-md z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-red-500 mr-2"></i>
+                            <h3 class="text-lg font-semibold text-gray-900">Control de Acceso</h3>
+                        </div>
+                        <button type="button" 
+                                onclick="cerrarModalControlAcceso()"
+                                class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6">
+                        <form id="formControlAcceso" method="POST" action="<?php echo e(route('usuarios.configurar-acceso')); ?>">
+                            <?php echo csrf_field(); ?>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Columna Izquierda - Configuración -->
+                                <div class="space-y-4">
+                                    <!-- Estado actual -->
+                                    <div class="p-3 bg-green-50 border border-green-200 rounded">
+                                        <div id="estadoActual" class="flex items-center">
+                                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                            <span class="text-sm text-green-700">Sistema Habilitado</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Fecha y hora de inicio -->
+                                    <div>
+                                        <label for="fechaInicio" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Fecha y Hora de Inicio
+                                        </label>
+                                        <input type="datetime-local" 
+                                               id="fechaInicio" 
+                                               name="fecha_inicio"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+
+                                    <!-- Fecha y hora de fin -->
+                                    <div>
+                                        <label for="fechaFin" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Fecha y Hora de Fin
+                                        </label>
+                                        <input type="datetime-local" 
+                                               id="fechaFin" 
+                                               name="fecha_fin"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                                    </div>
+
+                                    <!-- Preview del período -->
+                                    <div class="p-3 bg-gray-50 border border-gray-200 rounded">
+                                        <h4 class="text-sm font-medium text-gray-700 mb-2">Vista Previa</h4>
+                                        <div id="previewPeriodo" class="text-xs text-gray-600">
+                                            Selecciona las fechas para ver el período
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Columna Derecha - Usuarios e Información -->
+                                <div class="space-y-4">
+                                    <!-- Información -->
+                                    <div class="p-3 bg-blue-50 border border-blue-200 rounded">
+                                        <h4 class="text-sm font-medium text-blue-800 mb-2">Información Importante</h4>
+                                        <div class="text-xs text-blue-700">
+                                            <p class="mb-1">• Solo administradores tendrán acceso durante el período</p>
+                                            <p>• Otros usuarios serán redirigidos a página de acceso denegado</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configuración Automática -->
+                                    <div class="p-3 bg-purple-50 border border-purple-200 rounded">
+                                        <h4 class="text-sm font-medium text-purple-800 mb-3 flex items-center">
+                                            <i class="fas fa-robot text-purple-600 mr-2"></i>
+                                            Configuración Automática
+                                        </h4>
+                                        <div class="text-xs text-purple-700 mb-3">
+                                            El sistema se configura automáticamente:
+                                        </div>
+                                        <div id="infoAutoConfig" class="text-xs text-purple-600 space-y-1">
+                                            <div class="flex justify-between">
+                                                <span>• Se cierra:</span>
+                                                <span id="nextCloseDate" class="font-medium">Cargando...</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span>• Se habilita:</span>
+                                                <span id="nextOpenDate" class="font-medium">Cargando...</span>
+                                            </div>
+                                            <div class="mt-2 p-2 bg-purple-100 rounded text-center">
+                                                <span id="currentDayInfo" class="text-xs font-medium">Cargando...</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 flex space-x-2">
+                                            <button type="button" 
+                                                    onclick="procesarAutoConfig()"
+                                                    class="flex-1 px-3 py-1.5 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition-colors">
+                                                <i class="fas fa-play mr-1"></i>
+                                                Ejecutar Ahora
+                                            </button>
+                                            <button type="button" 
+                                                    onclick="cargarInfoAutoConfig()"
+                                                    class="flex-1 px-3 py-1.5 bg-gray-600 text-white rounded text-xs hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-refresh mr-1"></i>
+                                                Actualizar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Usuarios Excepcionales -->
+                                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                        <h4 class="text-sm font-medium text-yellow-800 mb-3 flex items-center">
+                                            <i class="fas fa-user-shield text-yellow-600 mr-2"></i>
+                                            Usuarios con Acceso Especial
+                                        </h4>
+                                        <div class="text-xs text-yellow-700 mb-3">
+                                            Selecciona usuarios específicos que podrán acceder durante el período de deshabilitación:
+                                        </div>
+                                        <div id="usuariosExcepcionales" class="space-y-2 max-h-40 overflow-y-auto">
+                                            <!-- Los usuarios se cargarán aquí dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex justify-between items-center p-4 border-t border-gray-200 bg-gray-50">
+                        <button type="button" 
+                                onclick="deshabilitarControlAcceso()"
+                                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm">
+                            <i class="fas fa-unlock mr-1"></i>
+                            Deshabilitar
+                        </button>
+                        <div class="flex space-x-2">
+                            <button type="button" 
+                                    onclick="cerrarModalControlAcceso()"
+                                    class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 text-sm">
+                                Cancelar
+                            </button>
+                            <button type="button" 
+                                    onclick="guardarControlAcceso()"
+                                    class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+                                <i class="fas fa-save mr-1"></i>
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </div>
 
@@ -929,6 +1136,289 @@
 
 <?php $__env->startPush('scripts'); ?>
 <script src="<?php echo e(asset('js/usuarios.js')); ?>"></script>
+
+<script>
+// Funciones para el Control de Acceso
+function abrirModalControlAcceso() {
+    document.getElementById('modalControlAcceso').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Cargar estado actual y configuración guardada
+    cargarEstadoControlAcceso();
+    
+    // Cargar usuarios excepcionales
+    cargarUsuariosExcepcionales();
+    
+    // Cargar información de configuración automática
+    cargarInfoAutoConfig();
+    
+    // Agregar event listeners para preview en tiempo real
+    document.getElementById('fechaInicio').addEventListener('change', actualizarPreview);
+    document.getElementById('fechaFin').addEventListener('change', actualizarPreview);
+    
+    // Actualizar preview inicial
+    actualizarPreview();
+}
+
+function cerrarModalControlAcceso() {
+    document.getElementById('modalControlAcceso').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    
+    // Limpiar formulario
+    document.getElementById('formControlAcceso').reset();
+    
+    // Remover event listeners
+    document.getElementById('fechaInicio').removeEventListener('change', actualizarPreview);
+    document.getElementById('fechaFin').removeEventListener('change', actualizarPreview);
+}
+
+function actualizarPreview() {
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    const previewDiv = document.getElementById('previewPeriodo');
+    if (!fechaInicio || !fechaFin) {
+        previewDiv.innerHTML = 'Selecciona las fechas para ver el período';
+        return;
+    }
+    
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const ahora = new Date();
+    
+    // Calcular duración
+    const duracionMs = fin - inicio;
+    const duracionHoras = Math.round(duracionMs / (1000 * 60 * 60));
+    const duracionDias = Math.floor(duracionHoras / 24);
+    const horasRestantes = duracionHoras % 24;
+    
+    let duracionTexto = '';
+    if (duracionDias > 0) {
+        duracionTexto = `${duracionDias}d ${horasRestantes}h`;
+    } else {
+        duracionTexto = `${duracionHoras}h`;
+    }
+    
+    // Calcular tiempo restante
+    let tiempoRestanteTexto = '--';
+    if (ahora < inicio) {
+        const tiempoRestanteMs = inicio - ahora;
+        const diasRestantes = Math.floor(tiempoRestanteMs / (1000 * 60 * 60 * 24));
+        const horasRestantes = Math.floor((tiempoRestanteMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        
+        if (diasRestantes > 0) {
+            tiempoRestanteTexto = `${diasRestantes}d ${horasRestantes}h`;
+        } else {
+            tiempoRestanteTexto = `${horasRestantes}h`;
+        }
+    } else if (ahora >= inicio && ahora <= fin) {
+        tiempoRestanteTexto = 'Activo';
+    } else {
+        tiempoRestanteTexto = 'Finalizado';
+    }
+    
+    // Actualizar preview
+    previewDiv.innerHTML = `
+        <div class="space-y-1">
+            <div><strong>Inicio:</strong> ${inicio.toLocaleString('es-ES')}</div>
+            <div><strong>Fin:</strong> ${fin.toLocaleString('es-ES')}</div>
+            <div><strong>Duración:</strong> ${duracionTexto}</div>
+            <div><strong>Tiempo restante:</strong> ${tiempoRestanteTexto}</div>
+        </div>
+    `;
+}
+
+function cargarEstadoControlAcceso() {
+    fetch('<?php echo e(route("usuarios.estado-acceso")); ?>')
+        .then(response => response.json())
+        .then(data => {
+            const estadoDiv = document.getElementById('estadoActual');
+            
+            // Cargar fechas guardadas en los inputs
+            if (data.fecha_inicio && data.fecha_fin) {
+                // Convertir fechas al formato datetime-local (sin conversión de zona horaria)
+                const fechaInicio = new Date(data.fecha_inicio);
+                const fechaFin = new Date(data.fecha_fin);
+                
+                // Crear strings en formato local sin conversión de zona horaria
+                const fechaInicioLocal = fechaInicio.getFullYear() + '-' + 
+                    String(fechaInicio.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(fechaInicio.getDate()).padStart(2, '0') + 'T' + 
+                    String(fechaInicio.getHours()).padStart(2, '0') + ':' + 
+                    String(fechaInicio.getMinutes()).padStart(2, '0');
+                    
+                const fechaFinLocal = fechaFin.getFullYear() + '-' + 
+                    String(fechaFin.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(fechaFin.getDate()).padStart(2, '0') + 'T' + 
+                    String(fechaFin.getHours()).padStart(2, '0') + ':' + 
+                    String(fechaFin.getMinutes()).padStart(2, '0');
+                
+                document.getElementById('fechaInicio').value = fechaInicioLocal;
+                document.getElementById('fechaFin').value = fechaFinLocal;
+            } else {
+                // Si no hay configuración guardada, establecer valores por defecto
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                document.getElementById('fechaInicio').value = now.toISOString().slice(0, 16);
+                document.getElementById('fechaFin').value = tomorrow.toISOString().slice(0, 16);
+            }
+            
+            if (data.habilitado) {
+                estadoDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span class="text-sm text-green-700">Sistema Habilitado</span>
+                    </div>
+                `;
+                console.log('✅ Sistema HABILITADO - Todos los usuarios pueden acceder');
+            } else {
+                estadoDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                        <span class="text-sm text-red-700">Sistema Deshabilitado</span>
+                    </div>
+                `;
+                console.log('❌ Sistema DESHABILITADO - Solo administradores pueden acceder');
+                console.log('📅 Período:', data.fecha_inicio, 'hasta', data.fecha_fin);
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar estado:', error);
+        });
+}
+
+function cargarUsuariosExcepcionales() {
+    fetch('<?php echo e(route("usuarios.usuarios-excepcionales")); ?>')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('usuariosExcepcionales');
+            
+            console.log('Datos recibidos:', data); // Debug
+            
+            if (data.usuarios && data.usuarios.length > 0) {
+                let html = '';
+                data.usuarios.forEach(usuario => {
+                    const isSelected = data.usuariosExcepcionales.includes(usuario.idUsuario);
+                    html += `
+                        <label class="flex items-center p-2 bg-white border border-gray-200 rounded cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" 
+                                   class="mr-3 text-yellow-600 focus:ring-yellow-500" 
+                                   value="${usuario.idUsuario}" 
+                                   ${isSelected ? 'checked' : ''}>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">${usuario.login}</div>
+                                <div class="text-xs text-gray-500">${usuario.email} - Rol: ${usuario.idRol}</div>
+                            </div>
+                        </label>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                let message = 'No hay usuarios disponibles';
+                if (data.debug) {
+                    message += `<br><small class="text-gray-400">Total usuarios: ${data.debug.total_usuarios}, No admin: ${data.debug.usuarios_no_admin}</small>`;
+                    if (data.debug.roles_encontrados && data.debug.roles_encontrados.length > 0) {
+                        message += `<br><small class="text-gray-400">Roles: ${data.debug.roles_encontrados.join(', ')}</small>`;
+                    }
+                }
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center">${message}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar usuarios excepcionales:', error);
+            document.getElementById('usuariosExcepcionales').innerHTML = '<p class="text-xs text-red-500 text-center">Error al cargar usuarios</p>';
+        });
+}
+
+function guardarControlAcceso() {
+    const form = document.getElementById('formControlAcceso');
+    const formData = new FormData(form);
+    
+    // Validar fechas
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
+    
+    if (!fechaInicio || !fechaFin) {
+        showToast('Por favor, selecciona ambas fechas', 'error');
+        return;
+    }
+    
+    if (new Date(fechaInicio) >= new Date(fechaFin)) {
+        showToast('La fecha de fin debe ser posterior a la fecha de inicio', 'error');
+        return;
+    }
+    
+    // Obtener usuarios excepcionales seleccionados
+    const usuariosExcepcionales = Array.from(document.querySelectorAll('#usuariosExcepcionales input[type="checkbox"]:checked'))
+        .map(checkbox => parseInt(checkbox.value));
+    
+    // Enviar formulario de configuración de acceso
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Guardar usuarios excepcionales
+            return fetch('<?php echo e(route("usuarios.guardar-usuarios-excepcionales")); ?>', {
+                method: 'POST',
+                body: JSON.stringify({ usuarios: usuariosExcepcionales }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+        } else {
+            throw new Error(data.message || 'Error al guardar configuración');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Configuración de acceso y usuarios excepcionales guardados correctamente', 'success');
+            cerrarModalControlAcceso();
+            cargarEstadoControlAcceso();
+        } else {
+            showToast(data.message || 'Error al guardar usuarios excepcionales', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error al guardar la configuración', 'error');
+    });
+}
+
+function deshabilitarControlAcceso() {
+    if (confirm('¿Estás seguro de que quieres deshabilitar el control de acceso? Esto permitirá que todos los usuarios accedan al sistema.')) {
+        fetch('<?php echo e(route("usuarios.deshabilitar-acceso")); ?>', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Control de acceso deshabilitado correctamente', 'success');
+                cerrarModalControlAcceso();
+                cargarEstadoControlAcceso();
+            } else {
+                showToast(data.message || 'Error al deshabilitar el control', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error al deshabilitar el control', 'error');
+        });
+    }
+}
+</script>
 <?php $__env->stopPush(); ?>
 
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/usuarios/index.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\druizp\Desktop\Sistema_Medifarma\resources\views/usuarios/index.blade.php ENDPATH**/ ?>

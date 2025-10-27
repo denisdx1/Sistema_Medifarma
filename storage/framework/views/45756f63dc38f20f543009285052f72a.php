@@ -183,4 +183,4 @@
 
 
 </body>
-</html><?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/auth/login.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\Users\druizp\Desktop\Sistema_Medifarma\resources\views/auth/login.blade.php ENDPATH**/ ?>

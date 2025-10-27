@@ -245,21 +245,39 @@ function loadProductosNuevosYSinAsignar() {
                 const countSinAsignar = response.data.counts.sin_asignar;
                 const total = response.data.counts.total;
                 
-                // Actualizar contador total en el badge
-                document.getElementById('total-count-notification').textContent = total;
+                // Actualizar contador total en el badge (desktop y mobile)
+                const desktopBadge = document.getElementById('total-count-notification');
+                const mobileBadge = document.getElementById('total-count-notification-mobile');
+                
+                if (desktopBadge) desktopBadge.textContent = total;
+                if (mobileBadge) mobileBadge.textContent = total;
                 
                 // Actualizar tooltip
                 document.getElementById('tooltip-count-nuevos').textContent = countNuevos;
                 document.getElementById('tooltip-count-sin-asignar').textContent = countSinAsignar;
                 
-                // Cambiar color del badge según si hay productos
-                const badgeElement = document.getElementById('total-count-notification').parentElement;
+                // Cambiar color del badge según si hay productos (desktop y mobile)
+                const desktopBadgeElement = document.getElementById('total-count-notification')?.parentElement;
+                const mobileBadgeElement = document.getElementById('total-count-notification-mobile')?.parentElement;
+                
                 if (total > 0) {
-                    badgeElement.classList.remove('bg-blue-600');
-                    badgeElement.classList.add('bg-red-600');
+                    if (desktopBadgeElement) {
+                        desktopBadgeElement.classList.remove('bg-blue-600');
+                        desktopBadgeElement.classList.add('bg-red-600');
+                    }
+                    if (mobileBadgeElement) {
+                        mobileBadgeElement.classList.remove('bg-blue-600');
+                        mobileBadgeElement.classList.add('bg-red-600');
+                    }
                 } else {
-                    badgeElement.classList.remove('bg-red-600');
-                    badgeElement.classList.add('bg-blue-600');
+                    if (desktopBadgeElement) {
+                        desktopBadgeElement.classList.remove('bg-red-600');
+                        desktopBadgeElement.classList.add('bg-blue-600');
+                    }
+                    if (mobileBadgeElement) {
+                        mobileBadgeElement.classList.remove('bg-red-600');
+                        mobileBadgeElement.classList.add('bg-blue-600');
+                    }
                 }
             }
         },
@@ -281,20 +299,38 @@ function loadAtc4Count() {
             if (response.success && response.data) {
                 const atc4Count = response.data.atc4_count;
                 
-                // Actualizar contador en el badge
-                document.getElementById('atc4-count-badge').textContent = atc4Count;
+                // Actualizar contador en el badge (desktop y mobile)
+                const desktopAtc4Badge = document.getElementById('atc4-count-badge');
+                const mobileAtc4Badge = document.getElementById('atc4-count-badge-mobile');
+                
+                if (desktopAtc4Badge) desktopAtc4Badge.textContent = atc4Count;
+                if (mobileAtc4Badge) mobileAtc4Badge.textContent = atc4Count;
                 
                 // Actualizar tooltip
                 document.getElementById('tooltip-count-atc4').textContent = atc4Count;
                 
-                // Cambiar color del badge según si hay ATC4
-                const badgeElement = document.getElementById('atc4-count-badge').parentElement;
+                // Cambiar color del badge según si hay ATC4 (desktop y mobile)
+                const desktopBadgeElement = document.getElementById('atc4-count-badge')?.parentElement;
+                const mobileBadgeElement = document.getElementById('atc4-count-badge-mobile')?.parentElement;
+                
                 if (atc4Count > 0) {
-                    badgeElement.classList.remove('bg-purple-600');
-                    badgeElement.classList.add('bg-green-600');
+                    if (desktopBadgeElement) {
+                        desktopBadgeElement.classList.remove('bg-purple-600');
+                        desktopBadgeElement.classList.add('bg-green-600');
+                    }
+                    if (mobileBadgeElement) {
+                        mobileBadgeElement.classList.remove('bg-purple-600');
+                        mobileBadgeElement.classList.add('bg-green-600');
+                    }
                 } else {
-                    badgeElement.classList.remove('bg-green-600');
-                    badgeElement.classList.add('bg-purple-600');
+                    if (desktopBadgeElement) {
+                        desktopBadgeElement.classList.remove('bg-green-600');
+                        desktopBadgeElement.classList.add('bg-purple-600');
+                    }
+                    if (mobileBadgeElement) {
+                        mobileBadgeElement.classList.remove('bg-green-600');
+                        mobileBadgeElement.classList.add('bg-purple-600');
+                    }
                 }
             }
         },
@@ -309,5 +345,7 @@ function loadAtc4Count() {
 // Función para limpiar búsqueda
 function clearSearch() {
     document.getElementById('search-input').value = '';
+    const mobileSearchInput = document.getElementById('search-input-mobile');
+    if (mobileSearchInput) mobileSearchInput.value = '';
     // Aquí puedes agregar lógica adicional para limpiar resultados de búsqueda
 }

@@ -7,8 +7,15 @@
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <!-- IDIOMAS -->
     
-    <!-- Vite Assets -->
-    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+    <!-- Assets - Auto-detect production/development -->
+    <?php if(file_exists(public_path('build/manifest.json'))): ?>
+        
+        <link rel="stylesheet" href="<?php echo e(\App\Helpers\AssetHelper::css()); ?>">
+        <script src="<?php echo e(\App\Helpers\AssetHelper::js()); ?>" defer></script>
+    <?php else: ?>
+        
+        <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+    <?php endif; ?>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -201,4 +208,4 @@
     <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 </html>
-<?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\druizp\Desktop\Sistema_Medifarma\resources\views/layouts/app.blade.php ENDPATH**/ ?>

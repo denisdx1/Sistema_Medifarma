@@ -7,8 +7,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- IDIOMAS -->
     
-    <!-- Vite Assets -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Assets - Auto-detect production/development -->
+    @if(file_exists(public_path('build/manifest.json')))
+        {{-- Production: Use compiled assets --}}
+        <link rel="stylesheet" href="{{ \App\Helpers\AssetHelper::css() }}">
+        <script src="{{ \App\Helpers\AssetHelper::js() }}" defer></script>
+    @else
+        {{-- Development: Use Vite --}}
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 

@@ -31,7 +31,12 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 
 Route::middleware(['auth'])->group(function () {
     
-    Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto', 'password.change'])->group(function () {
+    // Ruta para acceso denegado - Accesible para todos los usuarios autenticados
+    Route::get('/access-denied', function () {
+        return view('auth.access-denied');
+    })->name('access.denied');
+    
+    Route::prefix('market-management')->name('market-management.')->middleware(['auth', 'role:administrador,gerente_producto', 'password.change', 'access.control'])->group(function () {
         Route::get('/', [App\Http\Controllers\MarketManagementController::class, 'index'])->name('index');
 
         Route::put('/update', [App\Http\Controllers\MarketManagementController::class, 'updateMarket'])->name('update');
@@ -60,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/market-management/atc4-list', [App\Http\Controllers\MarketManagementController::class, 'getAtc4List'])->name('market-management.atc4-list');
     
     // Productos Module - Available for all authenticated users
-    Route::prefix('productos')->name('productos.')->group(function () {
+    Route::prefix('productos')->name('productos.')->middleware(['access.control'])->group(function () {
         Route::get('/', [App\Http\Controllers\ProductosController::class, 'index'])->name('index');
         Route::get('/api', [App\Http\Controllers\ProductosController::class, 'getProductsApi'])->name('api');
         Route::get('/filter-options', [App\Http\Controllers\ProductosController::class, 'getFilterOptions'])->name('filter-options');
@@ -84,7 +89,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // User Management Routes - Available for authenticated users
-    Route::prefix('users')->name('users.')->group(function () {
+    Route::prefix('users')->name('users.')->middleware(['access.control'])->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('index');
         Route::get('/create', [UserManagementController::class, 'create'])->name('create');
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
@@ -110,6 +115,19 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/configuracion-notificaciones', [UsuarioController::class, 'storeConfiguracionNotificaciones'])->name('configuracion-notificaciones.store');
         Route::put('/configuracion-notificaciones/{id}', [UsuarioController::class, 'updateConfiguracionNotificaciones'])->name('configuracion-notificaciones.update');
         Route::delete('/configuracion-notificaciones/{id}', [UsuarioController::class, 'destroyConfiguracionNotificaciones'])->name('configuracion-notificaciones.destroy');
+        
+        // Rutas para control de acceso
+        Route::post('/configurar-acceso', [UsuarioController::class, 'configurarAcceso'])->name('configurar-acceso');
+        Route::post('/deshabilitar-acceso', [UsuarioController::class, 'deshabilitarAcceso'])->name('deshabilitar-acceso');
+        Route::get('/estado-acceso', [UsuarioController::class, 'estadoAcceso'])->name('estado-acceso');
+        
+        // Rutas para usuarios excepcionales
+        Route::get('/usuarios-excepcionales', [UsuarioController::class, 'obtenerUsuariosExcepcionales'])->name('usuarios-excepcionales');
+        Route::post('/guardar-usuarios-excepcionales', [UsuarioController::class, 'guardarUsuariosExcepcionales'])->name('guardar-usuarios-excepcionales');
+        
+        // Rutas para configuración automática
+        Route::get('/info-auto-config', [UsuarioController::class, 'obtenerInfoAutoConfig'])->name('info-auto-config');
+        Route::post('/procesar-auto-config', [UsuarioController::class, 'procesarAutoConfig'])->name('procesar-auto-config');
     });
 
 

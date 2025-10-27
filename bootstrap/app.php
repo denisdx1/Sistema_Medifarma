@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'password.change' => \App\Http\Middleware\PasswordChangeMiddleware::class,
             'session.expired' => \App\Http\Middleware\HandleSessionExpired::class,
+            'access.control' => \App\Http\Middleware\CheckAccessControl::class,
         ]);
         
         // Add global middleware to handle session expired

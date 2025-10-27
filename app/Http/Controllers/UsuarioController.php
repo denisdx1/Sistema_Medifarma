@@ -603,4 +603,234 @@ class UsuarioController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Configurar control de acceso al sistema
+     */
+    public function configurarAcceso(Request $request)
+    {
+        try {
+            $request->validate([
+                'fecha_inicio' => 'required|date',
+                'fecha_fin' => 'required|date|after:fecha_inicio'
+            ]);
+
+            // Guardar configuración en archivo JSON
+            $config = [
+                'habilitado' => false,
+                'fecha_inicio' => $request->fecha_inicio,
+                'fecha_fin' => $request->fecha_fin,
+                'configurado_por' => auth()->user()->usuario,
+                'configurado_en' => now()->toISOString()
+            ];
+
+            $configPath = storage_path('app/access_control.json');
+            file_put_contents($configPath, json_encode($config, JSON_PRETTY_PRINT));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Control de acceso configurado correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al configurar el control de acceso: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Deshabilitar control de acceso al sistema
+     */
+    public function deshabilitarAcceso(Request $request)
+    {
+        try {
+            // Eliminar archivo de configuración
+            $configPath = storage_path('app/access_control.json');
+            if (file_exists($configPath)) {
+                unlink($configPath);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Control de acceso deshabilitado correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al deshabilitar el control de acceso: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener estado actual del control de acceso
+     */
+    public function estadoAcceso(Request $request)
+    {
+        try {
+            $configPath = storage_path('app/access_control.json');
+            
+            if (!file_exists($configPath)) {
+                return response()->json([
+                    'habilitado' => true,
+                    'fecha_inicio' => null,
+                    'fecha_fin' => null
+                ]);
+            }
+
+            $config = json_decode(file_get_contents($configPath), true);
+            $now = now();
+
+            // Verificar si estamos dentro del período de deshabilitación
+            $fechaInicio = \Carbon\Carbon::parse($config['fecha_inicio']);
+            $fechaFin = \Carbon\Carbon::parse($config['fecha_fin']);
+
+            $deshabilitado = $now->between($fechaInicio, $fechaFin);
+
+            return response()->json([
+                'habilitado' => !$deshabilitado,
+                'fecha_inicio' => $config['fecha_inicio'],
+                'fecha_fin' => $config['fecha_fin'],
+                'configurado_por' => $config['configurado_por'] ?? null,
+                'configurado_en' => $config['configurado_en'] ?? null
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'habilitado' => true,
+                'fecha_inicio' => null,
+                'fecha_fin' => null,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Obtener lista de usuarios para excepciones
+     */
+    public function obtenerUsuariosExcepcionales(Request $request)
+    {
+        try {
+            // Obtener todos los usuarios (incluyendo administradores para debug)
+            $usuarios = User::select('idUsuario', 'login', 'email', 'idRol')
+                ->get();
+
+            // Filtrar usuarios que no son administradores
+            $usuariosNoAdmin = $usuarios->filter(function($usuario) {
+                return $usuario->idRol !== 1; // Asumiendo que 1 es el ID del rol administrador
+            })->values();
+
+            // Obtener usuarios excepcionales actuales
+            $exceptionsPath = storage_path('app/user_exceptions.json');
+            $usuariosExcepcionales = [];
+            
+            if (file_exists($exceptionsPath)) {
+                $exceptions = json_decode(file_get_contents($exceptionsPath), true);
+                $usuariosExcepcionales = $exceptions['users'] ?? [];
+            }
+
+            // Log para debug
+            \Log::info('Usuarios encontrados:', [
+                'total' => $usuarios->count(),
+                'no_admin' => $usuariosNoAdmin->count(),
+                'roles' => $usuarios->pluck('role')->unique()->toArray()
+            ]);
+
+            return response()->json([
+                'usuarios' => $usuariosNoAdmin,
+                'usuariosExcepcionales' => $usuariosExcepcionales,
+                'debug' => [
+                    'total_usuarios' => $usuarios->count(),
+                    'usuarios_no_admin' => $usuariosNoAdmin->count(),
+                    'roles_encontrados' => $usuarios->pluck('role')->unique()->toArray()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener usuarios excepcionales: ' . $e->getMessage());
+            return response()->json([
+                'usuarios' => [],
+                'usuariosExcepcionales' => [],
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Guardar usuarios excepcionales
+     */
+    public function guardarUsuariosExcepcionales(Request $request)
+    {
+        try {
+            $usuariosSeleccionados = $request->input('usuarios', []);
+            
+            $exceptionsPath = storage_path('app/user_exceptions.json');
+            
+            $data = [
+                'users' => $usuariosSeleccionados,
+                'configurado_por' => auth()->user()->login,
+                'configurado_en' => now()->toISOString()
+            ];
+            
+            file_put_contents($exceptionsPath, json_encode($data, JSON_PRETTY_PRINT));
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuarios excepcionales guardados correctamente'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar usuarios excepcionales: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Obtener información de configuración automática
+     */
+    public function obtenerInfoAutoConfig(Request $request)
+    {
+        try {
+            $autoService = new \App\Services\AutoAccessControlService();
+            $info = $autoService->getAutoConfigInfo();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $info
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener información de configuración automática: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Procesar configuración automática manualmente
+     */
+    public function procesarAutoConfig(Request $request)
+    {
+        try {
+            $autoService = new \App\Services\AutoAccessControlService();
+            $result = $autoService->processAutoAccessControl();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar configuración automática: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

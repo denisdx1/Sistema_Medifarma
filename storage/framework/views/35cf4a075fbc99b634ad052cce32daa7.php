@@ -310,4 +310,4 @@ document.addEventListener('DOMContentLoaded', function() {
     animation: slideUp 0.2s ease-out;
 }
 </style>
-<?php /**PATH C:\Users\druizp\Documents\Sistema_Medifarma\resources\views/components/navbar.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\druizp\Desktop\Sistema_Medifarma\resources\views/components/navbar.blade.php ENDPATH**/ ?>
