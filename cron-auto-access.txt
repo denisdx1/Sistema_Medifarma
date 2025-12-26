@@ -1,0 +1,12 @@
+# Configuración automática de acceso del sistema Medifarma
+# Este archivo debe ser agregado al crontab del servidor
+
+# Ejecutar todos los días a las 00:01 para verificar configuración automática
+1 0 * * * cd /path/to/Sistema_Medifarma && php artisan access:auto-process >> /var/log/medifarma-auto-access.log 2>&1
+
+# Ejecutar también a las 12:00 como respaldo
+0 12 * * * cd /path/to/Sistema_Medifarma && php artisan access:auto-process >> /var/log/medifarma-auto-access.log 2>&1
+
+# Para agregar al crontab, ejecutar:
+# crontab -e
+# Y agregar la línea correspondiente (ajustar la ruta del proyecto)

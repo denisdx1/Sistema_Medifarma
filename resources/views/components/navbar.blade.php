@@ -1,0 +1,310 @@
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <!-- Left side - Logo and Main Navigation -->
+            <div class="flex items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <img src="{{ asset('images/logo-medifarma-Photoroom.png') }}" alt="Medifarma Logo" class="h-8 w-auto">
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:ml-8 md:flex md:space-x-6">
+                    <!-- Market Management -->
+                    <a href="{{ route('market-management.index') }}" 
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-clipboard-list mr-2 {{ request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        Marcas
+                    </a>
+                    
+                    <!-- Productos Database -->
+                    <a href="{{ route('productos.index') }}" 
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-database mr-2 {{ request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        Base de Productos
+                    </a>
+                    
+                    <!-- Admin Section - Solo para administradores -->
+                    @if(Auth::check() && Auth::user()->isAdmin())
+                        <a href="{{ route('usuarios.index') }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                            <i class="fas fa-users mr-2 {{ request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                            Gestión Usuarios
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                Admin
+                            </span>
+                        </a>
+                        
+                        <a href="{{ route('logs.index') }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 {{ request()->routeIs('logs.*') ? 'text-primary bg-secondary-light border-b-2 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                            <i class="fas fa-clipboard-list mr-2 {{ request()->routeIs('logs.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                            Logs de Sistema
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-purple text-primary">
+                                <i class="fas fa-eye mr-1"></i>
+                                Audit
+                            </span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+            
+            <!-- Right side - User info and logout -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                @if(Auth::check())
+                    <!-- User Role Info (Desktop) -->
+                    <div class="hidden lg:flex lg:items-center lg:space-x-4">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">{{ Auth::user()->usuario }}</div>
+                            <div class="text-xs text-gray-500">
+                                @if(Auth::user()->isAdmin())
+                                    <span class="text-primary font-medium">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        Administrador
+                                    </span>
+                                @elseif(Auth::user()->isGerenteProducto())
+                                    <span class="text-secondary font-medium">
+                                        <i class="fas fa-user-tie mr-1"></i>
+                                        Gerente Producto
+                                    </span>
+                                @endif
+                                @if(Auth::user()->department)
+                                    | {{ Auth::user()->department }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Avatar (Mobile) -->
+                    <div class="md:hidden flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                            {{ substr(Auth::user()->usuario, 0, 1) }}
+                        </div>
+                        <div class="text-left">
+                            <div class="text-xs font-medium text-gray-900 truncate max-w-20">{{ Auth::user()->usuario }}</div>
+                            <div class="text-xs text-gray-500">
+                                @if(Auth::user()->isAdmin())
+                                    <span class="text-primary font-medium">Admin</span>
+                                @elseif(Auth::user()->isGerenteProducto())
+                                    <span class="text-secondary font-medium">Gerente</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Logout button -->
+                    <a href="{{ route('logout.get') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
+                        <i class="fas fa-sign-out-alt sm:mr-2"></i>
+                        <span class="hidden sm:inline">Salir</span>
+                    </a>
+                @else
+                    <!-- Login button for unauthenticated users -->
+                    <a href="{{ route('login') }}" class="inline-flex items-center px-2 sm:px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-primary rounded-md transition-colors duration-200">
+                        <i class="fas fa-sign-in-alt sm:mr-2"></i>
+                        <span class="hidden sm:inline">Iniciar Sesión</span>
+                    </a>
+                @endif
+                
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-button" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-bars text-lg" id="mobile-menu-icon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 bg-white shadow-lg">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                @if(Auth::check())
+                    <!-- Market Management -->
+                    <a href="{{ route('market-management.index') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('market-management.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-clipboard-list mr-3 text-lg {{ request()->routeIs('market-management.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        <div>
+                            <div class="font-medium">Marcas</div>
+                            <div class="text-xs text-gray-500">Gestión de marcas</div>
+                        </div>
+                    </a>
+                    
+                    <!-- Productos Database -->
+                    <a href="{{ route('productos.index') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('productos.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                        <i class="fas fa-database mr-3 text-lg {{ request()->routeIs('productos.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                        <div>
+                            <div class="font-medium">Base de Productos</div>
+                            <div class="text-xs text-gray-500">Gestión de productos</div>
+                        </div>
+                    </a>
+                    
+                    <!-- Admin Section Mobile -->
+                    @if(Auth::user()->isAdmin())
+                        <a href="{{ route('usuarios.index') }}" 
+                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('usuarios.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                            <i class="fas fa-users mr-3 text-lg {{ request()->routeIs('usuarios.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                            <div>
+                                <div class="font-medium">Gestión Usuarios</div>
+                                <div class="text-xs text-gray-500">Administración</div>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ route('logs.index') }}" 
+                           class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 {{ request()->routeIs('logs.*') ? 'text-primary bg-secondary-light border-l-4 border-primary' : 'text-gray-600 hover:text-primary hover:bg-secondary-lighter' }}">
+                            <i class="fas fa-clipboard-list mr-3 text-lg {{ request()->routeIs('logs.*') ? 'text-primary' : 'text-gray-400' }}"></i>
+                            <div>
+                                <div class="font-medium">Logs de Sistema</div>
+                                <div class="text-xs text-gray-500">Auditoría</div>
+                            </div>
+                        </a>
+                    @endif
+                    
+                    <!-- Logout Mobile -->
+                    <a href="{{ route('logout.get') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 text-gray-600 hover:text-primary hover:bg-secondary-lighter">
+                        <i class="fas fa-sign-out-alt mr-3 text-lg text-gray-400"></i>
+                        <div>
+                            <div class="font-medium">Cerrar Sesión</div>
+                            <div class="text-xs text-gray-500">Salir del sistema</div>
+                        </div>
+                    </a>
+                @else
+                    <!-- Login Mobile for unauthenticated users -->
+                    <a href="{{ route('login') }}" 
+                       class="flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors duration-200 text-gray-600 hover:text-primary hover:bg-secondary-lighter">
+                        <i class="fas fa-sign-in-alt mr-3 text-lg text-gray-400"></i>
+                        <div>
+                            <div class="font-medium">Iniciar Sesión</div>
+                            <div class="text-xs text-gray-500">Acceder al sistema</div>
+                        </div>
+                    </a>
+                @endif
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- JavaScript para el menú móvil mejorado -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuIcon = document.getElementById('mobile-menu-icon');
+    
+    // Manejo de logout con fallback para sesiones expiradas
+    const logoutForm = document.getElementById('logoutForm');
+    const logoutFallback = document.getElementById('logoutFallback');
+    
+    if (logoutForm) {
+        logoutForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = response.url || '/login';
+                } else if (response.status === 419) {
+                    // Token CSRF expirado, usar fallback
+                    logoutForm.classList.add('hidden');
+                    logoutFallback.classList.remove('hidden');
+                    // Mostrar mensaje al usuario
+                    alert('Su sesión ha expirado. Será redirigido al login.');
+                    window.location.href = '/logout';
+                } else {
+                    // Otro error, intentar redirigir directamente
+                    window.location.href = '/logout';
+                }
+            })
+            .catch(error => {
+                console.error('Error en logout:', error);
+                // En caso de error de red, usar fallback
+                logoutForm.classList.add('hidden');
+                logoutFallback.classList.remove('hidden');
+                window.location.href = '/logout';
+            });
+        });
+    }
+    
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+            const isHidden = mobileMenu.classList.contains('hidden');
+            
+            if (isHidden) {
+                // Mostrar menú
+                mobileMenu.classList.remove('hidden');
+                mobileMenu.classList.add('animate-slideDown');
+                mobileMenuIcon.className = 'fas fa-times text-lg';
+            } else {
+                // Ocultar menú
+                mobileMenu.classList.add('animate-slideUp');
+                setTimeout(() => {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenu.classList.remove('animate-slideUp');
+                }, 200);
+                mobileMenuIcon.className = 'fas fa-bars text-lg';
+            }
+        });
+        
+        // Cerrar menú al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('animate-slideUp');
+                    setTimeout(() => {
+                        mobileMenu.classList.add('hidden');
+                        mobileMenu.classList.remove('animate-slideUp');
+                    }, 200);
+                    mobileMenuIcon.className = 'fas fa-bars text-lg';
+                }
+            }
+        });
+        
+        // Cerrar menú al cambiar de ruta
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                setTimeout(() => {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenuIcon.className = 'fas fa-bars text-lg';
+                }, 100);
+            });
+        });
+    }
+});
+</script>
+
+<style>
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.animate-slideDown {
+    animation: slideDown 0.2s ease-out;
+}
+
+.animate-slideUp {
+    animation: slideUp 0.2s ease-out;
+}
+</style>

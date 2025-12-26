@@ -1,4 +1,4 @@
-// Market Management JavaScript Functions
+// Market Management JavaScript Functions - CLEAN VERSION
 // Define routes for JavaScript
 window.MarketManagementRoutes = window.MarketManagementRoutes || {};
 window.csrfToken = window.csrfToken || '';
@@ -6,6 +6,7 @@ window.csrfToken = window.csrfToken || '';
 // Global search functionality with AJAX
 let searchTimeout;
 let currentSearch = '';
+let productSearchTimeout = null; // Para búsqueda de productos
 
 // Utility function to safely escape strings for JavaScript
 function escapeForJs(str) {
@@ -18,223 +19,28 @@ function escapeForJs(str) {
               .replace(/\t/g, '\\t');
 }
 
-// Open create modal
-function openCreateModal() {
-    $('#market-name').val('');
-    $('#create-modal').removeClass('hidden');
-    $('#market-name').focus();
+// Utility function to escape HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
-// Close create modal
-function closeCreateModal() {
-    $('#create-modal').addClass('hidden');
-}
-
-// Open edit modal
-function openEditModal(marketId, marketName) {
-    $('#edit-market-id').val(marketId);
-    $('#edit-market-name').val(marketName).data('original', marketName);
-    $('#edit-modal').removeClass('hidden');
-    $('#edit-market-name').focus();
-}
-
-// Close edit modal
-function closeEditModal() {
-    $('#edit-modal').addClass('hidden');
-}
-
-// Open create confirmation modal
-function openCreateConfirmationModal() {
-    const marketName = $('#market-name').val().trim();
-    
-    if (!marketName) {
-        showToast('Por favor ingresa un nombre para el mercado', 'error');
-        $('#market-name').focus();
-        return;
+// Utility function to format date
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES');
+    } catch (e) {
+        return 'N/A';
     }
-    
-    // Update confirmation modal with market name
-    $('#confirm-create-market-name').text(marketName);
-    
-    // Show confirmation modal
-    $('#create-confirmation-modal').removeClass('hidden');
 }
 
-// Close create confirmation modal
-function closeCreateConfirmationModal() {
-    $('#create-confirmation-modal').addClass('hidden');
-}
-
-// Confirm create market
-function confirmCreateMarket() {
-    const marketName = $('#market-name').val().trim();
-    const submitBtn = $('#confirm-create-btn');
-    const btnText = submitBtn.find('.btn-text');
-    const btnLoading = submitBtn.find('.btn-loading');
-    
-    // Show loading state
-    btnText.addClass('hidden');
-    btnLoading.removeClass('hidden');
-    submitBtn.prop('disabled', true);
-    
-    // Submit form
-    $.post(window.MarketManagementRoutes.store, {
-        market_name: marketName,
-        _token: window.csrfToken
-    })
-    .done(function(response) {
-        if (response.success) {
-            showToast(response.message, 'success');
-            // Close both modals
-            closeCreateConfirmationModal();
-            closeCreateModal();
-            // Reload page to show new market
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showToast(response.message, 'error');
-        }
-    })
-    .fail(function(xhr) {
-        if (xhr.status === 422) {
-            const errors = xhr.responseJSON.errors;
-            if (errors.market_name) {
-                showToast(errors.market_name[0], 'error');
-            } else {
-                showToast('Error de validación', 'error');
-            }
-        } else {
-            showToast('Error al crear mercado', 'error');
-        }
-    })
-    .always(function() {
-        // Reset loading state
-        btnText.removeClass('hidden');
-        btnLoading.addClass('hidden');
-        submitBtn.prop('disabled', false);
-    });
-}
-
-// Open edit confirmation modal
-function openEditConfirmationModal() {
-    const currentName = $('#edit-market-name').data('original') || $('#edit-market-name').val();
-    const newName = $('#edit-market-name').val().trim();
-    
-    if (!newName) {
-        showToast('Por favor ingresa un nombre para el mercado', 'error');
-        $('#edit-market-name').focus();
-        return;
-    }
-    
-    if (currentName === newName) {
-        showToast('No hay cambios para guardar', 'warning');
-        return;
-    }
-    
-    // Update confirmation modal with names
-    $('#confirm-edit-current-name').text(currentName);
-    $('#confirm-edit-new-name').text(newName);
-    
-    // Show confirmation modal
-    $('#edit-confirmation-modal').removeClass('hidden');
-}
-
-// Close edit confirmation modal
-function closeEditConfirmationModal() {
-    $('#edit-confirmation-modal').addClass('hidden');
-}
-
-// Confirm edit market
-function confirmEditMarket() {
-    const marketId = $('#edit-market-id').val();
-    const marketName = $('#edit-market-name').val().trim();
-    const submitBtn = $('#confirm-edit-btn');
-    const btnText = submitBtn.find('.btn-text');
-    const btnLoading = submitBtn.find('.btn-loading');
-    
-    // Show loading state
-    btnText.addClass('hidden');
-    btnLoading.removeClass('hidden');
-    submitBtn.prop('disabled', true);
-    
-    // Submit form
-    $.ajax({
-        url: window.MarketManagementRoutes.update,
-        method: 'POST',
-        data: {
-            market_id: marketId,
-            market_name: marketName,
-            _token: window.csrfToken,
-            _method: 'PUT'
-        }
-    })
-    .done(function(response) {
-        if (response.success) {
-            showToast(response.message, 'success');
-            // Close both modals
-            closeEditConfirmationModal();
-            closeEditModal();
-            // Reload page to show updated market
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showToast(response.message, 'error');
-        }
-    })
-    .fail(function(xhr) {
-        if (xhr.status === 422) {
-            const errors = xhr.responseJSON.errors;
-            if (errors.market_name) {
-                showToast(errors.market_name[0], 'error');
-            } else {
-                showToast('Error de validación', 'error');
-            }
-        } else {
-            showToast('Error al actualizar mercado', 'error');
-        }
-    })
-    .always(function() {
-        // Reset loading state
-        btnText.removeClass('hidden');
-        btnLoading.addClass('hidden');
-        submitBtn.prop('disabled', false);
-    });
-}
-
-// View market products
-function viewMarketProducts(marketId, marketName) {
-    console.log('viewMarketProducts called with:', {
-        marketId: marketId,
-        marketName: marketName,
-        typeof_marketId: typeof marketId,
-        typeof_marketName: typeof marketName
-    });
-    
-    // Validar que el marketId sea válido
-    if (!marketId || isNaN(marketId) || marketId <= 0) {
-        console.error('Invalid market ID:', marketId);
-        showToast('Error: ID de mercado inválido. No se puede cargar la vista de productos.', 'error');
-        return;
-    }
-    
-    // Validar que tengamos un nombre de mercado
-    if (marketName === undefined || marketName === null) {
-        console.warn('Market name is undefined/null, using default');
-        marketName = 'Mercado sin nombre';
-    }
-    
-    console.log('Redirecting to products for market:', marketId, marketName);
-    
-    // Redirect to products view for this market
-    window.location.href = `/market-management/market/${marketId}/products`;
-}
-
-// Function to reset to original view
-function resetToOriginalView() {
-    window.location.href = window.MarketManagementRoutes.index || '/market-management';
-}
+// ========================================
+// FUNCIONES PARA BÚSQUEDA DE MARCAS
+// ========================================
 
 // Function to perform global search via AJAX
 function performGlobalSearch(searchTerm, page = 1) {
@@ -243,6 +49,10 @@ function performGlobalSearch(searchTerm, page = 1) {
         search: searchTerm,
         page: page
     });
+    
+    // Debug log
+    console.log('Search URL:', searchUrl);
+    console.log('Search params:', params.toString());
     
     // Show loading state
     showLoadingState();
@@ -255,6 +65,7 @@ function performGlobalSearch(searchTerm, page = 1) {
             'X-CSRF-TOKEN': window.csrfToken
         },
         success: function(data) {
+            console.log('Search response:', data);
             if (data.success) {
                 updateTableWithResults(data.data);
                 updateResultsInfo(data, searchTerm);
@@ -264,7 +75,7 @@ function performGlobalSearch(searchTerm, page = 1) {
             }
         },
         error: function(xhr) {
-            console.error('Error:', xhr);
+            console.error('Search error:', xhr);
             showError('Error de conexión durante la búsqueda');
         },
         complete: function() {
@@ -278,9 +89,9 @@ function showLoadingState() {
     const tbody = $('table tbody');
     tbody.html(`
         <tr>
-            <td colspan="6" class="px-6 py-8 text-center">
+            <td colspan="4" class="px-6 py-8 text-center">
                 <div class="flex items-center justify-center">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mr-3"></div>
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600 mr-3"></div>
                     <span class="text-gray-600">Buscando...</span>
                 </div>
             </td>
@@ -290,7 +101,7 @@ function showLoadingState() {
 
 // Function to hide loading state
 function hideLoadingState() {
-    // This will be handled by updateTableWithResults
+    // Loading state is handled by the search function
 }
 
 // Function to update table with search results
@@ -300,181 +111,108 @@ function updateTableWithResults(markets) {
     if (markets.length === 0) {
         tbody.html(`
             <tr>
-                <td colspan="6" class="px-6 py-8 text-center text-gray-500">
-                    <div class="flex flex-col items-center">
-                        <i class="fas fa-search text-4xl mb-4 text-gray-300"></i>
-                        <p class="text-lg">No se encontraron resultados</p>
-                        <p class="text-sm">Intenta con otros términos de búsqueda</p>
-                    </div>
+                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                    <i class="fas fa-search mr-2"></i>
+                    No se encontraron resultados
                 </td>
             </tr>
         `);
         return;
     }
     
-    let tableHTML = '';
+    let html = '';
     markets.forEach(market => {
-        tableHTML += generateMarketRow(market);
-    });
-    tbody.html(tableHTML);
-}
-
-// Function to generate market row HTML
-function generateMarketRow(market) {
-    // Format date properly
-    const formattedDate = formatDate(market.fechaRegistro);
-    
-    // Escape market name for safe HTML usage
-    const escapedMarketName = escapeHtml(market.mercado);
-    
-    // Generate status badge with icon
-    const statusBadge = generateStateBadge(market.estado);
-    
-    // Generate action buttons based on market status
-    const actionButtons = generateActionButtons(market);
-    
-    return `
-        <tr class="hover:bg-gray-50 market-row" data-market-id="${market.idMercado}">
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ${market.idMercado}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-store text-purple-600 text-xs"></i>
+        html += `
+            <tr class="hover:bg-gray-50 market-row" data-market-id="${market.idMercado}" data-product-code="${market.codigoPresentacion}">
+                <!-- Marca (Descripción Producto) -->
+                <td class="px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-8 h-8 bg-secondary-light rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-tags text-primary text-xs"></i>
+                        </div>
+                        <div>
+                            <button onclick="redirectToProductsWithBrand('${escapeForJs(market.marca)}')" 
+                                    class="font-medium text-gray-900 hover:text-primary hover:underline transition-colors cursor-pointer"
+                                    title="Ver productos de esta marca">
+                                ${escapeHtml(market.marca)}
+                            </button>
+                            <div class="text-sm text-gray-500">Código: ${escapeHtml(market.codigoPresentacion)}</div>
+                        </div>
                     </div>
-                    <div class="font-medium text-gray-900">${escapedMarketName}</div>
-                </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${formattedDate}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                ${statusBadge}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                ${actionButtons}
-            </td>
-        </tr>
-    `;
-}
-
-// Function to generate state badge with icon
-function generateStateBadge(estado) {
-    let badgeClass, icon;
-    
-    switch(estado) {
-        case 'ACTIVO':
-            badgeClass = 'bg-emerald-100 text-emerald-800';
-            icon = 'fa-play';
-            break;
-        case 'INACTIVO':
-            badgeClass = 'bg-red-100 text-red-800';
-            icon = 'fa-pause';
-            break;
-        default:
-            badgeClass = 'bg-gray-100 text-gray-800';
-            icon = 'fa-question';
-    }
-    
-    return `
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeClass}">
-            <i class="fas ${icon} mr-1"></i>
-            ${estado}
-        </span>
-    `;
-}
-
-// Function to generate action buttons based on market status
-function generateActionButtons(market) {
-    let buttons = '';
-    
-    // Ver Productos Button - Always available (con validación)
-    if (market.idMercado && !isNaN(market.idMercado)) {
-        // Escapar el nombre del mercado de manera segura para JavaScript
-        const safeMarketName = escapeForJs(market.mercado || '');
-        buttons += `
-            <button onclick="viewMarketProducts(${market.idMercado}, '${safeMarketName}')"
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors duration-200"
-                    title="Ver productos del mercado">
-                <i class="fas fa-box mr-1"></i>
-                Productos
-            </button>
+                </td>
+                <!-- Mercado Asignado -->
+                <td class="px-6 py-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-6 h-6 bg-secondary-purple rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-store text-primary text-xs"></i>
+                        </div>
+                        ${market.mercado ? 
+                            `<button onclick="redirectToProductsWithMarket('${escapeForJs(market.mercado)}')" 
+                                    class="font-medium text-primary hover:text-secondary hover:underline transition-colors cursor-pointer"
+                                    title="Ver productos de este mercado">
+                                ${escapeHtml(market.mercado)}
+                            </button>` :
+                            `<span class="text-gray-400 italic" title="Sin mercado asignado">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Sin asignar
+                            </span>`
+                        }
+                    </div>
+                </td>
+                <!-- Estado -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${market.estado == 'ACTIVO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                        <i class="fas ${market.estado == 'ACTIVO' ? 'fa-play' : 'fa-pause'} mr-1"></i>
+                        ${escapeHtml(market.estado)}
+                    </span>
+                </td>
+                <!-- Acciones -->
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                        ${market.mercado ? 
+                            `<!-- Editar Nombre del Mercado -->
+                            <button onclick="openEditModal(${market.idMercado}, '${escapeForJs(market.mercado)}')"
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-secondary-lighter text-primary hover:bg-secondary-muted transition-colors duration-200"
+                                    title="Editar nombre del mercado">
+                                <i class="fas fa-edit mr-1"></i>
+                                Editar Mercado
+                            </button>
+                            
+                            <!-- Asignar Producto -->
+                            <button onclick="redirectToProductsWithRestoAndMarket('${escapeForJs(market.mercado)}')"
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-primary text-white hover:bg-secondary transition-colors duration-200"
+                                    title="Asignar producto a este mercado">
+                                <i class="fas fa-plus mr-1"></i>
+                                Asignar Producto
+                            </button>` :
+                            `<!-- Sin mercado asignado -->
+                            <span class="text-gray-400 italic text-xs">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Sin mercado asignado
+                            </span>`
+                        }
+                    </div>
+                </td>
+            </tr>
         `;
-    } else {
-        buttons += `
-            <button disabled 
-                    class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-400 cursor-not-allowed"
-                    title="ID de mercado no válido">
-                <i class="fas fa-box mr-1"></i>
-                Productos
-            </button>
-        `;
-    }
-    
-    // Escapar el nombre del mercado de manera segura para JavaScript
-    const safeMarketName = escapeForJs(market.mercado || '');
-    
-    // Edit Market Button
-    buttons += `
-        <button onclick="openEditModal(${market.idMercado}, '${safeMarketName}')"
-                class="inline-flex items-center px-3 py-1 rounded-md text-sm bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors duration-200"
-                title="Editar mercado">
-            <i class="fas fa-edit mr-1"></i>
-            Editar
-        </button>
-    `;
-    
-    // Toggle Status Button
-    const isActive = market.estado === 'ACTIVO';
-    const toggleClass = isActive ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200';
-    const toggleIcon = isActive ? 'fa-pause' : 'fa-play';
-    const toggleText = isActive ? 'Desactivar' : 'Activar';
-    
-    buttons += `
-        <button onclick="toggleMarketStatus(${market.idMercado}, '${safeMarketName}', '${market.estado}')"
-                class="inline-flex items-center px-3 py-1 rounded-md text-sm ${toggleClass} transition-colors duration-200">
-            <i class="fas ${toggleIcon} mr-1"></i>
-            ${toggleText}
-        </button>
-    `;
-    
-    return buttons;
-}
-
-// Function to escape HTML characters
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
     });
+    
+    tbody.html(html);
 }
 
 // Function to update results info
 function updateResultsInfo(data, searchTerm) {
-    const resultsInfo = $('#pagination-info');
-    if (resultsInfo.length) {
-        const start = ((data.current_page - 1) * data.per_page) + 1;
-        const end = Math.min(data.current_page * data.per_page, data.total);
+    const infoElement = $('#pagination-info');
+    if (infoElement.length) {
+        const total = data.total || 0;
+        const from = data.from || 0;
+        const to = data.to || 0;
         
-        if (searchTerm) {
-            resultsInfo.html(`${start} - ${end} de ${data.total} resultados para "${searchTerm}"`);
+        if (total > 0) {
+            infoElement.text(`${from} - ${to} de ${total} marcas encontradas para "${searchTerm}"`);
         } else {
-            resultsInfo.html(`${start} - ${end} de ${data.total} mercados`);
+            infoElement.text(`No se encontraron marcas para "${searchTerm}"`);
         }
     }
 }
@@ -482,131 +220,319 @@ function updateResultsInfo(data, searchTerm) {
 // Function to update pagination
 function updatePagination(data, searchTerm) {
     const paginationContainer = $('#pagination-links');
+    if (!paginationContainer.length) return;
     
-    if (!paginationContainer.length || data.last_page <= 1) {
-        // Hide pagination if only one page or container not found
-        $('#pagination-container').hide();
+    const currentPage = data.current_page || 1;
+    const lastPage = data.last_page || 1;
+    const total = data.total || 0;
+    
+    if (total === 0) {
+        paginationContainer.html('');
         return;
     }
     
-    // Show pagination container
-    $('#pagination-container').show();
+    let paginationHtml = '';
     
-    let paginationHTML = '';
-    
-    // Previous Page Link
-    if (data.current_page <= 1) {
-        paginationHTML += `
-            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
-                <i class="fas fa-chevron-left"></i>
-            </span>
-        `;
-    } else {
-        paginationHTML += `
-            <a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page - 1}); return false;" 
+    // Previous button
+    if (currentPage > 1) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${currentPage - 1}); return false;" 
                class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                 <i class="fas fa-chevron-left"></i>
             </a>
         `;
+    } else {
+        paginationHtml += `
+            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+            </span>
+        `;
     }
-
-    // Calculate page range
-    const start = Math.max(data.current_page - 2, 1);
-    const end = Math.min(start + 4, data.last_page);
-    const adjustedStart = Math.max(end - 4, 1);
-
-    // First page if not in range
-    if (adjustedStart > 1) {
-        paginationHTML += `
-            <a href="#" onclick="performGlobalSearch('${searchTerm}', 1); return false;" 
+    
+    // Page numbers
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(lastPage, currentPage + 2);
+    
+    if (start > 1) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', 1); return false;" 
                class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">1</a>
         `;
-        if (adjustedStart > 2) {
-            paginationHTML += '<span class="px-1 text-xs text-gray-400">...</span>';
+        if (start > 2) {
+            paginationHtml += '<span class="px-1 text-xs text-gray-400">...</span>';
         }
     }
-
-    // Page Numbers
-    for (let page = adjustedStart; page <= end; page++) {
-        if (page == data.current_page) {
-            paginationHTML += `
-                <span class="px-2 py-1 text-xs text-white bg-purple-600 rounded font-medium">${page}</span>
+    
+    for (let i = start; i <= end; i++) {
+        if (i === currentPage) {
+            paginationHtml += `
+                <span class="px-2 py-1 text-xs text-white bg-red-600 rounded font-medium">${i}</span>
             `;
         } else {
-            paginationHTML += `
-                <a href="#" onclick="performGlobalSearch('${searchTerm}', ${page}); return false;" 
-                   class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${page}</a>
+            paginationHtml += `
+                <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${i}); return false;" 
+                   class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${i}</a>
             `;
         }
     }
-
-    // Last page if not in range
-    if (end < data.last_page) {
-        if (end < data.last_page - 1) {
-            paginationHTML += '<span class="px-1 text-xs text-gray-400">...</span>';
+    
+    if (end < lastPage) {
+        if (end < lastPage - 1) {
+            paginationHtml += '<span class="px-1 text-xs text-gray-400">...</span>';
         }
-        paginationHTML += `
-            <a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.last_page}); return false;" 
-               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${data.last_page}</a>
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${lastPage}); return false;" 
+               class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">${lastPage}</a>
         `;
     }
-
-    // Next Page Link
-    if (data.current_page >= data.last_page) {
-        paginationHTML += `
-            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
-                <i class="fas fa-chevron-right"></i>
-            </span>
-        `;
-    } else {
-        paginationHTML += `
-            <a href="#" onclick="performGlobalSearch('${searchTerm}', ${data.current_page + 1}); return false;" 
+    
+    // Next button
+    if (currentPage < lastPage) {
+        paginationHtml += `
+            <a href="#" onclick="performGlobalSearch('${escapeForJs(searchTerm)}', ${currentPage + 1}); return false;" 
                class="px-2 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
                 <i class="fas fa-chevron-right"></i>
             </a>
         `;
+    } else {
+        paginationHtml += `
+            <span class="px-2 py-1 text-xs text-gray-400 bg-gray-200 rounded cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+        `;
     }
     
-    paginationContainer.html(paginationHTML);
+    paginationContainer.html(paginationHtml);
 }
 
-// Function to show error messages
+// Function to reset to original view
+function resetToOriginalView() {
+    window.location.href = window.MarketManagementRoutes.index;
+}
+
+// Function to clear search (desktop and mobile)
+window.clearSearch = function() {
+    $('#search-input').val('');
+    $('#search-input-mobile').val('');
+    resetToOriginalView();
+}
+
+// ========================================
+// FUNCIONES PARA EDICIÓN DE MERCADOS
+// ========================================
+
+// Function to open edit modal
+window.openEditModal = function(marketId, currentName) {
+    $('#edit-market-id').val(marketId);
+    $('#edit-market-original-name').val(currentName); // Guardar el nombre original
+    $('#edit-market-name').val(currentName);
+    $('#edit-market-note').val(''); // Limpiar la nota
+    $('#edit-modal').removeClass('hidden');
+    
+    // Agregar validación en tiempo real para la nota
+    $('#edit-market-note').on('input', function() {
+        const note = $(this).val().trim();
+        const submitBtn = $('#edit-submit-btn');
+        const errorMsg = $('#edit-note-error');
+        
+        if (!note) {
+            $(this).addClass('border-red-500').removeClass('border-primary');
+            submitBtn.addClass('opacity-50 cursor-not-allowed').prop('disabled', true);
+            errorMsg.removeClass('hidden');
+        } else {
+            $(this).removeClass('border-red-500').addClass('border-primary');
+            submitBtn.removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
+            errorMsg.addClass('hidden');
+        }
+    });
+    
+    // Validación inicial - deshabilitar botón hasta que se ingrese una nota
+    $('#edit-submit-btn').addClass('opacity-50 cursor-not-allowed').prop('disabled', true);
+}
+
+// Function to close edit modal
+window.closeEditModal = function() {
+    $('#edit-modal').addClass('hidden');
+    $('#edit-market-name').val('');
+    $('#edit-market-id').val('');
+}
+
+// Function to open edit confirmation modal
+window.openEditConfirmationModal = function() {
+    const marketId = $('#edit-market-id').val();
+    const currentName = $('#edit-market-original-name').val(); // Usar el nombre original guardado
+    const newName = $('#edit-market-name').val().trim();
+    const note = $('#edit-market-note').val().trim();
+    
+    if (!newName) {
+        showToast('El nombre del mercado no puede estar vacío', 'error');
+        return;
+    }
+    
+    if (newName === currentName) {
+        showToast('El nuevo nombre debe ser diferente al actual', 'warning');
+        return;
+    }
+    
+    if (!note) {
+        showToast('La nota es obligatoria', 'error');
+        return;
+    }
+    
+    $('#confirm-edit-current-name').text(currentName);
+    $('#confirm-edit-new-name').text(newName);
+    $('#edit-confirmation-modal').removeClass('hidden');
+}
+
+// Function to close edit confirmation modal
+window.closeEditConfirmationModal = function() {
+    $('#edit-confirmation-modal').addClass('hidden');
+}
+
+// Function to confirm edit market
+window.confirmEditMarket = function() {
+    const marketId = $('#edit-market-id').val();
+    const newName = $('#edit-market-name').val().trim();
+    const note = $('#edit-market-note').val().trim();
+    
+    if (!newName) {
+        showToast('El nombre del mercado no puede estar vacío', 'error');
+        return;
+    }
+    
+    if (!note) {
+        showToast('La nota es obligatoria', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const confirmButton = $('#confirm-edit-btn');
+    const btnText = confirmButton.find('.btn-text');
+    const btnLoading = confirmButton.find('.btn-loading');
+    
+    btnText.addClass('hidden');
+    btnLoading.removeClass('hidden');
+    confirmButton.prop('disabled', true);
+    
+    // Send AJAX request
+    $.ajax({
+        url: window.MarketManagementRoutes.update,
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': window.csrfToken,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({
+            market_id: marketId,
+            market_name: newName,
+            market_note: $('#edit-market-note').val().trim()
+        }),
+        success: function(response) {
+            if (response.success) {
+                showToast(response.message, 'success');
+                closeEditConfirmationModal();
+                closeEditModal();
+                
+                // Reload page to show changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showToast(response.message || 'Error al actualizar el mercado', 'error');
+            }
+        },
+        error: function(xhr) {
+            let errorMessage = 'Error al actualizar el mercado';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            showToast(errorMessage, 'error');
+        },
+        complete: function() {
+            // Restore button state
+            btnText.removeClass('hidden');
+            btnLoading.addClass('hidden');
+            confirmButton.prop('disabled', false);
+        }
+    });
+}
+
+// ========================================
+// FUNCIONES DE UTILIDAD
+// ========================================
+
+// Function to show error message
 function showError(message) {
     showToast(message, 'error');
 }
 
-// Toast function
-function showToast(message, type = 'info') {
-    const toast = $(`
-        <div class="toast toast-${type} p-4 mb-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300">
-            <div class="flex items-center">
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>
-                <span>${message}</span>
+// Function to show toast notification
+window.showToast = function(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : 
+                  type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' :
+                  type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' :
+                  '<i class="fas fa-info-circle"></i>'}
+            </div>
+            <div class="ml-3">
+                <p class="text-sm">${message}</p>
+            </div>
+            <div class="ml-auto pl-3">
+                <button type="button" class="inline-flex text-white hover:opacity-75 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-    `);
+    `;
     
-    $('#toast-container').append(toast);
+    // Agregar al contenedor
+    const container = document.getElementById('toast-container');
+    if (container) {
+        container.appendChild(toast);
+    } else {
+        // Si no existe el contenedor, crear uno
+        const newContainer = document.createElement('div');
+        newContainer.id = 'toast-container';
+        newContainer.className = 'fixed top-20 right-4 z-50';
+        document.body.appendChild(newContainer);
+        newContainer.appendChild(toast);
+    }
     
+    // Mostrar el toast
     setTimeout(() => {
-        toast.removeClass('translate-x-full');
+        toast.classList.add('show');
     }, 100);
     
+    // Auto remover después de 5 segundos
     setTimeout(() => {
-        toast.addClass('translate-x-full');
+        toast.classList.remove('show');
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentElement) {
+                toast.remove();
+            }
         }, 300);
-    }, 3000);
+    }, 5000);
 }
+
+// ========================================
+// DOCUMENT READY
+// ========================================
 
 // Document ready functions
 $(document).ready(function() {
-    // Search input functionality
-    $('#search-input').on('input', function() {
+    // Search input functionality (desktop and mobile)
+    $('#search-input, #search-input-mobile').on('input', function() {
         clearTimeout(searchTimeout);
         const searchTerm = $(this).val().trim();
         currentSearch = searchTerm;
+        
+        // Sincronizar ambos inputs
+        $('#search-input').val(searchTerm);
+        $('#search-input-mobile').val(searchTerm);
         
         searchTimeout = setTimeout(() => {
             if (searchTerm === '') {
@@ -617,16 +543,27 @@ $(document).ready(function() {
             }
         }, 500); // Debounce search for 500ms
     });
+    
+    // Search on Enter key (desktop and mobile)
+    $('#search-input, #search-input-mobile').on('keypress', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimeout);
+            const searchTerm = $(this).val().trim();
+            currentSearch = searchTerm;
+            
+            if (searchTerm === '') {
+                resetToOriginalView();
+            } else {
+                performGlobalSearch(searchTerm);
+            }
+        }
+    });
 
     // Close modal when clicking outside
-    $(document).on('click', '#create-modal, #edit-modal, #create-confirmation-modal, #edit-confirmation-modal', function(e) {
+    $(document).on('click', '#edit-modal, #edit-confirmation-modal', function(e) {
         if (e.target === this) {
-            if (this.id === 'create-modal') {
-                closeCreateModal();
-            } else if (this.id === 'edit-modal') {
+            if (this.id === 'edit-modal') {
                 closeEditModal();
-            } else if (this.id === 'create-confirmation-modal') {
-                closeCreateConfirmationModal();
             } else if (this.id === 'edit-confirmation-modal') {
                 closeEditConfirmationModal();
             }
@@ -636,802 +573,14 @@ $(document).ready(function() {
     // Close modal with Escape key
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
-            if (!$('#create-confirmation-modal').hasClass('hidden')) {
-                closeCreateConfirmationModal();
-            } else if (!$('#edit-confirmation-modal').hasClass('hidden')) {
+            if (!$('#edit-confirmation-modal').hasClass('hidden')) {
                 closeEditConfirmationModal();
-            } else if (!$('#create-modal').hasClass('hidden')) {
-                closeCreateModal();
             } else if (!$('#edit-modal').hasClass('hidden')) {
                 closeEditModal();
             }
         }
     });
+
+    
 });
 
-// Variables globales para asignación de productos
-let currentAssignMarketId = null;
-let currentAssignMarketName = null;
-let selectedProducts = [];
-let restoProducts = [];
-let currentRestoCursor = null;
-let isLoadingResto = false;
-
-// Filter variables for resto products modal
-let currentRestoFilters = {
-    descripcionFF3: '',
-    descripcionATC4: '',
-    descripcionLaboratorio: '',
-    fuente: '',
-    molecula: '',
-    descripcionCorporacion: ''
-};
-let restoFilterOptions = {
-    descripcionFF3: [],
-    descripcionATC4: [],
-    descripcionLaboratorio: [],
-    fuente: [],
-    molecula: [],
-    descripcionCorporacion: []
-};
-let restoFilterTimeout = null;
-
-// Función para abrir modal de asignación de productos
-function openAssignProductsModal(marketId, marketName) {
-    currentAssignMarketId = marketId;
-    currentAssignMarketName = marketName;
-    selectedProducts = [];
-    
-    // Actualizar título
-    document.getElementById('assign-market-name').textContent = marketName;
-    
-    // Limpiar búsqueda
-    document.getElementById('resto-product-search').value = '';
-    document.getElementById('clear-resto-search').classList.add('hidden');
-    
-    // Limpiar filtros
-    clearAllRestoFilters();
-    
-    // Resetear estado del panel de filtros (siempre colapsado al abrir)
-    const filtersPanel = $('#resto-filters-panel');
-    const toggleButton = $('#toggle-resto-filters');
-    const toggleIcon = toggleButton.find('i').last();
-    const toggleText = toggleButton.find('span');
-    
-    filtersPanel.addClass('hidden');
-    toggleIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-    toggleText.text('Mostrar Filtros');
-    
-    // Mostrar modal
-    document.getElementById('assign-products-modal').classList.remove('hidden');
-    
-    // Cargar productos RESTO
-    loadRestoProducts();
-    
-    // Configurar event listeners
-    setupRestoProductSearch();
-    setupRestoFilters();
-    
-    // Cargar opciones de filtros
-    loadRestoFilterOptions();
-}
-
-// Función para cerrar modal
-function closeAssignProductsModal() {
-    document.getElementById('assign-products-modal').classList.add('hidden');
-    currentAssignMarketId = null;
-    currentAssignMarketName = null;
-    selectedProducts = [];
-    restoProducts = [];
-    currentRestoCursor = null;
-}
-
-// Configurar búsqueda de productos RESTO
-function setupRestoProductSearch() {
-    const searchInput = document.getElementById('resto-product-search');
-    const clearButton = document.getElementById('clear-resto-search');
-    
-    // Event listener para búsqueda
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        if (query.length > 0) {
-            clearButton.classList.remove('hidden');
-        } else {
-            clearButton.classList.add('hidden');
-        }
-        
-        // Debounce de 300ms
-        clearTimeout(window.restoSearchTimeout);
-        window.restoSearchTimeout = setTimeout(() => {
-            searchRestoProducts(query);
-        }, 300);
-    });
-    
-    // Event listener para limpiar búsqueda
-    clearButton.addEventListener('click', function() {
-        searchInput.value = '';
-        clearButton.classList.add('hidden');
-        
-        // Also clear all filters when clearing search
-        clearAllRestoFilters();
-        
-        loadRestoProducts();
-    });
-}
-
-// Setup resto filters functionality
-function setupRestoFilters() {
-    // Remove existing event listeners to prevent duplicates
-    $('#toggle-resto-filters').off('click');
-    $('#clear-all-resto-filters').off('click');
-    
-    // Initialize each filter select
-    Object.keys(currentRestoFilters).forEach(filterKey => {
-        const filterSelect = $(`#resto-filter-${filterKey}`);
-        const clearButton = $(`#clear-resto-filter-${filterKey}`);
-
-        // Remove existing listeners
-        filterSelect.off('change');
-        clearButton.off('click');
-
-        // Filter change event
-        filterSelect.on('change', function() {
-            const value = $(this).val();
-            currentRestoFilters[filterKey] = value;
-            
-            // Show/hide clear button
-            if (value) {
-                clearButton.removeClass('hidden');
-            } else {
-                clearButton.addClass('hidden');
-            }
-
-            // Clear previous timeout
-            if (restoFilterTimeout) {
-                clearTimeout(restoFilterTimeout);
-            }
-
-            // Set new timeout for filter (300ms debounce)
-            restoFilterTimeout = setTimeout(() => {
-                applyRestoFilters();
-            }, 300);
-        });
-
-        // Clear individual filter
-        clearButton.on('click', function() {
-            filterSelect.val('');
-            clearButton.addClass('hidden');
-            currentRestoFilters[filterKey] = '';
-            applyRestoFilters();
-        });
-    });
-
-    // Clear all filters button
-    $('#clear-all-resto-filters').on('click', function() {
-        clearAllRestoFilters();
-        applyRestoFilters();
-    });
-
-    // Toggle filters panel
-    $('#toggle-resto-filters').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('Toggle filters clicked'); // Debug log
-        
-        const filtersPanel = $('#resto-filters-panel');
-        const icon = $(this).find('.fa-chevron-down, .fa-chevron-up');
-        const textSpan = $(this).find('span');
-        
-        filtersPanel.toggleClass('hidden');
-        
-        if (filtersPanel.hasClass('hidden')) {
-            icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-            textSpan.text('Mostrar Filtros');
-            console.log('Filters collapsed'); // Debug log
-        } else {
-            icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-            textSpan.text('Ocultar Filtros');
-            console.log('Filters expanded'); // Debug log
-        }
-    });
-}
-
-// Clear all resto filters
-function clearAllRestoFilters() {
-    Object.keys(currentRestoFilters).forEach(filterKey => {
-        currentRestoFilters[filterKey] = '';
-        $(`#resto-filter-${filterKey}`).val('');
-        $(`#clear-resto-filter-${filterKey}`).addClass('hidden');
-    });
-    updateRestoFilterStatus();
-}
-
-// Apply resto filters
-function applyRestoFilters() {
-    // Reset pagination when filtering
-    currentRestoCursor = null;
-    
-    // Update filter status
-    updateRestoFilterStatus();
-    
-    // Load products with current filters
-    const searchQuery = document.getElementById('resto-product-search').value.trim();
-    loadRestoProducts(null, false, searchQuery);
-}
-
-// Update filter status display
-function updateRestoFilterStatus() {
-    const activeFilters = Object.values(currentRestoFilters).filter(value => value.length > 0);
-    const statusDiv = $('#resto-filter-status');
-    const countSpan = $('#resto-filter-count');
-    const clearAllBtn = $('#clear-all-resto-filters');
-    
-    if (activeFilters.length > 0) {
-        countSpan.text(activeFilters.length);
-        statusDiv.removeClass('hidden');
-        clearAllBtn.removeClass('hidden');
-    } else {
-        statusDiv.addClass('hidden');
-        clearAllBtn.addClass('hidden');
-    }
-}
-
-// Load filter options from API
-function loadRestoFilterOptions() {
-    $.ajax({
-        url: '/market-management/resto-filter-options',
-        method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                restoFilterOptions = response.data;
-                populateRestoFilterSelects();
-            }
-        },
-        error: function(xhr) {
-            console.error('Error loading filter options:', xhr);
-        }
-    });
-}
-
-// Populate filter select elements
-function populateRestoFilterSelects() {
-    Object.keys(restoFilterOptions).forEach(filterKey => {
-        const select = $(`#resto-filter-${filterKey}`);
-        const options = restoFilterOptions[filterKey];
-        
-        // Clear existing options except the first one
-        select.find('option:not(:first)').remove();
-        
-        // Add new options
-        options.forEach(option => {
-            if (option && option.trim()) {
-                select.append(`<option value="${option}">${option}</option>`);
-            }
-        });
-    });
-}
-
-// Cargar productos del mercado RESTO
-function loadRestoProducts(cursor = null, append = false, searchQuery = '') {
-    if (isLoadingResto) return;
-    
-    isLoadingResto = true;
-    showRestoLoadingState();
-    
-    const data = {
-        cursor: cursor,
-        search: searchQuery
-    };
-    
-    // Add filter parameters
-    Object.keys(currentRestoFilters).forEach(filterKey => {
-        if (currentRestoFilters[filterKey] && currentRestoFilters[filterKey].length > 0) {
-            data[`filter_${filterKey}`] = currentRestoFilters[filterKey];
-        }
-    });
-    
-    $.ajax({
-        url: '/market-management/resto-products',
-        method: 'GET',
-        data: data,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                if (!append) {
-                    updateRestoProductsTable(response.data.products);
-                    currentRestoCursor = response.data.next_cursor;
-                } else {
-                    appendRestoProductsToTable(response.data.products);
-                    currentRestoCursor = response.data.next_cursor;
-                }
-                
-                updateRestoPaginationInfo(response.data);
-                
-                if (response.data.products.length === 0 && !append) {
-                    showRestoEmptyState();
-                }
-            } else {
-                showErrorNotification('Error al cargar productos RESTO: ' + response.message);
-            }
-        },
-        error: function(xhr, textStatus, errorThrown) {
-            console.error('Error loading resto products:', {xhr, textStatus, errorThrown});
-            showErrorNotification('Error al cargar productos RESTO');
-        },
-        complete: function() {
-            isLoadingResto = false;
-            hideRestoLoadingState();
-        }
-    });
-}
-
-// Buscar productos RESTO
-function searchRestoProducts(query) {
-    selectedProducts = []; // Limpiar selección en nueva búsqueda
-    updateSelectedCount();
-    currentRestoCursor = null;
-    loadRestoProducts(null, false, query);
-}
-
-// Mostrar estado de carga
-function showRestoLoadingState() {
-    document.getElementById('resto-loading-overlay').classList.remove('hidden');
-    document.getElementById('resto-search-loading').classList.remove('hidden');
-}
-
-// Ocultar estado de carga
-function hideRestoLoadingState() {
-    document.getElementById('resto-loading-overlay').classList.add('hidden');
-    document.getElementById('resto-search-loading').classList.add('hidden');
-}
-
-// Mostrar estado vacío
-function showRestoEmptyState() {
-    document.getElementById('resto-empty-state').classList.remove('hidden');
-    document.getElementById('resto-products-table-body').innerHTML = '';
-}
-
-// Actualizar tabla de productos RESTO
-function updateRestoProductsTable(products) {
-    const tbody = document.getElementById('resto-products-table-body');
-    tbody.innerHTML = '';
-    
-    document.getElementById('resto-empty-state').classList.add('hidden');
-    
-    products.forEach(product => {
-        tbody.appendChild(generateRestoProductRow(product));
-    });
-}
-
-// Añadir productos a la tabla
-function appendRestoProductsToTable(products) {
-    const tbody = document.getElementById('resto-products-table-body');
-    
-    products.forEach(product => {
-        tbody.appendChild(generateRestoProductRow(product));
-    });
-}
-
-// Generar fila de producto RESTO
-function generateRestoProductRow(product) {
-    const row = document.createElement('tr');
-    row.className = 'divide-x divide-gray-200 hover:bg-gray-50';
-    
-    const isSelected = selectedProducts.includes(product.codigoPresentacion);
-    
-    const marcaGenerico = product.marcaGenerico || '-';
-    const eticoPopular = product.eticoPopular || '-';
-    
-    row.innerHTML = `
-        <!-- Selección 4% -->
-        <td class="w-[4%] px-1 py-1 text-center">
-            <input type="checkbox" 
-                   class="product-checkbox rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                   data-product-code="${product.codigoPresentacion}"
-                   data-product-fuente="${product.fuente || 'IQV'}"
-                   onchange="toggleProductSelection('${product.codigoPresentacion}', '${product.fuente || 'IQV'}')"
-                   ${isSelected ? 'checked' : ''}>
-        </td>
-        <!-- Descripción 18% -->
-        <td class="w-[18%] px-1 py-1 text-xs text-gray-900 description-cell" title="${product.descripcionPresentacion || '-'}">
-            <div class="truncate font-medium" style="white-space: pre-wrap;">${product.descripcionPresentacion || '-'}</div>
-        </td>
-        <!-- M/G 8% -->
-        <td class="w-[8%] px-1 py-1 text-center text-xs hidden sm:table-cell">
-            <span class="lg:inline hidden">${marcaGenerico === 'MARCA' ? 'MARCA' : 'GENÉRICO'}</span>
-            <span class="lg:hidden">${marcaGenerico === 'MARCA' ? 'M' : 'G'}</span>
-        </td>
-        <!-- É/P 8% -->
-        <td class="w-[8%] px-1 py-1 text-center text-xs hidden sm:table-cell">
-            <span class="lg:inline hidden">${eticoPopular === 'ÉTICO' ? 'ÉTICO' : 'POPULAR'}</span>
-            <span class="lg:hidden">${eticoPopular === 'ÉTICO' ? 'É' : 'P'}</span>
-        </td>
-        <!-- Fuente 6% -->
-        <td class="w-[6%] px-1 py-1 text-center text-xs text-gray-500 single-line-cell">
-            <span class="text-blue-600 font-medium">${product.fuente || 'IQV'}</span>
-        </td>
-        <!-- Molécula 14% -->
-        <td class="w-[14%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell molecule-cell" title="${product.descripcionMolecula || '-'}">
-            <span class="text-gray-700">${product.descripcionMolecula || '-'}</span>
-        </td>
-        <!-- FF3 10% -->
-        <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${product.descripcionFF3 || '-'}">
-            <span class="truncate">${product.descripcionFF3 || '-'}</span>
-        </td>
-        <!-- ATC4 10% -->
-        <td class="w-[10%] px-1 py-1 text-xs text-gray-500 hidden md:table-cell single-line-cell" title="${product.descripcionATC4 || '-'}">
-            <span class="truncate">${product.descripcionATC4 || '-'}</span>
-        </td>
-        <!-- Laboratorio 8% -->
-        <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden lg:table-cell single-line-cell" title="${product.descripcionLaboratorio || '-'}">
-            <span class="truncate">${product.descripcionLaboratorio || '-'}</span>
-        </td>
-        <!-- Corporación 8% -->
-        <td class="w-[8%] px-1 py-1 text-xs text-gray-500 hidden xl:table-cell single-line-cell" title="${product.descripcionCorporacion || '-'}">
-            <span class="truncate">${product.descripcionCorporacion || '-'}</span>
-        </td>
-    `;
-    
-    return row;
-}
-
-// Toggle selección de producto
-function toggleProductSelection(productCode, fuente) {
-    // Asegurar que la fuente tenga un valor por defecto
-    const safeFuente = fuente || 'IQV';
-    
-    const index = selectedProducts.findIndex(p => p.code === productCode);
-    
-    if (index > -1) {
-        selectedProducts.splice(index, 1);
-    } else {
-        selectedProducts.push({
-            code: productCode,
-            fuente: safeFuente
-        });
-    }
-    
-    updateSelectedCount();
-    updateSelectAllCheckbox();
-}
-
-// Toggle todos los productos
-function toggleAllProducts() {
-    const selectAllCheckbox = document.getElementById('select-all-products');
-    const productCheckboxes = document.querySelectorAll('.product-checkbox');
-    
-    if (selectAllCheckbox.checked) {
-        // Seleccionar todos
-        productCheckboxes.forEach(checkbox => {
-            const productCode = checkbox.dataset.productCode;
-            const fuente = checkbox.dataset.productFuente || 'IQV'; // Fuente por defecto
-            
-            if (!selectedProducts.find(p => p.code === productCode)) {
-                selectedProducts.push({
-                    code: productCode,
-                    fuente: fuente
-                });
-                checkbox.checked = true;
-            }
-        });
-    } else {
-        // Deseleccionar todos
-        productCheckboxes.forEach(checkbox => {
-            const productCode = checkbox.dataset.productCode;
-            const index = selectedProducts.findIndex(p => p.code === productCode);
-            
-            if (index > -1) {
-                selectedProducts.splice(index, 1);
-                checkbox.checked = false;
-            }
-        });
-    }
-    
-    updateSelectedCount();
-}
-
-// Actualizar checkbox "Seleccionar todos"
-function updateSelectAllCheckbox() {
-    const selectAllCheckbox = document.getElementById('select-all-products');
-    const productCheckboxes = document.querySelectorAll('.product-checkbox');
-    const checkedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
-    
-    if (productCheckboxes.length === 0) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-    } else if (checkedCheckboxes.length === productCheckboxes.length) {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = true;
-    } else if (checkedCheckboxes.length > 0) {
-        selectAllCheckbox.indeterminate = true;
-        selectAllCheckbox.checked = false;
-    } else {
-        selectAllCheckbox.indeterminate = false;
-        selectAllCheckbox.checked = false;
-    }
-}
-
-// Actualizar contador de seleccionados
-function updateSelectedCount() {
-    document.getElementById('selected-count').textContent = selectedProducts.length;
-    
-    const assignBtn = document.getElementById('assign-selected-btn');
-    if (selectedProducts.length > 0) {
-        assignBtn.disabled = false;
-    } else {
-        assignBtn.disabled = true;
-    }
-}
-
-// Actualizar información de paginación
-function updateRestoPaginationInfo(data) {
-    const info = document.getElementById('resto-pagination-info');
-    const controls = document.getElementById('resto-pagination-controls');
-    
-    // Información de productos
-    info.textContent = `${data.products.length} de ${data.total} productos en RESTO`;
-    
-    // Limpiar controles anteriores
-    controls.innerHTML = '';
-    
-    // Solo mostrar paginación si hay más páginas o si no es la primera carga
-    if (data.has_more_pages || currentRestoCursor) {
-        let paginationHTML = '';
-        
-        // Botón "Cargar más" si hay más páginas
-        if (data.has_more_pages) {
-            paginationHTML += `
-                <button onclick="loadMoreRestoProducts()" 
-                        id="load-more-resto-btn"
-                        class="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors duration-200 flex items-center">
-                    <i class="fas fa-chevron-down mr-1"></i>
-                    Cargar más productos
-                </button>
-            `;
-        }
-        
-        // Botón "Mostrar todo" si hay pocas páginas restantes
-        if (data.total > 0 && data.total <= 200) {
-            paginationHTML += `
-                <button onclick="loadAllRestoProducts()" 
-                        id="load-all-resto-btn"
-                        class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors duration-200 flex items-center ml-2">
-                    <i class="fas fa-list mr-1"></i>
-                    Mostrar todos
-                </button>
-            `;
-        }
-        
-        controls.innerHTML = paginationHTML;
-    } else if (data.total === 0) {
-        info.textContent = 'No se encontraron productos en RESTO';
-    }
-}
-
-// Cargar más productos RESTO
-function loadMoreRestoProducts() {
-    if (!currentRestoCursor || isLoadingResto) return;
-    
-    const searchQuery = document.getElementById('resto-product-search').value.trim();
-    loadRestoProducts(currentRestoCursor, true, searchQuery);
-}
-
-// Cargar todos los productos RESTO
-function loadAllRestoProducts() {
-    if (isLoadingResto) return;
-    
-    const searchQuery = document.getElementById('resto-product-search').value.trim();
-    
-    // Mostrar loading
-    isLoadingResto = true;
-    showRestoLoadingState();
-    
-    // Hacer petición para obtener todos los productos
-    const data = {
-        per_page: 200, // Máximo permitido
-        search: searchQuery
-    };
-    
-    $.ajax({
-        url: '/market-management/resto-products',
-        method: 'GET',
-        data: data,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                updateRestoProductsTable(response.data.products);
-                currentRestoCursor = response.data.next_cursor;
-                updateRestoPaginationInfo(response.data);
-                
-                if (response.data.products.length === 0) {
-                    showRestoEmptyState();
-                }
-            } else {
-                showErrorNotification('Error al cargar todos los productos: ' + response.message);
-            }
-        },
-        error: function(xhr, textStatus, errorThrown) {
-            console.error('Error loading all resto products:', {xhr, textStatus, errorThrown});
-            showErrorNotification('Error al cargar todos los productos');
-        },
-        complete: function() {
-            isLoadingResto = false;
-            hideRestoLoadingState();
-        }
-    });
-}
-
-// Asignar productos seleccionados
-function assignSelectedProducts() {
-    if (selectedProducts.length === 0) {
-        showErrorNotification('No hay productos seleccionados');
-        return;
-    }
-    
-    if (!currentAssignMarketId) {
-        showErrorNotification('Error: No se ha seleccionado un mercado');
-        return;
-    }
-    
-    // Mostrar loading en botón
-    const btn = document.getElementById('assign-selected-btn');
-    const btnText = btn.querySelector('.btn-text');
-    const btnLoading = btn.querySelector('.btn-loading');
-    
-    btnText.classList.add('hidden');
-    btnLoading.classList.remove('hidden');
-    btn.disabled = true;
-    
-    $.ajax({
-        url: '/market-management/assign-products',
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        data: {
-            idMercado: currentAssignMarketId,
-            products: selectedProducts
-        },
-        success: function(response) {
-            if (response.success) {
-                // Mensaje detallado de éxito
-                let successMessage = '';
-                if (response.assigned_count === 1) {
-                    successMessage = `1 producto asignado correctamente al mercado "${response.market_name}"`;
-                } else {
-                    successMessage = `${response.assigned_count} productos asignados correctamente al mercado "${response.market_name}"`;
-                }
-                
-                // Mostrar advertencias si las hay
-                if (response.warnings && response.warnings.length > 0) {
-                    successMessage += `\n\nAdvertencias:\n${response.warnings.join('\n')}`;
-                }
-                
-                showSuccessNotification(successMessage);
-                
-                // Cerrar modal y recargar productos RESTO
-                closeAssignProductsModal();
-                
-                // Opcional: Recargar la lista de productos RESTO para reflejar los cambios
-                setTimeout(() => {
-                    if (document.getElementById('assign-products-modal').classList.contains('hidden') === false) {
-                        loadRestoProducts();
-                    }
-                }, 1000);
-                
-            } else {
-                showErrorNotification('Error: ' + response.message);
-            }
-        },
-        error: function(xhr, textStatus, errorThrown) {
-            console.error('Error assigning products:', {xhr, textStatus, errorThrown});
-            let errorMessage = 'Error al asignar productos';
-            
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
-            
-            showErrorNotification('Error: ' + errorMessage);
-        },
-        complete: function() {
-            // Restaurar botón
-            btnText.classList.remove('hidden');
-            btnLoading.classList.add('hidden');
-            btn.disabled = false;
-        }
-    });
-}
-
-// Funciones de notificación
-function showSuccessNotification(message) {
-    showNotification(message, 'success');
-}
-
-function showErrorNotification(message) {
-    showNotification(message, 'error');
-}
-
-function showNotification(message, type = 'info') {
-    const container = document.getElementById('toast-container') || document.body;
-    
-    // Crear el toast
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 max-w-sm w-full bg-white border border-gray-200 rounded-lg shadow-lg transform translate-x-full opacity-0 transition-all duration-300 ease-in-out z-50`;
-    
-    // Colores según el tipo
-    let iconClass, bgClass, borderClass, textClass;
-    
-    switch(type) {
-        case 'success':
-            iconClass = 'fas fa-check-circle text-green-600';
-            bgClass = 'bg-green-50';
-            borderClass = 'border-green-200';
-            textClass = 'text-green-800';
-            break;
-        case 'error':
-            iconClass = 'fas fa-exclamation-circle text-red-600';
-            bgClass = 'bg-red-50';
-            borderClass = 'border-red-200';
-            textClass = 'text-red-800';
-            break;
-        default:
-            iconClass = 'fas fa-info-circle text-blue-600';
-            bgClass = 'bg-blue-50';
-            borderClass = 'border-blue-200';
-            textClass = 'text-blue-800';
-    }
-    
-    toast.innerHTML = `
-        <div class="p-4">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <i class="${iconClass}"></i>
-                </div>
-                <div class="ml-3 w-0 flex-1">
-                    <p class="text-sm font-medium ${textClass}">
-                        ${message}
-                    </p>
-                </div>
-                <div class="ml-4 flex-shrink-0 flex">
-                    <button onclick="this.parentElement.parentElement.parentElement.parentElement.style.transform='translateX(100%)'; setTimeout(() => this.parentElement.parentElement.parentElement.parentElement.remove(), 300);" 
-                            class="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Añadir clases específicas del tipo
-    toast.classList.add(bgClass, borderClass);
-    
-    // Añadir al DOM
-    container.appendChild(toast);
-    
-    // Animación de entrada
-    setTimeout(() => {
-        toast.classList.remove('translate-x-full', 'opacity-0');
-    }, 100);
-    
-    // Auto-remove después de 5 segundos
-    setTimeout(() => {
-        toast.style.transform = 'translateX(100%)';
-        toast.style.opacity = '0';
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-        }, 300);
-    }, 5000);
-}

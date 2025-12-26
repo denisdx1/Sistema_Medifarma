@@ -1,0 +1,104 @@
+/* Global theme variables and overrides for Sistema Medifarma */
+:root {
+    --primary: #6A5CBC;
+    --secondary: rgb(158, 136, 253);
+    --secondary-light: #D3E0E0;
+    --secondary-lighter: #E7E7E7;
+    --secondary-muted: #bfced6;
+    --secondary-purple: #c4bee4;
+    --dark: #1d252d;
+    --white: #ffffff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --info: #3b82f6;
+}
+
+/* Ensure background remains white across app */
+body {
+    background: var(--white) !important;
+}
+
+/* Toasts */
+.toast-success { background-color: #d1fae5; color: var(--success); }
+.toast-error   { background-color: #fee2e2; color: var(--danger); }
+.toast-info    { background-color: #dbeafe; color: var(--info); }
+
+
+
+/* Primary action buttons */
+.btn-primary,
+.products-btn,
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white) !important;
+    border-color: transparent !important;
+}
+.btn-primary:hover,
+.products-btn:hover,
+.action-btn.primary:hover {
+    filter: brightness(0.95);
+}
+
+/* Edit / warning buttons - use muted tones */
+.edit-btn {
+    background-color: var(--secondary-light);
+    color: var(--primary);
+    border-color: var(--secondary-muted);
+}
+
+/* Status badges and buttons */
+.status-btn-active {
+    background-color: #fee2e2;
+    color: var(--danger);
+    border-color: #fca5a5;
+}
+.status-btn-inactive {
+    background-color: #d1fae5;
+    color: #059669;
+    border-color: #86efac;
+}
+
+/* Form focus states */
+.form-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 7, 50, 0.08);
+    border-color: var(--primary);
+}
+
+/* Search loading spinner color */
+.search-loading::after { border-top-color: var(--primary); }
+
+/* Pagination active color accent */
+.pagination-container .bg-red-600 {
+    box-shadow: 0 1px 3px rgba(255, 7, 50, 0.18);
+}
+
+/* Utility helpers */
+.text-primary { color: var(--primary) !important; }
+.bg-primary   { background-color: var(--primary) !important; }
+.bg-secondary { background-color: var(--secondary) !important; }
+.bg-secondary-500 { background-color: var(--secondary-500) !important; }
+.bg-secondary-light { background-color: var(--secondary-light) !important; }
+.bg-secondary-lighter { background-color: var(--secondary-lighter) !important; }
+.bg-secondary-muted { background-color: var(--secondary-muted) !important; }
+.bg-secondary-purple { background-color: var(--secondary-purple) !important; }
+.border-primary { border-color: var(--primary) !important; }
+
+/* Global input focus states */
+input:focus,
+select:focus,
+textarea:focus {
+    --tw-ring-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Override all blue focus states to use primary color */
+.focus\:ring-blue-500:focus {
+    --tw-ring-color: var(--primary) !important;
+}
+
+.focus\:border-blue-500:focus {
+    border-color: var(--primary) !important;
+}
+
+/* Gradients mapping - keep originals but map red gradient to primary */
+.gradient-red { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }

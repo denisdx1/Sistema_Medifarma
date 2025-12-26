@@ -5,61 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Sistema Medifarma')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- IDIOMAS -->
+    
+    <!-- Assets - Auto-detect production/development -->
+    @if(file_exists(public_path('build/manifest.json')))
+        {{-- Production: Use compiled assets --}}
+        <link rel="stylesheet" href="{{ \App\Helpers\AssetHelper::css() }}">
+        <script src="{{ \App\Helpers\AssetHelper::js() }}" defer></script>
+    @else
+        {{-- Development: Use Vite --}}
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Global theme variables and overrides -->
+    <link rel="stylesheet" href="{{ asset('css/global-theme.css') }}">
 
     @stack('styles')
     <style>
+        /* Nuevo branding de colores */
+        :root {
+            --primary: #6A5CBC;
+            --secondary: #9E88FD;
+            --secondary-light: #D3E0E0;
+            --secondary-lighter: #E7E7E7;
+            --secondary-muted: #bfced6;
+            --secondary-purple: #c4bee4;
+            --dark: #1d252d;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            */background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
-        }
-        
-        .sidebar-collapsed {
-            width: 4rem !important;
-        }
-        
-        .sidebar-collapsed .sidebar-text {
-            opacity: 0;
-            transform: translateX(-20px);
-            transition: all 0.3s ease;
-        }
-        
-        .sidebar-collapsed #sidebar-logo {
-            opacity: 0;
-        }
-        
-        /* Manejar badges de mercados pendientes */
-        .sidebar-collapsed #pending-markets-badge {
-            opacity: 0;
-            visibility: hidden;
-            transform: translateX(-20px);
-            transition: all 0.3s ease;
-        }
-        
-        /* Mostrar badge compacto cuando sidebar está contraído */
-        #pending-markets-badge-collapsed {
-            opacity: 0;
-            visibility: hidden;
-            transform: scale(0);
-            transition: all 0.3s ease;
-        }
-        
-        .sidebar-collapsed #pending-markets-badge-collapsed {
-            opacity: 1;
-            visibility: visible;
-            transform: scale(1);
-        }
-        
-        /* Asegurar que el badge contraído no interfiera con el layout */
-        .sidebar-collapsed #pending-markets-badge-collapsed {
-            z-index: 10;
-        }
-        
-        .content-expanded {
-            margin-left: 4rem !important;
         }
         
         /* Custom scrollbar */
@@ -68,22 +47,22 @@
         }
         
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: var(--secondary-lighter);
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: var(--secondary-muted);
             border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: var(--secondary);
         }
         
         /* Toast notifications */
         .toast {
             position: fixed;
-            top: 20px;
+            top: 80px; /* Ajustado para el navbar */
             right: 20px;
             z-index: 9999;
             min-width: 300px;
@@ -102,7 +81,7 @@
         }
         
         .toast-success {
-            background-color: #10b981;
+            background-color: var(--primary);
         }
         
         .toast-error {
@@ -114,49 +93,23 @@
         }
         
         .toast-info {
-            background-color: #3b82f6;
+            background-color: var(--secondary);
         }
     </style>
     
     @stack('styles')
 </head>
-<body class="bg-white-500">
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <x-sidebar />
-        
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1 transition-all duration-300 ease-in-out overflow-y-auto">
-            <!-- Top Navigation Bar -->
-            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <div class="flex items-center">
-                        <h1 class="text-xl font-semibold text-gray-800">
-                            @yield('page-title', 'Sistema Medifarma')
-                        </h1>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <!-- User Info -->
-                        <div class="flex items-center space-x-3">
-                            <div class="text-right">
-                                <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-500">{{ Auth::user()->getRoleDisplayName() }}</p>
-                            </div>
-                            <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-sm">
-                                {{ substr(Auth::user()->name, 0, 1) }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- Page Content -->
-            <div class="p-6">
-                @yield('content')
-            </div>
-        </main>
-    </div>
+<body class="bg-gray-50">
+    <!-- Top Navigation Bar -->
+    <x-navbar />
+    
+    <!-- Main Content - Now full width -->
+    <main class="min-h-screen">
+        <!-- Page Content -->
+        <div class="max-w-full">
+            @yield('content')
+        </div>
+    </main>
     
     <!-- Toast Container -->
     <div id="toast-container"></div>
@@ -164,21 +117,9 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+
+    
     <script>
-        // Sidebar toggle functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('toggle-sidebar');
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('main-content');
-            
-            if (toggleBtn && sidebar && mainContent) {
-                toggleBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('sidebar-collapsed');
-                    mainContent.classList.toggle('content-expanded');
-                });
-            }
-        });
-        
         // Toast notification function
         function showToast(message, type = 'info', duration = 5000) {
             const container = document.getElementById('toast-container');
@@ -231,6 +172,10 @@
         
         @if(session('info'))
             showToast('{{ session('info') }}', 'info');
+        @endif
+        
+        @if(session('warning'))
+            showToast('{{ session('warning') }}', 'warning');
         @endif
         
         // Show validation errors

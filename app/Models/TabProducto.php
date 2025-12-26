@@ -16,6 +16,8 @@ class TabProducto extends Model
         'descripcionPresentacion',
         'fechaLanzamientoPresentacion',
         'sizePack',
+        'Concentracion',
+        'Volumen',
         'stghVal',
         'stghMea',
         'voluMea',
